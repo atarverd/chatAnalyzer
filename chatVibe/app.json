@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "chatVibe",
-    "slug": "chatVibe",
+    "slug": "cahtvibe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,10 +21,17 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.atarverd.cahtvibe"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "96134182-0a20-437b-85e1-59fc3307ff8a"
+      }
+    },
+    "owner": "atarverd"
   }
 }
