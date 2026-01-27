@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Button } from './Button';
 
 type AnalysisOptionsProps = {
   selectedType: 'personal' | 'business' | 'qualities' | null;
@@ -47,18 +48,24 @@ export function AnalysisOptions({
 
   return (
     <>
-      <TouchableOpacity style={styles.backButton} onPress={onBack}>
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
-      <ScrollView style={styles.optionsScroll}>
+      <Button
+        title="← Back"
+        onPress={onBack}
+        style={styles.backButton}
+      />
+      <ScrollView
+        style={styles.optionsScroll}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {getOptions().map((option) => (
-          <TouchableOpacity
+          <Button
             key={option.key}
-            style={styles.optionButton}
+            title={option.text}
             onPress={() => onRunAnalysis(option.key)}
-          >
-            <Text style={styles.optionButtonText}>{option.text}</Text>
-          </TouchableOpacity>
+            style={styles.optionButton}
+            textStyle={styles.optionButtonText}
+          />
         ))}
       </ScrollView>
     </>
@@ -69,27 +76,22 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 16,
+    width: 'auto',
+    height: 'auto',
     paddingVertical: 8,
     paddingHorizontal: 12,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
+    backgroundColor: 'transparent',
   },
   optionsScroll: {
     maxHeight: 400,
   },
   optionButton: {
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 8,
     marginBottom: 12,
+    backgroundColor: '#f0f0f0',
   },
   optionButtonText: {
     color: '#333',
     fontSize: 14,
-    textAlign: 'center',
   },
 });
 

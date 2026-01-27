@@ -89,9 +89,9 @@ export const api = createApi({
     }),
     analyzeChat: builder.mutation<
       { analysis: string },
-      { chatId: number; type: string }
+      { chatId: number; type: string; tone?: string }
     >({
-      queryFn: async ({ chatId, type }) => {
+      queryFn: async ({ chatId, type, tone }) => {
         try {
           const url = `https://chatvibe.tvintla.net/chats/${chatId}/analyze`;
 
@@ -99,7 +99,7 @@ export const api = createApi({
           const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type }),
+            body: JSON.stringify({ type, ...(tone && { tone }) }),
             // No signal - request will continue even if app goes to background
           });
 

@@ -1,14 +1,15 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BackgroundWrapper } from './BackgroundWrapper';
+import { Button } from './Button';
 
 type ErrorViewProps = {
   error: any;
   onRetry: () => void;
-  onLogout: () => void;
 };
 
-export function ErrorView({ error, onRetry, onLogout }: ErrorViewProps) {
+export function ErrorView({ error, onRetry }: ErrorViewProps) {
   let errorMessage = 'Failed to load chats';
   if ('status' in error) {
     if (error.status === 'FETCH_ERROR') {
@@ -26,67 +27,57 @@ export function ErrorView({ error, onRetry, onLogout }: ErrorViewProps) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <View style={styles.center}>
-        <Text style={styles.errorText}>
-          Failed to load chats. Please try again.
-        </Text>
-        <Text style={styles.errorDetails}>{errorMessage}</Text>
-        <TouchableOpacity onPress={onRetry} style={styles.retryButton}>
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+    <BackgroundWrapper>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <View style={styles.center}>
+          <Text style={styles.errorText}>
+            Failed to load chats. Please try again.
+          </Text>
+          <Text style={styles.errorDetails}>{errorMessage}</Text>
+          <Button title='Retry' onPress={onRetry} />
+        </View>
+      </SafeAreaView>
+    </BackgroundWrapper>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
     paddingHorizontal: 16,
   },
   errorText: {
     fontSize: 16,
-    color: 'red',
+    color: '#FE3F21',
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest_400Regular',
+      web: 'Onest, sans-serif',
+    }),
+    fontWeight: '400',
+    lineHeight: 20,
+    letterSpacing: 0,
     textAlign: 'center',
     marginBottom: 8,
   },
   errorDetails: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 16,
+    color: '#FE3F21',
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest_400Regular',
+      web: 'Onest, sans-serif',
+    }),
+    fontWeight: '400',
+    lineHeight: 20,
+    letterSpacing: 0,
     textAlign: 'center',
     marginBottom: 12,
     paddingHorizontal: 16,
-  },
-  retryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-    backgroundColor: '#007AFF',
-    marginBottom: 12,
-  },
-  retryText: {
-    color: '#fff',
-    fontWeight: '500',
-  },
-  logoutButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-    backgroundColor: '#ff3b30',
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontWeight: '500',
   },
 });

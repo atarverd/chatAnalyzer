@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import { Button } from './Button';
 
 type AnalysisResultProps = {
   result: string;
@@ -14,10 +15,16 @@ export function AnalysisResult({
 }: AnalysisResultProps) {
   return (
     <>
-      <TouchableOpacity style={styles.backButton} onPress={onClose}>
-        <Text style={styles.backButtonText}>← Close</Text>
-      </TouchableOpacity>
-      <ScrollView style={styles.resultScroll}>
+      <Button
+        title="← Close"
+        onPress={onClose}
+        style={styles.backButton}
+      />
+      <ScrollView
+        style={styles.resultScroll}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {isAnalyzing ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator />
@@ -35,12 +42,11 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 16,
+    width: 'auto',
+    height: 'auto',
     paddingVertical: 8,
     paddingHorizontal: 12,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
+    backgroundColor: 'transparent',
   },
   resultScroll: {
     maxHeight: 400,
