@@ -1,0 +1,83 @@
+{
+  "appName": "ChatVibe",
+  "common": {
+    "back": "Back",
+    "search": "Search",
+    "retry": "Retry",
+    "close": "Close",
+    "country": "Country"
+  },
+  "auth": {
+    "connectTelegram": "Connect Telegram",
+    "connectTelegramSubtitle": "To analyze a chat, we need temporary access to your messages",
+    "getCode": "Get code",
+    "sending": "Sending...",
+    "enterCodeTitle": "Enter the code",
+    "codeSentTo": "Code sent to {{phone}}",
+    "resend": "Resend",
+    "submitPassword": "Submit password"
+  },
+  "chats": {
+    "title": "Chats",
+    "all": "All",
+    "personal": "Personal",
+    "group": "Group",
+    "analyze": "Analyze",
+    "personalChat": "Personal chat",
+    "groupChat": "Group chat"
+  },
+  "analysis": {
+    "whatToLearn": "What do you want to know?",
+    "tone": "Tone",
+    "start": "Start analysis",
+    "reanalyze": "Reanalyze",
+    "analyzingTitle": "Analyzing messages",
+    "analyzingSubtitle": "Importing chats for analysis",
+    "whatToStudy": "What to study",
+    "analysisResult": "Analysis result",
+    "questionLabels": {
+      "character": "Communication style",
+      "communication": "How to communicate better",
+      "mistakes": "Where I make mistakes",
+      "dynamics": "Understand dynamics"
+    },
+    "tones": {
+      "neutral": "Neutral",
+      "direct": "Direct / honest",
+      "supportive": "Supportive"
+    },
+    "notifications": {
+      "completeTitle": "Analysis complete",
+      "completeBody": "Analysis for \"{{chatTitle}}\" is ready"
+    }
+  },
+  "intro": {
+    "title": "Analyze your Telegram chats with AI",
+    "whatWeAnalyze": "WHAT WE ANALYZE",
+    "start": "Start",
+    "privacy": "We don't store your messages and delete them right after analysis",
+    "features": {
+      "emotionalTone": "Emotional tone",
+      "initiativeBalance": "Initiative balance"
+    }
+  },
+  "success": {
+    "title": "Account connected",
+    "subtitle": "Importing chats for analysis"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "failedToLoadChats": "Failed to load chats",
+    "networkError": "Network error - check your connection",
+    "invalidResponse": "Invalid response format",
+    "failedToAnalyze": "Failed to analyze chat. Please try again.",
+    "failedToSendCode": "Failed to send code. Please try again.",
+    "failedToVerifyCode": "Failed to verify code. Please try again.",
+    "invalidCode": "Invalid code"
+  },
+  "empty": {
+    "noChatsFound": "No chats found"
+  }
+}
+
+

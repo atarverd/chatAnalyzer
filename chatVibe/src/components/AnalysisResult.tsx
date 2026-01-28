@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Platform } from 'react-native';
-import LottieView from 'lottie-react-native';
 import { Button } from './Button';
+import { useTranslation } from 'react-i18next';
+import { LottieOrLoader } from './LottieOrLoader';
 
 const loadingAnimation = require('../../assets/Animation.json');
 
@@ -16,9 +17,14 @@ export function AnalysisResult({
   isAnalyzing,
   onClose,
 }: AnalysisResultProps) {
+  const { t } = useTranslation();
   return (
     <>
-      <Button title='← Close' onPress={onClose} style={styles.backButton} />
+      <Button
+        title={`← ${t('common.close')}`}
+        onPress={onClose}
+        style={styles.backButton}
+      />
       <ScrollView
         style={styles.resultScroll}
         contentContainerStyle={styles.resultContent}
@@ -27,24 +33,19 @@ export function AnalysisResult({
       >
         {isAnalyzing ? (
           <View style={styles.loadingContainer}>
-            <LottieView
-              source={loadingAnimation}
-              autoPlay
-              loop
-              style={styles.loadingAnimation}
-            />
-            <Text style={styles.loadingTitle}>Анализируем сообщения</Text>
+            <LottieOrLoader source={loadingAnimation} style={styles.loadingAnimation} />
+            <Text style={styles.loadingTitle}>{t('analysis.analyzingTitle')}</Text>
             <Text style={styles.loadingSubtitle}>
-              Импортируем чаты для анализа
+              {t('analysis.analyzingSubtitle')}
             </Text>
           </View>
         ) : (
           <View style={styles.resultContainer}>
-            <Text style={styles.sectionLabel}>Что нужно изучить</Text>
-            <Text style={styles.sectionValue}>Характер общения</Text>
+            <Text style={styles.sectionLabel}>{t('analysis.whatToStudy')}</Text>
+            <Text style={styles.sectionValue}>{t('analysis.questionLabels.character')}</Text>
 
             <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
-              Результат анализа
+              {t('analysis.analysisResult')}
             </Text>
             <Text style={styles.resultText}>{result}</Text>
           </View>

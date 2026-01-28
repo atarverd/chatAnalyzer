@@ -13,24 +13,26 @@ import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { Button } from '../components/Button';
 import { ImageAssets } from '../utils/imageCache';
 import { GlassButton } from '../components/GlassButton';
+import { useTranslation } from 'react-i18next';
 
 type IntroScreenProps = {
   onStart: () => void;
 };
 
 export function IntroScreen({ onStart }: IntroScreenProps) {
+  const { t } = useTranslation();
   const features = [
     {
       icon: ImageAssets.chatIcon,
-      text: 'Стиль общения',
+      text: t('analysis.questionLabels.character'),
     },
     {
       icon: ImageAssets.sprakIcon,
-      text: 'Эмоциональный фон',
+      text: t('intro.features.emotionalTone'),
     },
     {
       icon: ImageAssets.graphIcon,
-      text: 'Баланс инициативы',
+      text: t('intro.features.initiativeBalance'),
     },
   ];
 
@@ -44,7 +46,7 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
         >
           <View style={styles.content}>
             <Text style={styles.mainHeading}>
-              Проанализируйте ваши Telegram-чаты с AI
+              {t('intro.title')}
             </Text>
 
             <LinearGradient
@@ -54,7 +56,7 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
               style={styles.featuresCardBorder}
             >
               <View style={styles.featuresCard}>
-                <Text style={styles.featuresTitle}>ЧТО МЫ АНАЛИЗИРУЕМ</Text>
+                <Text style={styles.featuresTitle}>{t('intro.whatWeAnalyze')}</Text>
                 {features.map((feature, index) => (
                   <View key={index} style={styles.featureItem}>
                     <View style={styles.featureIconContainer}>
@@ -85,7 +87,7 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
                   />
                 </View>
                 <Text style={styles.privacyText}>
-                  Мы не храним вашу переписку и удаляем ее сразу после анализа
+                  {t('intro.privacy')}
                 </Text>
               </View>
             </LinearGradient>
@@ -93,7 +95,7 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
 
           <View style={styles.buttonContainer}>
             {/* <Button title='Начать' onPress={onStart} /> */}
-            <GlassButton title='Начать' onPress={onStart} />
+            <GlassButton title={t('intro.start')} onPress={onStart} />
           </View>
         </ScrollView>
       </SafeAreaView>

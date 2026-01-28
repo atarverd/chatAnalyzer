@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { ImageAssets } from '../utils/imageCache';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   onComplete: () => void;
 };
 
 export function SuccessScreen({ onComplete }: Props) {
+  const { t } = useTranslation();
   return (
     <BackgroundWrapper showIcon={false} showGlow={true} showHeader={true}>
       <View style={styles.container}>
@@ -20,8 +22,8 @@ export function SuccessScreen({ onComplete }: Props) {
             contentFit='contain'
           />
         </View>
-        <Text style={styles.title}>Аккаунт подключен</Text>
-        <Text style={styles.subtitle}>Импортируем чаты для анализа</Text>
+        <Text style={styles.title}>{t('success.title')}</Text>
+        <Text style={styles.subtitle}>{t('success.subtitle')}</Text>
       </View>
     </BackgroundWrapper>
   );

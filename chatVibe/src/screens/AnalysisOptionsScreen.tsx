@@ -17,6 +17,7 @@ import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { GlassButton } from '../components/GlassButton';
 import { ImageAssets } from '../utils/imageCache';
+import { useTranslation } from 'react-i18next';
 
 type Chat = {
   id: number;
@@ -45,6 +46,7 @@ export function AnalysisOptionsScreen({
   onBack,
   onStartAnalysis,
 }: AnalysisOptionsScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionType>(null);
   const [selectedTone, setSelectedTone] = useState<AnalysisTone>('neutral');
@@ -57,29 +59,29 @@ export function AnalysisOptionsScreen({
     {
       id: 'character' as QuestionType,
       icon: ImageAssets.heartIcon,
-      text: 'Характер общения',
+      text: t('analysis.questionLabels.character'),
     },
     {
       id: 'communication' as QuestionType,
       icon: ImageAssets.chatIcon,
-      text: 'Как лучше общаться',
+      text: t('analysis.questionLabels.communication'),
     },
     {
       id: 'mistakes' as QuestionType,
       icon: ImageAssets.alertIcon,
-      text: 'Где я делаю ошибки',
+      text: t('analysis.questionLabels.mistakes'),
     },
     {
       id: 'dynamics' as QuestionType,
       icon: ImageAssets.chartIcon,
-      text: 'Понять динамику',
+      text: t('analysis.questionLabels.dynamics'),
     },
   ];
 
   const tones = [
-    { id: 'neutral' as AnalysisTone, text: 'Нейтральный' },
-    { id: 'direct' as AnalysisTone, text: 'Прямой/честный' },
-    { id: 'supportive' as AnalysisTone, text: 'Поддерживающий' },
+    { id: 'neutral' as AnalysisTone, text: t('analysis.tones.neutral') },
+    { id: 'direct' as AnalysisTone, text: t('analysis.tones.direct') },
+    { id: 'supportive' as AnalysisTone, text: t('analysis.tones.supportive') },
   ];
 
   const handleStart = () => {
@@ -107,7 +109,7 @@ export function AnalysisOptionsScreen({
                   contentFit='contain'
                 />
                 <Text style={styles.headerType}>
-                  {isPersonal ? 'Личный чат' : 'Групповой чат'}
+                  {isPersonal ? t('chats.personalChat') : t('chats.groupChat')}
                 </Text>
               </View>
             </View>
@@ -117,7 +119,7 @@ export function AnalysisOptionsScreen({
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Что вы хотите узнать?</Text>
+            <Text style={styles.sectionTitle}>{t('analysis.whatToLearn')}</Text>
             <View style={styles.questionGrid}>
               {questionTypes.map((question) => {
                 const isSelected = selectedQuestion === question.id;
@@ -168,7 +170,7 @@ export function AnalysisOptionsScreen({
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Тон анализа</Text>
+            <Text style={styles.sectionTitle}>{t('analysis.tone')}</Text>
             <View style={styles.toneContainer}>
               {tones.map((tone) => {
                 const isSelected = selectedTone === tone.id;
@@ -213,7 +215,7 @@ export function AnalysisOptionsScreen({
 
           <View style={styles.buttonContainer}>
             <GlassButton
-              title='Начать анализ'
+              title={t('analysis.start')}
               onPress={handleStart}
               disabled={!selectedQuestion}
             />

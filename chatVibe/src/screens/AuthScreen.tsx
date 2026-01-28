@@ -27,10 +27,12 @@ import { GlassButton } from '../components/GlassButton';
 import { ResendButton } from '../components/ResendButton';
 import { CountryCodePicker } from '../components/CountryCodePicker';
 import { CountrySelectionScreen } from './CountrySelectionScreen';
+import { useTranslation } from 'react-i18next';
 
 export function AuthScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const auth = useSelector(selectAuth);
+  const { t } = useTranslation();
   // const auth = {
   //   step: 'phone',
   //   phone: '79123456789',
@@ -139,7 +141,7 @@ export function AuthScreen() {
   const handleSendCode = async () => {
     const phoneNumber = auth.phone.trim();
     if (!phoneNumber) {
-      setStatus('Please enter a phone number');
+      setStatus(t('errors.generic'));
       return;
     }
     const phone = `${countryCode}${phoneNumber}`;
@@ -148,14 +150,14 @@ export function AuthScreen() {
       const res = await sendCode({ phone }).unwrap();
       //   setStatus(res.message || 'Code sent! Check your Telegram app');
     } catch {
-      setStatus('Failed to send code. Please try again.');
+      setStatus(t('errors.failedToSendCode'));
     }
   };
 
   const handleVerifyCode = async () => {
     const fullCode = code.join('');
     if (fullCode.length !== 5) {
-      setStatus('Please enter the verification code');
+      setStatus(t('errors.invalidCode'));
       return;
     }
     // setStatus('Verifying code...');
@@ -177,7 +179,7 @@ export function AuthScreen() {
         setCodeError(true);
       }
     } catch {
-      setStatus('Failed to verify code. Please try again.');
+      setStatus(t('errors.failedToVerifyCode'));
       setCodeError(true);
     }
   };
@@ -239,10 +241,11 @@ export function AuthScreen() {
               <View style={styles.content}>
                 {auth.step === 'phone' && (
                   <React.Fragment key='phone-step'>
-                    <Text style={styles.mainTitle}>Подключите Telegram</Text>
+                    <Text style={styles.mainTitle}>
+                      {t('auth.connectTelegram')}
+                    </Text>
                     <Text style={styles.secondaryText}>
-                      Чтобы проанализировать чат, нам нужен временный доступ к
-                      вашей переписке
+                      {t('auth.connectTelegramSubtitle')}
                     </Text>
                     <View style={styles.phoneInputContainer}>
                       <CountryCodePicker
@@ -271,9 +274,13 @@ export function AuthScreen() {
                 )}
                 {auth.step === 'code' && (
                   <React.Fragment key='code-step'>
-                    <Text style={styles.codeTitle}>Введите код</Text>
+                    <Text style={styles.codeTitle}>
+                      {t('auth.enterCodeTitle')}
+                    </Text>
                     <Text style={styles.codeSubtitle}>
-                      Код отправлен на {countryCode} {auth.phone}
+                      {t('auth.codeSentTo', {
+                        phone: `${countryCode} ${auth.phone}`,
+                      })}
                     </Text>
                     <View style={styles.codeInputsContainer}>
                       {code.map((digit, index) => {
@@ -378,14 +385,14 @@ export function AuthScreen() {
               <View style={styles.buttonContainer}>
                 {auth.step === 'phone' && (
                   <GlassButton
-                    title={isLoading ? 'Sending...' : 'Получить код'}
+                    title={isLoading ? t('auth.sending') : t('auth.getCode')}
                     onPress={handleSendCode}
                     disabled={isLoading}
                   />
                 )}
                 {auth.step === 'code' && (
                   <ResendButton
-                    title='Отправить снова'
+                    title={t('auth.resend')}
                     onPress={handleSendCode}
                     disabled={isLoading}
                     width={141}
@@ -396,7 +403,7 @@ export function AuthScreen() {
                 {auth.step === 'password' && (
                   <GlassButton
                     title={
-                      isVerifyingPassword ? 'Verifying...' : 'Submit password'
+                      isVerifyingPassword ? t('auth.sending') : t('auth.submitPassword')
                     }
                     onPress={handleSubmitPassword}
                     disabled={isVerifyingPassword}

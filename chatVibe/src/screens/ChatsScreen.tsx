@@ -25,6 +25,7 @@ import { AnalysisOptionsScreen } from './AnalysisOptionsScreen';
 import { AnalysisResultScreen } from './AnalysisResultScreen';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { ImageAssets } from '../utils/imageCache';
+import { useTranslation } from 'react-i18next';
 
 type AnalysisType = 'personal' | 'business' | 'qualities' | null;
 
@@ -36,6 +37,7 @@ type Chat = {
 };
 
 export function ChatsScreen() {
+  const { t } = useTranslation();
   const { data, isLoading, error, refetch } = useGetChatsQuery();
   const [analyzeChat, { isLoading: isAnalyzing }] = useAnalyzeChatMutation();
 
@@ -216,8 +218,8 @@ export function ChatsScreen() {
         try {
           await Notifications.scheduleNotificationAsync({
             content: {
-              title: 'Analysis Complete',
-              body: `Analysis for "${chatTitle}" is ready`,
+              title: t('analysis.notifications.completeTitle'),
+              body: t('analysis.notifications.completeBody', { chatTitle }),
               data: { chatId, chatTitle },
             },
             trigger: null,
@@ -233,7 +235,7 @@ export function ChatsScreen() {
 
       const currentAppState = AppState.currentState;
       if (currentAppState === 'active') {
-        setAnalysisResult('Failed to analyze chat. Please try again.');
+        setAnalysisResult(t('errors.failedToAnalyze'));
       }
     }
   };
@@ -313,8 +315,12 @@ export function ChatsScreen() {
       .includes(searchQuery.toLowerCase());
     const matchesFilter =
       filterType === 'all' ||
-      (filterType === 'personal' && chat.type.toLowerCase().includes('личн')) ||
-      (filterType === 'group' && chat.type.toLowerCase().includes('групп'));
+      (filterType === 'personal' &&
+        (chat.type.toLowerCase().includes('личн') ||
+          chat.type.toLowerCase().includes('personal'))) ||
+      (filterType === 'group' &&
+        (chat.type.toLowerCase().includes('групп') ||
+          chat.type.toLowerCase().includes('group')));
     return matchesSearch && matchesFilter;
   });
 
@@ -350,7 +356,9 @@ export function ChatsScreen() {
                     style={styles.searchIcon}
                     contentFit='contain'
                   />
-                  <Text style={styles.searchPlaceholderText}>Search</Text>
+                  <Text style={styles.searchPlaceholderText}>
+                    {t('common.search')}
+                  </Text>
                 </View>
               )}
             </View>
@@ -370,7 +378,7 @@ export function ChatsScreen() {
                     filterType === 'all' && styles.filterButtonTextActive,
                   ]}
                 >
-                  Все
+                  {t('chats.all')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -386,7 +394,7 @@ export function ChatsScreen() {
                     filterType === 'personal' && styles.filterButtonTextActive,
                   ]}
                 >
-                  Личные
+                  {t('chats.personal')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -403,7 +411,7 @@ export function ChatsScreen() {
                     filterType === 'group' && styles.filterButtonTextActive,
                   ]}
                 >
-                  Групповые
+                  {t('chats.group')}
                 </Text>
               </TouchableOpacity>
             </View>

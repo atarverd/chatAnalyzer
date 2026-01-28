@@ -1,0 +1,83 @@
+{
+  "appName": "ChatVibe",
+  "common": {
+    "back": "Назад",
+    "search": "Поиск",
+    "retry": "Повторить",
+    "close": "Закрыть",
+    "country": "Страна"
+  },
+  "auth": {
+    "connectTelegram": "Подключите Telegram",
+    "connectTelegramSubtitle": "Чтобы проанализировать чат, нам нужен временный доступ к вашей переписке",
+    "getCode": "Получить код",
+    "sending": "Отправляем...",
+    "enterCodeTitle": "Введите код",
+    "codeSentTo": "Код отправлен на {{phone}}",
+    "resend": "Отправить снова",
+    "submitPassword": "Отправить пароль"
+  },
+  "chats": {
+    "title": "Чаты",
+    "all": "Все",
+    "personal": "Личные",
+    "group": "Групповые",
+    "analyze": "Анализ",
+    "personalChat": "Личный чат",
+    "groupChat": "Групповой чат"
+  },
+  "analysis": {
+    "whatToLearn": "Что вы хотите узнать?",
+    "tone": "Тон анализа",
+    "start": "Начать анализ",
+    "reanalyze": "Переанализировать",
+    "analyzingTitle": "Анализируем сообщения",
+    "analyzingSubtitle": "Импортируем чаты для анализа",
+    "whatToStudy": "Что нужно изучить",
+    "analysisResult": "Результат анализа",
+    "questionLabels": {
+      "character": "Характер общения",
+      "communication": "Как лучше общаться",
+      "mistakes": "Где я делаю ошибки",
+      "dynamics": "Понять динамику"
+    },
+    "tones": {
+      "neutral": "Нейтральный",
+      "direct": "Прямой/честный",
+      "supportive": "Поддерживающий"
+    },
+    "notifications": {
+      "completeTitle": "Анализ завершён",
+      "completeBody": "Анализ для «{{chatTitle}}» готов"
+    }
+  },
+  "intro": {
+    "title": "Проанализируйте ваши Telegram-чаты с AI",
+    "whatWeAnalyze": "ЧТО МЫ АНАЛИЗИРУЕМ",
+    "start": "Начать",
+    "privacy": "Мы не храним вашу переписку и удаляем ее сразу после анализа",
+    "features": {
+      "emotionalTone": "Эмоциональный фон",
+      "initiativeBalance": "Баланс инициативы"
+    }
+  },
+  "success": {
+    "title": "Аккаунт подключен",
+    "subtitle": "Импортируем чаты для анализа"
+  },
+  "errors": {
+    "generic": "Что-то пошло не так",
+    "failedToLoadChats": "Не удалось загрузить чаты",
+    "networkError": "Ошибка сети — проверьте подключение",
+    "invalidResponse": "Некорректный формат ответа",
+    "failedToAnalyze": "Не удалось проанализировать чат. Попробуйте ещё раз.",
+    "failedToSendCode": "Не удалось отправить код. Попробуйте ещё раз.",
+    "failedToVerifyCode": "Не удалось проверить код. Попробуйте ещё раз.",
+    "invalidCode": "Неверный код"
+  },
+  "empty": {
+    "noChatsFound": "Чаты не найдены"
+  }
+}
+
+

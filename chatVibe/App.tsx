@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { preloadImages, ImageAssets } from './src/utils/imageCache';
 import { useSelector } from 'react-redux';
 import { selectAuth } from './src/store';
+import './src/i18n';
 
 // Prevent auto-hiding splash screen until we're ready
 SplashScreen.preventAutoHideAsync();

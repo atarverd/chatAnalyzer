@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { Image as ExpoImage } from 'expo-image';
 import { Avatar } from './Avatar';
 import { ImageAssets } from '../utils/imageCache';
+import { useTranslation } from 'react-i18next';
 
 type Chat = {
   id: number;
@@ -18,8 +19,9 @@ type ChatItemProps = {
 };
 
 export function ChatItem({ chat, onAnalyze, hasAnalysis = false }: ChatItemProps) {
+  const { t } = useTranslation();
   const isPersonal = chat.type.toLowerCase().includes('личн') || chat.type.toLowerCase().includes('personal');
-  const chatTypeText = isPersonal ? 'Личный чат' : 'Групповой чат';
+  const chatTypeText = isPersonal ? t('chats.personalChat') : t('chats.groupChat');
   const chatTypeIconSource = isPersonal ? ImageAssets.privateChatIcon : ImageAssets.groupChatIcon;
 
   return (
@@ -67,7 +69,7 @@ export function ChatItem({ chat, onAnalyze, hasAnalysis = false }: ChatItemProps
           </>
         ) : (
           <>
-            <Text style={styles.analyzeButtonText}>Анализ</Text>
+            <Text style={styles.analyzeButtonText}>{t('chats.analyze')}</Text>
             <ExpoImage
               source={ImageAssets.arrowIcon}
               style={styles.analyzeButtonArrow}

@@ -14,6 +14,7 @@ import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { BackButton } from '../components/BackButton';
 import { Avatar } from '../components/Avatar';
 import { ImageAssets } from '../utils/imageCache';
+import { useTranslation } from 'react-i18next';
 
 type Chat = {
   id: number;
@@ -46,13 +47,15 @@ export function AnalysisResultScreen({
   onBack,
   onReanalyze,
 }: AnalysisResultScreenProps) {
+  const { t } = useTranslation();
   const [isDone, setIsDone] = useState(false);
   const isPersonal =
     chat.type.toLowerCase().includes('личн') ||
     chat.type.toLowerCase().includes('personal');
 
   const questionLabel =
-    (questionType && QUESTION_LABELS[questionType]) || 'Характер общения';
+    (questionType && t(`analysis.questionLabels.${questionType}`)) ||
+    t('analysis.questionLabels.character');
 
   useEffect(() => {
     if (!isAnalyzing && result) {
@@ -87,7 +90,7 @@ export function AnalysisResultScreen({
                   contentFit='contain'
                 />
                 <Text style={styles.headerType}>
-                  {isPersonal ? 'Личный чат' : 'Групповой чат'}
+                  {isPersonal ? t('chats.personalChat') : t('chats.groupChat')}
                 </Text>
               </View>
             </View>
@@ -109,16 +112,20 @@ export function AnalysisResultScreen({
                   style={styles.loadingAnimation}
                   done={!isAnalyzing}
                 />
-                <Text style={styles.loadingTitle}>Анализируем сообщения</Text>
+                <Text style={styles.loadingTitle}>
+                  {t('analysis.analyzingTitle')}
+                </Text>
                 <Text style={styles.loadingSubtitle}>
-                  Импортируем чаты для анализа
+                  {t('analysis.analyzingSubtitle')}
                 </Text>
               </View>
             ) : (
               <View style={styles.resultContainer}>
                 <View style={styles.sectionHeaderRow}>
                   <View style={styles.sectionHeaderLeft}>
-                    <Text style={styles.sectionLabel}>Что нужно изучить</Text>
+                    <Text style={styles.sectionLabel}>
+                      {t('analysis.whatToStudy')}
+                    </Text>
                     <Text style={styles.sectionValue}>{questionLabel}</Text>
                   </View>
                   {!isAnalyzing && (
@@ -133,7 +140,7 @@ export function AnalysisResultScreen({
                 </View>
 
                 <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
-                  Результат анализа
+                  {t('analysis.analysisResult')}
                 </Text>
                 <Text style={styles.resultText}>{result}</Text>
               </View>

@@ -35,6 +35,9 @@
       }
     },
     "owner": "atarverd",
-    "plugins": ["expo-font"]
+    "plugins": [
+      "expo-font",
+      "expo-localization"
+    ]
   }
 }

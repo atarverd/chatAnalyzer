@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundWrapper } from './BackgroundWrapper';
 import { Button } from './Button';
+import { useTranslation } from 'react-i18next';
 
 type ErrorViewProps = {
   error: any;
@@ -10,12 +11,13 @@ type ErrorViewProps = {
 };
 
 export function ErrorView({ error, onRetry }: ErrorViewProps) {
-  let errorMessage = 'Failed to load chats';
+  const { t } = useTranslation();
+  let errorMessage = t('errors.failedToLoadChats');
   if ('status' in error) {
     if (error.status === 'FETCH_ERROR') {
-      errorMessage = 'Network error - check your connection';
+      errorMessage = t('errors.networkError');
     } else if (error.status === 'PARSING_ERROR') {
-      errorMessage = 'Invalid response format';
+      errorMessage = t('errors.invalidResponse');
     } else if (error.data) {
       errorMessage =
         typeof error.data === 'object'
@@ -31,10 +33,10 @@ export function ErrorView({ error, onRetry }: ErrorViewProps) {
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.center}>
           <Text style={styles.errorText}>
-            Failed to load chats. Please try again.
+            {t('errors.generic')}
           </Text>
           <Text style={styles.errorDetails}>{errorMessage}</Text>
-          <Button title='Retry' onPress={onRetry} />
+          <Button title={t('common.retry')} onPress={onRetry} />
         </View>
       </SafeAreaView>
     </BackgroundWrapper>

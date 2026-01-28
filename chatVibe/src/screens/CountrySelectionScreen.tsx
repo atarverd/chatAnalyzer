@@ -17,118 +17,9 @@ import { CloseButton } from '../components/CloseButton';
 import { ImageAssets } from '../utils/imageCache';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
+import { COUNTRIES } from '../data/countries';
 
-// Common country codes with emoji flags - sorted alphabetically
-const COUNTRIES = [
-  { code: '+355', flag: '🇦🇱', name: 'Albania' },
-  { code: '+376', flag: '🇦🇩', name: 'Andorra' },
-  { code: '+375', flag: '🇧🇾', name: 'Belarus' },
-  { code: '+32', flag: '🇧🇪', name: 'Belgium' },
-  { code: '+55', flag: '🇧🇷', name: 'Brazil' },
-  { code: '+1', flag: '🇺🇸', name: 'United States' },
-  { code: '+7', flag: '🇷🇺', name: 'Russia' },
-  { code: '+33', flag: '🇫🇷', name: 'France' },
-  { code: '+34', flag: '🇪🇸', name: 'Spain' },
-  { code: '+39', flag: '🇮🇹', name: 'Italy' },
-  { code: '+44', flag: '🇬🇧', name: 'United Kingdom' },
-  { code: '+49', flag: '🇩🇪', name: 'Germany' },
-  { code: '+52', flag: '🇲🇽', name: 'Mexico' },
-  { code: '+61', flag: '🇦🇺', name: 'Australia' },
-  { code: '+81', flag: '🇯🇵', name: 'Japan' },
-  { code: '+82', flag: '🇰🇷', name: 'South Korea' },
-  { code: '+86', flag: '🇨🇳', name: 'China' },
-  { code: '+91', flag: '🇮🇳', name: 'India' },
-  { code: '+380', flag: '🇺🇦', name: 'Ukraine' },
-  { code: '+7', flag: '🇰🇿', name: 'Kazakhstan' },
-  { code: '+998', flag: '🇺🇿', name: 'Uzbekistan' },
-  { code: '+996', flag: '🇰🇬', name: 'Kyrgyzstan' },
-  { code: '+992', flag: '🇹🇯', name: 'Tajikistan' },
-  { code: '+993', flag: '🇹🇲', name: 'Turkmenistan' },
-  { code: '+374', flag: '🇦🇲', name: 'Armenia' },
-  { code: '+995', flag: '🇬🇪', name: 'Georgia' },
-  { code: '+994', flag: '🇦🇿', name: 'Azerbaijan' },
-  { code: '+90', flag: '🇹🇷', name: 'Turkey' },
-  { code: '+971', flag: '🇦🇪', name: 'UAE' },
-  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
-  { code: '+20', flag: '🇪🇬', name: 'Egypt' },
-  { code: '+27', flag: '🇿🇦', name: 'South Africa' },
-  { code: '+234', flag: '🇳🇬', name: 'Nigeria' },
-  { code: '+254', flag: '🇰🇪', name: 'Kenya' },
-  { code: '+212', flag: '🇲🇦', name: 'Morocco' },
-  { code: '+213', flag: '🇩🇿', name: 'Algeria' },
-  { code: '+216', flag: '🇹🇳', name: 'Tunisia' },
-  { code: '+218', flag: '🇱🇾', name: 'Libya' },
-  { code: '+249', flag: '🇸🇩', name: 'Sudan' },
-  { code: '+251', flag: '🇪🇹', name: 'Ethiopia' },
-  { code: '+255', flag: '🇹🇿', name: 'Tanzania' },
-  { code: '+256', flag: '🇺🇬', name: 'Uganda' },
-  { code: '+260', flag: '🇿🇲', name: 'Zambia' },
-  { code: '+263', flag: '🇿🇼', name: 'Zimbabwe' },
-  { code: '+265', flag: '🇲🇼', name: 'Malawi' },
-  { code: '+267', flag: '🇧🇼', name: 'Botswana' },
-  { code: '+268', flag: '🇸🇿', name: 'Eswatini' },
-  { code: '+269', flag: '🇰🇲', name: 'Comoros' },
-  { code: '+290', flag: '🇸🇭', name: 'Saint Helena' },
-  { code: '+291', flag: '🇪🇷', name: 'Eritrea' },
-  { code: '+297', flag: '🇦🇼', name: 'Aruba' },
-  { code: '+298', flag: '🇫🇴', name: 'Faroe Islands' },
-  { code: '+299', flag: '🇬🇱', name: 'Greenland' },
-  { code: '+350', flag: '🇬🇮', name: 'Gibraltar' },
-  { code: '+351', flag: '🇵🇹', name: 'Portugal' },
-  { code: '+352', flag: '🇱🇺', name: 'Luxembourg' },
-  { code: '+353', flag: '🇮🇪', name: 'Ireland' },
-  { code: '+354', flag: '🇮🇸', name: 'Iceland' },
-  { code: '+356', flag: '🇲🇹', name: 'Malta' },
-  { code: '+357', flag: '🇨🇾', name: 'Cyprus' },
-  { code: '+358', flag: '🇫🇮', name: 'Finland' },
-  { code: '+359', flag: '🇧🇬', name: 'Bulgaria' },
-  { code: '+370', flag: '🇱🇹', name: 'Lithuania' },
-  { code: '+371', flag: '🇱🇻', name: 'Latvia' },
-  { code: '+372', flag: '🇪🇪', name: 'Estonia' },
-  { code: '+373', flag: '🇲🇩', name: 'Moldova' },
-  { code: '+381', flag: '🇷🇸', name: 'Serbia' },
-  { code: '+382', flag: '🇲🇪', name: 'Montenegro' },
-  { code: '+383', flag: '🇽🇰', name: 'Kosovo' },
-  { code: '+385', flag: '🇭🇷', name: 'Croatia' },
-  { code: '+386', flag: '🇸🇮', name: 'Slovenia' },
-  { code: '+387', flag: '🇧🇦', name: 'Bosnia' },
-  { code: '+389', flag: '🇲🇰', name: 'North Macedonia' },
-  { code: '+420', flag: '🇨🇿', name: 'Czech Republic' },
-  { code: '+421', flag: '🇸🇰', name: 'Slovakia' },
-  { code: '+423', flag: '🇱🇮', name: 'Liechtenstein' },
-  { code: '+48', flag: '🇵🇱', name: 'Poland' },
-  { code: '+30', flag: '🇬🇷', name: 'Greece' },
-  { code: '+31', flag: '🇳🇱', name: 'Netherlands' },
-  { code: '+41', flag: '🇨🇭', name: 'Switzerland' },
-  { code: '+43', flag: '🇦🇹', name: 'Austria' },
-  { code: '+45', flag: '🇩🇰', name: 'Denmark' },
-  { code: '+46', flag: '🇸🇪', name: 'Sweden' },
-  { code: '+47', flag: '🇳🇴', name: 'Norway' },
-  { code: '+64', flag: '🇳🇿', name: 'New Zealand' },
-  { code: '+65', flag: '🇸🇬', name: 'Singapore' },
-  { code: '+66', flag: '🇹🇭', name: 'Thailand' },
-  { code: '+84', flag: '🇻🇳', name: 'Vietnam' },
-  { code: '+60', flag: '🇲🇾', name: 'Malaysia' },
-  { code: '+62', flag: '🇮🇩', name: 'Indonesia' },
-  { code: '+63', flag: '🇵🇭', name: 'Philippines' },
-  { code: '+92', flag: '🇵🇰', name: 'Pakistan' },
-  { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
-  { code: '+94', flag: '🇱🇰', name: 'Sri Lanka' },
-  { code: '+95', flag: '🇲🇲', name: 'Myanmar' },
-  { code: '+98', flag: '🇮🇷', name: 'Iran' },
-  { code: '+961', flag: '🇱🇧', name: 'Lebanon' },
-  { code: '+962', flag: '🇯🇴', name: 'Jordan' },
-  { code: '+963', flag: '🇸🇾', name: 'Syria' },
-  { code: '+964', flag: '🇮🇶', name: 'Iraq' },
-  { code: '+965', flag: '🇰🇼', name: 'Kuwait' },
-  { code: '+968', flag: '🇴🇲', name: 'Oman' },
-  { code: '+970', flag: '🇵🇸', name: 'Palestine' },
-  { code: '+972', flag: '🇮🇱', name: 'Israel' },
-  { code: '+973', flag: '🇧🇭', name: 'Bahrain' },
-  { code: '+974', flag: '🇶🇦', name: 'Qatar' },
-  { code: '+976', flag: '🇲🇳', name: 'Mongolia' },
-  { code: '+977', flag: '🇳🇵', name: 'Nepal' },
-].sort((a, b) => a.name.localeCompare(b.name));
 
 type CountrySelectionScreenProps = {
   selectedCode: string;
@@ -144,6 +35,7 @@ export function CountrySelectionScreen({
   onBack,
 }: CountrySelectionScreenProps) {
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -179,15 +71,21 @@ export function CountrySelectionScreen({
 
   // Group countries by first letter
   const groupedCountries = useMemo(() => {
+    const getName = (c: (typeof COUNTRIES)[number]) =>
+      i18n.language === 'ru' ? c.nameRu : c.nameEn;
+
+    const q = searchQuery.toLowerCase();
     const filtered = COUNTRIES.filter(
       (country) =>
-        country.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getName(country).toLowerCase().includes(q) ||
+        country.nameEn.toLowerCase().includes(q) ||
+        country.nameRu.toLowerCase().includes(q) ||
         country.code.includes(searchQuery)
     );
 
     const grouped: { [key: string]: typeof COUNTRIES } = {};
     filtered.forEach((country) => {
-      const firstLetter = country.name.charAt(0).toUpperCase();
+      const firstLetter = getName(country).charAt(0).toUpperCase();
       if (!grouped[firstLetter]) {
         grouped[firstLetter] = [];
       }
@@ -200,7 +98,7 @@ export function CountrySelectionScreen({
         title: letter,
         data: grouped[letter],
       }));
-  }, [searchQuery]);
+  }, [searchQuery, i18n.language]);
 
   const selectedCountry =
     COUNTRIES.find((c) => c.code === selectedCode) || COUNTRIES[0];
@@ -240,7 +138,7 @@ export function CountrySelectionScreen({
           {/* Header */}
           <View style={styles.header}>
             <BackButton onPress={onBack} />
-            <Text style={styles.headerTitle}>Страна</Text>
+            <Text style={styles.headerTitle}>{t('common.country')}</Text>
             <View style={styles.headerSpacer} />
           </View>
 
@@ -275,7 +173,7 @@ export function CountrySelectionScreen({
                   <TextInput
                     ref={searchInputRef}
                     style={styles.searchInput}
-                    placeholder='Search'
+                    placeholder={t('common.search')}
                     placeholderTextColor='#666'
                     value={searchQuery}
                     onChangeText={setSearchQuery}
@@ -301,7 +199,7 @@ export function CountrySelectionScreen({
           {/* Country List */}
           <SectionList
             sections={groupedCountries}
-            keyExtractor={(item, index) => `${item.code}-${item.name}-${index}`}
+            keyExtractor={(item, index) => `${item.code}-${item.nameEn}-${index}`}
             keyboardShouldPersistTaps='handled'
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
@@ -312,7 +210,9 @@ export function CountrySelectionScreen({
               >
                 <Text style={styles.countryFlag}>{item.flag}</Text>
                 <View style={styles.countryInfo}>
-                  <Text style={styles.countryName}>{item.name}</Text>
+                  <Text style={styles.countryName}>
+                    {i18n.language === 'ru' ? item.nameRu : item.nameEn}
+                  </Text>
                   <Text style={styles.countryCode}>{item.code}</Text>
                 </View>
               </TouchableOpacity>
