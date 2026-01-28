@@ -21,6 +21,8 @@ import { useAuthStatusQuery } from './src/services/api';
 import { BackgroundWrapper } from './src/components/BackgroundWrapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { preloadImages, ImageAssets } from './src/utils/imageCache';
+import { useSelector } from 'react-redux';
+import { selectAuth } from './src/store';
 
 // Prevent auto-hiding splash screen until we're ready
 SplashScreen.preventAutoHideAsync();
@@ -33,12 +35,13 @@ function SplashScreenComponent() {
 
 function Root() {
   const { data, isLoading } = useAuthStatusQuery();
+  const auth = useSelector(selectAuth);
   const [appIsReady, setAppIsReady] = useState(false);
   const [minSplashTimeElapsed, setMinSplashTimeElapsed] = useState(false);
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState<boolean | null>(null);
   const [introChecked, setIntroChecked] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [wasAuthorized, setWasAuthorized] = useState(false);
+  const wasAuthorizedRef = useRef<boolean | null>(null);
   const splashOpacity = useRef(new Animated.Value(1)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
 
@@ -61,11 +64,10 @@ function Root() {
     const checkIntroShown = async () => {
       try {
         const introShown = await AsyncStorage.getItem('introShown');
-        // if (introShown === 'true') {
-        //   setShowIntro(false);
-        // }
+        setShowIntro(introShown !== 'true');
         setIntroChecked(true);
       } catch (error) {
+        setShowIntro(true);
         setIntroChecked(true);
       }
     };
@@ -121,12 +123,29 @@ function Root() {
     contentOpacity,
   ]);
 
-  // Monitor auth status changes to show success screen
+  // Initialize wasAuthorizedRef with current auth status when app becomes ready
   useEffect(() => {
-    if (appIsReady && !showIntro && data?.authorized && !wasAuthorized) {
-      // User just became authorized - show success screen
+    if (appIsReady && introChecked && showIntro === false) {
+      // Set initial authorized state - if user is already authorized, don't show success screen
+      if (wasAuthorizedRef.current === null) {
+        wasAuthorizedRef.current = auth.authorized;
+      }
+    }
+  }, [appIsReady, introChecked, showIntro, auth.authorized]);
+
+  // Monitor auth status changes to show success screen
+  // Use Redux auth state which updates immediately after successful mutations
+  useEffect(() => {
+    if (
+      appIsReady &&
+      introChecked &&
+      showIntro === false &&
+      auth.authorized &&
+      wasAuthorizedRef.current === false
+    ) {
+      // User just became authorized during this session - show success screen
       setShowSuccess(true);
-      setWasAuthorized(true);
+      wasAuthorizedRef.current = true;
 
       // After 3 seconds, hide success screen and show chats
       const timer = setTimeout(() => {
@@ -134,12 +153,17 @@ function Root() {
       }, 3000);
 
       return () => clearTimeout(timer);
-    } else if (appIsReady && !showIntro && !data?.authorized) {
+    } else if (
+      appIsReady &&
+      introChecked &&
+      showIntro === false &&
+      !auth.authorized
+    ) {
       // User is not authorized - reset state
-      setWasAuthorized(false);
+      wasAuthorizedRef.current = false;
       setShowSuccess(false);
     }
-  }, [data?.authorized, appIsReady, showIntro, wasAuthorized]);
+  }, [auth.authorized, appIsReady, showIntro, introChecked]);
 
   const showSplash = isLoading || !appIsReady || !fontsLoaded;
 
@@ -175,12 +199,12 @@ function Root() {
         ]}
         pointerEvents={appIsReady ? 'auto' : 'none'}
       >
-        {appIsReady ? (
-          showIntro ? (
+        {appIsReady && introChecked ? (
+          showIntro === true ? (
             <IntroScreen onStart={handleIntroComplete} />
           ) : showSuccess ? (
             <SuccessScreen onComplete={() => setShowSuccess(false)} />
-          ) : data?.authorized ? (
+          ) : auth.authorized ? (
             <ChatsScreen />
           ) : (
             <AuthScreen />

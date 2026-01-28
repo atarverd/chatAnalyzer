@@ -63,7 +63,7 @@ export const api = createApi({
     getChats: builder.query<Chat[], void>({
       queryFn: async () => {
         try {
-          const url = 'https://chatvibe.tvintla.net/chats';
+          const url = 'https://chatvibe.dategram.io/chats';
           const response = await fetch(url);
           const data = await response.json();
 
@@ -93,7 +93,7 @@ export const api = createApi({
     >({
       queryFn: async ({ chatId, type, tone }) => {
         try {
-          const url = `https://chatvibe.tvintla.net/chats/${chatId}/analyze`;
+          const url = `https://chatvibe.dategram.io/chats/${chatId}/analyze`;
 
           // Don't use abort signal - let request continue in background
           const response = await fetch(url, {

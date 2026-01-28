@@ -72,8 +72,9 @@ export function AuthScreen() {
     }
     // Only allow numbers
     const numbersOnly = value.replace(/\D/g, '');
+
+    // If multiple digits pasted (autofill/paste), distribute them
     if (numbersOnly.length > 1) {
-      // If multiple digits pasted, distribute them
       const newCode = [...code];
       const digits = numbersOnly.split('').slice(0, 5);
       digits.forEach((digit, i) => {
@@ -82,19 +83,21 @@ export function AuthScreen() {
         }
       });
       setCode(newCode);
-      // Focus the last filled input or next empty one
+      // Focus the last filled input
       const lastFilledIndex = Math.min(index + digits.length - 1, 4);
-      const nextIndex = Math.min(lastFilledIndex + 1, 4);
-      if (nextIndex < 5 && !newCode[nextIndex]) {
-        codeInputRefs.current[nextIndex]?.focus();
-      }
+      setTimeout(() => {
+        codeInputRefs.current[lastFilledIndex]?.focus();
+      }, 0);
     } else {
+      // Single digit entered
       const newCode = [...code];
       newCode[index] = numbersOnly;
       setCode(newCode);
-      // Auto-focus next input if digit entered
+      // Auto-focus next input if digit entered and not the last one
       if (numbersOnly && index < 4) {
-        codeInputRefs.current[index + 1]?.focus();
+        setTimeout(() => {
+          codeInputRefs.current[index + 1]?.focus();
+        }, 0);
       }
     }
   };

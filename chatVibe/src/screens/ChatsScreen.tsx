@@ -3,7 +3,6 @@ import {
   View,
   FlatList,
   StyleSheet,
-  Animated,
   AppState,
   Platform,
   TextInput,
@@ -22,8 +21,8 @@ import { ChatItem } from '../components/ChatItem';
 import { LoadingView } from '../components/LoadingView';
 import { ErrorView } from '../components/ErrorView';
 import { EmptyView } from '../components/EmptyView';
-import { AnalysisModal } from '../components/AnalysisModal';
 import { AnalysisOptionsScreen } from './AnalysisOptionsScreen';
+import { AnalysisResultScreen } from './AnalysisResultScreen';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { ImageAssets } from '../utils/imageCache';
 
@@ -40,15 +39,15 @@ export function ChatsScreen() {
   const { data, isLoading, error, refetch } = useGetChatsQuery();
   const [analyzeChat, { isLoading: isAnalyzing }] = useAnalyzeChatMutation();
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [showAnalysisOptions, setShowAnalysisOptions] = useState(false);
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const [drawerStep, setDrawerStep] = useState<'type' | 'options' | 'result'>(
-    'type'
-  );
+  const [analysisView, setAnalysisView] = useState<
+    'none' | 'options' | 'result'
+  >('none');
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const [selectedType, setSelectedType] = useState<AnalysisType>(null);
   const [analysisResult, setAnalysisResult] = useState<string>('');
+  const [currentQuestionType, setCurrentQuestionType] = useState<string | null>(
+    null
+  );
+  const [currentTone, setCurrentTone] = useState<string>('neutral');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'personal' | 'group'>(
     'all'
@@ -115,37 +114,51 @@ export function ChatsScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    if (modalVisible) {
-      Animated.spring(slideAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 50,
-        friction: 7,
-      }).start();
-    } else {
-      slideAnim.setValue(0);
-    }
-  }, [modalVisible, slideAnim]);
-
-  const handleAnalyze = (chat: Chat) => {
+  const handleAnalyze = async (chat: Chat) => {
     setSelectedChat(chat);
-    setShowAnalysisOptions(true);
+
+    try {
+      // If there is a pending analysis for this chat, go straight to result
+      const pending = await AsyncStorage.getItem('pendingAnalysis');
+      if (pending) {
+        const info = JSON.parse(pending);
+        if (info.chatId === chat.id) {
+          setCurrentQuestionType(info.questionType || info.type || null);
+          setCurrentTone(info.tone || 'neutral');
+          setAnalysisView('result');
+          return;
+        }
+      }
+
+      // If there is a saved completed analysis for this chat, show it
+      const saved = await AsyncStorage.getItem(`analysisResult:${chat.id}`);
+      if (saved) {
+        const info = JSON.parse(saved);
+        setCurrentQuestionType(info.questionType || info.type || null);
+        setCurrentTone(info.tone || 'neutral');
+        setAnalysisResult(info.analysis || '');
+        setAnalysisView('result');
+        return;
+      }
+    } catch (e) {
+      // ignore and fall back to options screen
+    }
+
+    setAnalysisView('options');
   };
 
   const handleBackFromOptions = () => {
-    setShowAnalysisOptions(false);
+    setAnalysisView('none');
     setSelectedChat(null);
   };
 
   const handleStartAnalysis = (questionType: string, tone: string) => {
     if (!selectedChat) return;
 
-    // Close options screen and open result modal
-    setShowAnalysisOptions(false);
-    setDrawerStep('result');
+    setCurrentQuestionType(questionType);
+    setCurrentTone(tone);
+    setAnalysisView('result');
     setAnalysisResult('');
-    setModalVisible(true);
 
     // Start the analysis
     runAnalysisWithParams(questionType, tone);
@@ -177,6 +190,20 @@ export function ChatsScreen() {
 
       await AsyncStorage.removeItem('pendingAnalysis');
 
+      // Save successful result per chat for reuse
+      const storedResult = {
+        chatId,
+        chatTitle,
+        questionType,
+        tone,
+        analysis: result.analysis,
+        timestamp: Date.now(),
+      };
+      await AsyncStorage.setItem(
+        `analysisResult:${chatId}`,
+        JSON.stringify(storedResult)
+      );
+
       const currentAppState = AppState.currentState;
       const isAppActive = currentAppState === 'active';
 
@@ -206,90 +233,11 @@ export function ChatsScreen() {
     }
   };
 
-  const closeDrawer = () => {
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => {
-      setModalVisible(false);
-      setSelectedChat(null);
-      setSelectedType(null);
-      setAnalysisResult('');
-      setDrawerStep('type');
-    });
-  };
-
-  const selectAnalysisType = (type: AnalysisType) => {
-    setSelectedType(type);
-    setDrawerStep('options');
-  };
-
-  const goBackToType = () => {
-    setDrawerStep('type');
-    setSelectedType(null);
-  };
-
-  const runAnalysis = async (analysisSubtype: string) => {
-    if (!selectedChat) return;
-
-    setDrawerStep('result');
+  const handleBackFromResult = () => {
+    setAnalysisView('none');
+    setSelectedChat(null);
     setAnalysisResult('');
-
-    // Store analysis info for background completion
-    const analysisInfo = {
-      chatId: selectedChat.id,
-      chatTitle: selectedChat.title,
-      type: analysisSubtype,
-      timestamp: Date.now(),
-    };
-    await AsyncStorage.setItem('pendingAnalysis', JSON.stringify(analysisInfo));
-
-    // Store chat info in ref to access even if component unmounts
-    const chatTitle = selectedChat.title;
-    const chatId = selectedChat.id;
-
-    try {
-      // Start the analysis - this will continue even if app goes to background
-      const result = await analyzeChat({
-        chatId: selectedChat.id,
-        type: analysisSubtype,
-      }).unwrap();
-
-      // Clear pending analysis
-      await AsyncStorage.removeItem('pendingAnalysis');
-
-      // Check if app is active - only send notification if app is NOT active
-      const currentAppState = AppState.currentState;
-      const isAppActive = currentAppState === 'active';
-
-      if (!isAppActive && Platform.OS !== 'web') {
-        // App is in background or closed - send notification (native only)
-        try {
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: 'Analysis Complete',
-              body: `Analysis for "${chatTitle}" is ready`,
-              data: { chatId, chatTitle },
-            },
-            trigger: null, // Send immediately
-          });
-        } catch (error) {
-          setAnalysisResult(result.analysis);
-        }
-      } else {
-        setAnalysisResult(result.analysis);
-      }
-    } catch (error: any) {
-      // Clear pending analysis on error
-      await AsyncStorage.removeItem('pendingAnalysis');
-
-      // Only update UI if app is active
-      const currentAppState = AppState.currentState;
-      if (currentAppState === 'active') {
-        setAnalysisResult('Failed to analyze chat. Please try again.');
-      }
-    }
+    setCurrentQuestionType(null);
   };
 
   if (isLoading) {
@@ -305,12 +253,28 @@ export function ChatsScreen() {
   }
 
   // Show analysis options screen if selected
-  if (showAnalysisOptions && selectedChat) {
+  if (analysisView === 'options' && selectedChat) {
     return (
       <AnalysisOptionsScreen
         chat={selectedChat}
         onBack={handleBackFromOptions}
         onStartAnalysis={handleStartAnalysis}
+      />
+    );
+  }
+
+  // Show analysis result screen
+  if (analysisView === 'result' && selectedChat) {
+    return (
+      <AnalysisResultScreen
+        chat={selectedChat}
+        questionType={currentQuestionType}
+        result={analysisResult}
+        isAnalyzing={isAnalyzing}
+        onBack={handleBackFromResult}
+        onReanalyze={() => {
+          setAnalysisView('options');
+        }}
       />
     );
   }
@@ -430,20 +394,6 @@ export function ChatsScreen() {
             </View>
           </View>
         </TouchableWithoutFeedback>
-
-        <AnalysisModal
-          visible={modalVisible}
-          selectedChat={selectedChat}
-          drawerStep={drawerStep}
-          selectedType={selectedType}
-          analysisResult={analysisResult}
-          isAnalyzing={isAnalyzing}
-          slideAnim={slideAnim}
-          onClose={closeDrawer}
-          onSelectType={selectAnalysisType}
-          onBackToType={goBackToType}
-          onRunAnalysis={runAnalysis}
-        />
       </SafeAreaView>
     </BackgroundWrapper>
   );
