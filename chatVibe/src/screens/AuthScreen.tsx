@@ -31,7 +31,10 @@ import { CountrySelectionScreen } from './CountrySelectionScreen';
 export function AuthScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const auth = useSelector(selectAuth);
-
+  // const auth = {
+  //   step: 'phone',
+  //   phone: '79123456789',
+  // };
   const [code, setCode] = useState(['', '', '', '', '']);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -215,8 +218,13 @@ export function AuthScreen() {
       style={styles.keyboardAvoid}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
-      <BackgroundWrapper showGlow showHeader>
-        <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <BackgroundWrapper
+        showGlow
+        showHeader
+        showBackButton={auth.step === 'code'}
+        onBackPress={auth.step === 'code' ? handleBack : undefined}
+      >
+        <SafeAreaView style={styles.safeArea} edges={[]}>
           <TouchableWithoutFeedback
             onPress={Keyboard.dismiss}
             accessible={false}
@@ -316,7 +324,9 @@ export function AuthScreen() {
                                 onFocus={() => setFocusedInputIndex(index)}
                                 onBlur={() => setFocusedInputIndex(null)}
                                 keyboardType='number-pad'
-                                maxLength={1}
+                                maxLength={index === 0 ? 5 : 1}
+                                textContentType={index === 0 ? 'oneTimeCode' : 'none'}
+                                autoComplete={index === 0 ? ('sms-otp' as any) : 'off'}
                                 selectTextOnFocus
                                 selectionColor='#34C759'
                                 textAlign='center'
@@ -496,7 +506,7 @@ const styles = StyleSheet.create({
       android: 'Onest_600SemiBold',
       web: 'Onest, sans-serif',
     }),
-    lineHeight: 17,
+    // lineHeight: 17,
     letterSpacing: 2,
     textAlign: 'left',
     textAlignVertical: 'bottom',
@@ -624,8 +634,6 @@ const styles = StyleSheet.create({
     borderRadius: 998,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingLeft: 24,
-    paddingRight: 24,
     position: 'relative',
   },
   codeCursor: {
@@ -637,6 +645,8 @@ const styles = StyleSheet.create({
   },
   codeInput: {
     flex: 1,
+    width: '100%',
+    height: '100%',
     fontSize: 17,
     fontWeight: '600',
     color: '#fff',
@@ -646,10 +656,11 @@ const styles = StyleSheet.create({
       android: 'Onest_600SemiBold',
       web: 'Onest, sans-serif',
     }),
-    lineHeight: 17,
-    letterSpacing: 12,
+    // lineHeight: 17,
+    // letterSpacing: 12,
     padding: 0,
     margin: 0,
+    includeFontPadding: false,
     ...(Platform.OS === 'web' && {
       outlineStyle: 'none' as any,
       WebkitAppearance: 'none' as any,

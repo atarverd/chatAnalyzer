@@ -12,11 +12,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { ImageAssets } from '../utils/imageCache';
+import { BackButton } from './BackButton';
 
 type BackgroundWrapperProps = {
   showIcon?: boolean;
   showGlow?: boolean;
   showHeader?: boolean;
+  showBackButton?: boolean;
+  onBackPress?: () => void;
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
 };
@@ -25,6 +28,8 @@ export function BackgroundWrapper({
   showIcon = false,
   showGlow = false,
   showHeader = false,
+  showBackButton = false,
+  onBackPress,
   style,
   children,
 }: BackgroundWrapperProps) {
@@ -111,6 +116,11 @@ export function BackgroundWrapper({
         />
       )}
       {showGlow && <View style={styles.greenGlow} />}
+      {showBackButton && onBackPress && (
+        <View style={[styles.backButtonContainer, { paddingTop: insets.top + 16 }]}>
+          <BackButton onPress={onBackPress} />
+        </View>
+      )}
       {children}
     </View>
   );
@@ -237,5 +247,11 @@ const styles = StyleSheet.create({
     marginRight: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  backButtonContainer: {
+    position: 'absolute',
+    left: 24,
+    top: 0,
+    zIndex: 10,
   },
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,12 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import LottieView from 'lottie-react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { LottieOrLoader } from '../components/LottieOrLoader';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { BackButton } from '../components/BackButton';
 import { Avatar } from '../components/Avatar';
+import { ImageAssets } from '../utils/imageCache';
 
 type Chat = {
   id: number;
@@ -44,6 +46,7 @@ export function AnalysisResultScreen({
   onBack,
   onReanalyze,
 }: AnalysisResultScreenProps) {
+  const [isDone, setIsDone] = useState(false);
   const isPersonal =
     chat.type.toLowerCase().includes('личн') ||
     chat.type.toLowerCase().includes('personal');
@@ -51,18 +54,38 @@ export function AnalysisResultScreen({
   const questionLabel =
     (questionType && QUESTION_LABELS[questionType]) || 'Характер общения';
 
+  useEffect(() => {
+    if (!isAnalyzing && result) {
+      const timer = setTimeout(() => {
+        setIsDone(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (isAnalyzing) {
+      setIsDone(false);
+    }
+  }, [isAnalyzing, result]);
+
   return (
     <BackgroundWrapper showGlow showHeader={false}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+       <SafeAreaView
+         style={styles.safeArea}
+         edges={Platform.OS === 'android' ? ['top', 'bottom'] : ['top']}
+       >
         <View style={styles.content}>
           <View style={styles.header}>
             <BackButton onPress={onBack} />
             <View style={styles.headerCenter}>
               <Text style={styles.headerName}>{chat.title}</Text>
               <View style={styles.headerTypeContainer}>
-                <Text style={styles.headerTypeIcon}>
-                  {isPersonal ? '👤' : '👥'}
-                </Text>
+                <ExpoImage
+                  source={
+                    isPersonal
+                      ? ImageAssets.privateChatIcon
+                      : ImageAssets.groupChatIcon
+                  }
+                  style={styles.headerTypeIcon}
+                  contentFit='contain'
+                />
                 <Text style={styles.headerType}>
                   {isPersonal ? 'Личный чат' : 'Групповой чат'}
                 </Text>
@@ -73,29 +96,18 @@ export function AnalysisResultScreen({
             </View>
           </View>
 
-          <View style={styles.reanalyzeContainer}>
-            <TouchableOpacity
-              onPress={onReanalyze}
-              activeOpacity={0.8}
-              style={styles.reanalyzeButton}
-            >
-              <Text style={styles.reanalyzeIcon}>↺</Text>
-            </TouchableOpacity>
-          </View>
-
           <ScrollView
             style={styles.bodyScroll}
             contentContainerStyle={styles.bodyContent}
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
           >
-            {isAnalyzing ? (
+            {!isDone ? (
               <View style={styles.loadingContainer}>
-                <LottieView
+               <LottieOrLoader
                   source={require('../../assets/Animation.json')}
-                  autoPlay
-                  loop
                   style={styles.loadingAnimation}
+                  done={!isAnalyzing}
                 />
                 <Text style={styles.loadingTitle}>Анализируем сообщения</Text>
                 <Text style={styles.loadingSubtitle}>
@@ -104,8 +116,21 @@ export function AnalysisResultScreen({
               </View>
             ) : (
               <View style={styles.resultContainer}>
-                <Text style={styles.sectionLabel}>Что нужно изучить</Text>
-                <Text style={styles.sectionValue}>{questionLabel}</Text>
+                <View style={styles.sectionHeaderRow}>
+                  <View style={styles.sectionHeaderLeft}>
+                    <Text style={styles.sectionLabel}>Что нужно изучить</Text>
+                    <Text style={styles.sectionValue}>{questionLabel}</Text>
+                  </View>
+                  {!isAnalyzing && (
+                    <TouchableOpacity
+                      onPress={onReanalyze}
+                      activeOpacity={0.8}
+                      style={styles.reanalyzeButton}
+                    >
+                      <Text style={styles.reanalyzeIcon}>↺</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
 
                 <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
                   Результат анализа
@@ -124,9 +149,14 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  reanalyzeContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 16,
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  sectionHeaderLeft: {
+    flex: 1,
   },
   reanalyzeButton: {
     width: 40,
@@ -135,6 +165,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#39E478',
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 16,
+    flexShrink: 0,
   },
   reanalyzeIcon: {
     fontSize: 24,
@@ -143,7 +175,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingBottom: 26,
     paddingTop: 0,
   },
   header: {
@@ -173,7 +204,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTypeIcon: {
-    fontSize: 12,
+    width: 23,
+    height: 23,
     marginRight: 4,
   },
   headerType: {
@@ -193,12 +225,14 @@ const styles = StyleSheet.create({
   },
   bodyContent: {
     paddingBottom: 32,
+    flexGrow: 1,
   },
   loadingContainer: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 40,
-    paddingBottom: 40,
+    // paddingTop: 40,
+    paddingBottom: 100,
   },
   loadingAnimation: {
     width: 120,

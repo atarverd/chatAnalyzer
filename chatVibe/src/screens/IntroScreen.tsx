@@ -36,7 +36,7 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
 
   return (
     <BackgroundWrapper showGlow showHeader>
-      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <SafeAreaView style={styles.safeArea} edges={Platform.OS === 'android' ? [ 'bottom'] : []}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}

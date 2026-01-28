@@ -199,6 +199,7 @@ function Root() {
         ]}
         pointerEvents={appIsReady ? 'auto' : 'none'}
       >
+         {/* <AuthScreen /> */}
         {appIsReady && introChecked ? (
           showIntro === true ? (
             <IntroScreen onStart={handleIntroComplete} />

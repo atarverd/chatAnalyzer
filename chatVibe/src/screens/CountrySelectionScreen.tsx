@@ -10,10 +10,7 @@ import {
   SectionList,
   Keyboard,
 } from 'react-native';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { BackButton } from '../components/BackButton';
 import { CloseButton } from '../components/CloseButton';
@@ -230,8 +227,16 @@ export function CountrySelectionScreen({
 
   return (
     <BackgroundWrapper showGlow showHeader={false}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={[styles.container]}>
+      <View
+        style={[
+          styles.safeArea,
+          {
+            paddingTop: insets.top,
+            paddingBottom: Platform.OS === 'android' ? insets.bottom : 0,
+          },
+        ]}
+      >
+        <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
             <BackButton onPress={onBack} />
@@ -349,7 +354,7 @@ export function CountrySelectionScreen({
             </TouchableOpacity>
           )}
         </View>
-      </SafeAreaView>
+      </View>
     </BackgroundWrapper>
   );
 }

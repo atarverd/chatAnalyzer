@@ -14,9 +14,10 @@ type Chat = {
 type ChatItemProps = {
   chat: Chat;
   onAnalyze: (chat: Chat) => void;
+  hasAnalysis?: boolean;
 };
 
-export function ChatItem({ chat, onAnalyze }: ChatItemProps) {
+export function ChatItem({ chat, onAnalyze, hasAnalysis = false }: ChatItemProps) {
   const isPersonal = chat.type.toLowerCase().includes('личн') || chat.type.toLowerCase().includes('personal');
   const chatTypeText = isPersonal ? 'Личный чат' : 'Групповой чат';
   const chatTypeIconSource = isPersonal ? ImageAssets.privateChatIcon : ImageAssets.groupChatIcon;
@@ -48,12 +49,32 @@ export function ChatItem({ chat, onAnalyze }: ChatItemProps) {
         onPress={() => onAnalyze(chat)}
         activeOpacity={0.7}
       >
-        <Text style={styles.analyzeButtonText}>Анализ</Text>
-        <ExpoImage
-          source={ImageAssets.arrowIcon}
-          style={styles.analyzeButtonArrow}
-          contentFit='contain'
-        />
+        {hasAnalysis ? (
+          <>
+            <View style={styles.checkmarkContainer}>
+              <View style={styles.checkmarkCircle} />
+              <ExpoImage
+                source={ImageAssets.doneIcon}
+                style={styles.checkmarkIcon}
+                contentFit='contain'
+              />
+            </View>
+            <ExpoImage
+              source={ImageAssets.arrowIcon}
+              style={styles.analyzeButtonArrow}
+              contentFit='contain'
+            />
+          </>
+        ) : (
+          <>
+            <Text style={styles.analyzeButtonText}>Анализ</Text>
+            <ExpoImage
+              source={ImageAssets.arrowIcon}
+              style={styles.analyzeButtonArrow}
+              contentFit='contain'
+            />
+          </>
+        )}
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -132,6 +153,27 @@ const styles = StyleSheet.create({
   analyzeButtonArrow: {
     width: 8,
     height: 16,
+  },
+  checkmarkContainer: {
+    position: 'relative',
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  checkmarkCircle: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#34C759',
+    opacity: 0.15,
+  },
+  checkmarkIcon: {
+    width: 11,
+    height: 11,
+    zIndex: 1,
   },
 });
 

@@ -52,6 +52,9 @@ export function ChatsScreen() {
   const [filterType, setFilterType] = useState<'all' | 'personal' | 'group'>(
     'all'
   );
+  const [chatsWithAnalysis, setChatsWithAnalysis] = useState<Set<number>>(
+    new Set()
+  );
   const appStateRef = useRef(AppState.currentState);
   const isAppActiveRef = useRef(true);
 
@@ -203,6 +206,8 @@ export function ChatsScreen() {
         `analysisResult:${chatId}`,
         JSON.stringify(storedResult)
       );
+      // Update the set of chats with analysis
+      setChatsWithAnalysis((prev) => new Set(prev).add(chatId));
 
       const currentAppState = AppState.currentState;
       const isAppActive = currentAppState === 'active';
@@ -238,7 +243,29 @@ export function ChatsScreen() {
     setSelectedChat(null);
     setAnalysisResult('');
     setCurrentQuestionType(null);
+    // Refresh analysis status when returning from result
+    checkAnalysisResults();
   };
+
+  // Check which chats have analysis results
+  const checkAnalysisResults = async () => {
+    if (!data) return;
+    const chatIdsWithAnalysis = new Set<number>();
+    for (const chat of data) {
+      const saved = await AsyncStorage.getItem(`analysisResult:${chat.id}`);
+      if (saved) {
+        chatIdsWithAnalysis.add(chat.id);
+      }
+    }
+    setChatsWithAnalysis(chatIdsWithAnalysis);
+  };
+
+  // Check for analysis results when chats data changes
+  useEffect(() => {
+    if (data) {
+      checkAnalysisResults();
+    }
+  }, [data]);
 
   if (isLoading) {
     return <LoadingView />;
@@ -293,7 +320,10 @@ export function ChatsScreen() {
 
   return (
     <BackgroundWrapper showGlow showHeader>
-      <SafeAreaView style={styles.safeArea} edges={[]}>
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={Platform.OS === 'android' ? ['bottom'] : []}
+      >
         <TouchableWithoutFeedback
           onPress={Keyboard.dismiss}
           accessible={false}
@@ -388,7 +418,11 @@ export function ChatsScreen() {
                 }
                 contentContainerStyle={styles.listContent}
                 renderItem={({ item }) => (
-                  <ChatItem chat={item} onAnalyze={handleAnalyze} />
+                  <ChatItem
+                    chat={item}
+                    onAnalyze={handleAnalyze}
+                    hasAnalysis={chatsWithAnalysis.has(item.id)}
+                  />
                 )}
               />
             </View>

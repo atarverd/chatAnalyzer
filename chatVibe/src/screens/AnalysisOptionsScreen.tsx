@@ -97,9 +97,15 @@ export function AnalysisOptionsScreen({
             <View style={styles.headerCenter}>
               <Text style={styles.headerName}>{chat.title}</Text>
               <View style={styles.headerTypeContainer}>
-                <Text style={styles.headerTypeIcon}>
-                  {isPersonal ? '👤' : '👥'}
-                </Text>
+                <ExpoImage
+                  source={
+                    isPersonal
+                      ? ImageAssets.privateChatIcon
+                      : ImageAssets.groupChatIcon
+                  }
+                  style={styles.headerTypeIcon}
+                  contentFit='contain'
+                />
                 <Text style={styles.headerType}>
                   {isPersonal ? 'Личный чат' : 'Групповой чат'}
                 </Text>
@@ -143,6 +149,7 @@ export function AnalysisOptionsScreen({
                           source={question.icon}
                           style={styles.questionIcon}
                           contentFit='contain'
+                          tintColor={isSelected ? '#34C759' : undefined}
                         />
                         <Text
                           style={[
@@ -253,7 +260,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTypeIcon: {
-    fontSize: 12,
+    width: 23,
+    height: 23,
     marginRight: 4,
   },
   headerType: {
@@ -307,11 +315,12 @@ const styles = StyleSheet.create({
     width: 21,
     height: 21,
     marginBottom: 8,
+    
   },
   questionText: {
     fontSize: 17,
     fontWeight: '400',
-    color: '#fff',
+    color: '#999999',
     textAlign: 'left',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
@@ -341,7 +350,7 @@ const styles = StyleSheet.create({
   },
   toneButtonText: {
     fontSize: 14,
-    color: '#fff',
+    color: '#999999',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
       android: 'Onest_400Regular',
