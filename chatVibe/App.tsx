@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, StyleSheet, Animated, Dimensions,BackHandler } from 'react-native';
+
 import { Image as ExpoImage } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -166,6 +167,14 @@ function Root() {
     }
   }, [auth.authorized, appIsReady, showIntro, introChecked]);
 
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => true 
+    );
+
+    return () => subscription.remove();
+  }, []);
   const showSplash = isLoading || !appIsReady || !fontsLoaded;
 
   return (

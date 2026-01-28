@@ -242,15 +242,15 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   loadingAnimation: {
-    width: 120,
-    height: 120,
+    width: 180,
+    height: 180,
   },
   loadingTitle: {
     fontSize: 22,
     fontWeight: '600',
     color: '#fff',
     textAlign: 'center',
-    marginTop: 24,
+    // marginTop: 24,
     marginBottom: 8,
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',

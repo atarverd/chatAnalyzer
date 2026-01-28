@@ -10,10 +10,16 @@
     "splash": {
       "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#141414"
+      "backgroundColor": "#141414",
+      "imageWidth": 81
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIStatusBarHidden": true,
+        "UIViewControllerBasedStatusBarAppearance": false,
+        "UIRequiresFullScreen": true
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +28,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.atarverd.cahtvibe"
+      "package": "com.atarverd.cahtvibe",
+      "navigationBarHidden": true
     },
     "web": {
       "favicon": "./assets/icon.png",
@@ -33,6 +40,10 @@
       "eas": {
         "projectId": "96134182-0a20-437b-85e1-59fc3307ff8a"
       }
+    },
+    "statusBar": {
+      "hidden": true,
+      "translucent": true
     },
     "owner": "atarverd",
     "plugins": [

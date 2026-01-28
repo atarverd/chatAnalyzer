@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetChatsQuery, useAnalyzeChatMutation, api } from '../services/api';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { triggerHaptic } from '../utils/haptics';
 import { ChatItem } from '../components/ChatItem';
 import { LoadingView } from '../components/LoadingView';
 import { ErrorView } from '../components/ErrorView';
@@ -210,6 +211,9 @@ export function ChatsScreen() {
       );
       // Update the set of chats with analysis
       setChatsWithAnalysis((prev) => new Set(prev).add(chatId));
+
+      // Trigger success haptic feedback
+      await triggerHaptic('success');
 
       const currentAppState = AppState.currentState;
       const isAppActive = currentAppState === 'active';

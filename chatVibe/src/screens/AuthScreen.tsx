@@ -28,6 +28,7 @@ import { ResendButton } from '../components/ResendButton';
 import { CountryCodePicker } from '../components/CountryCodePicker';
 import { CountrySelectionScreen } from './CountrySelectionScreen';
 import { useTranslation } from 'react-i18next';
+import { triggerHaptic } from '../utils/haptics';
 
 export function AuthScreen() {
   const dispatch = useDispatch<AppDispatch>();
@@ -177,10 +178,12 @@ export function AuthScreen() {
       } else {
         setStatus(res.error || 'Invalid code');
         setCodeError(true);
+        await triggerHaptic('error');
       }
     } catch {
       setStatus(t('errors.failedToVerifyCode'));
       setCodeError(true);
+      await triggerHaptic('error');
     }
   };
 
@@ -197,9 +200,11 @@ export function AuthScreen() {
         // setStatus('Successfully authenticated!');
       } else {
         setStatus(res.error || 'Invalid password');
+        await triggerHaptic('error');
       }
     } catch {
       setStatus('Failed to verify password. Please try again.');
+      await triggerHaptic('error');
     }
   };
 
