@@ -291,66 +291,74 @@ export function AuthScreen() {
                       {code.map((digit, index) => {
                         const isFocused = focusedInputIndex === index;
                         return (
-                          <LinearGradient
+                          <TouchableOpacity
                             key={index}
-                            colors={
-                              codeError
-                                ? [
-                                    'rgba(255, 255, 255, 0.14)',
-                                    'rgba(254, 63, 33, 0.22)',
-                                    'rgba(254, 63, 33, 0.44)',
-                                  ]
-                                : isFocused
-                                ? [
-                                    'rgba(255, 255, 255, 0.14)',
-                                    'rgba(52, 199, 89, 0.22)',
-                                    'rgba(52, 199, 89, 0.44)',
-                                  ]
-                                : [
-                                    'rgba(255, 255, 255, 0.14)',
-                                    'rgba(255, 255, 255, 0.02)',
-                                    'rgba(255, 255, 255, 0.14)',
-                                  ]
-                            }
-                            locations={[0.1451, 0.5005, 0.8594]}
-                            start={{ x: 0.2, y: 0 }}
-                            end={{ x: 0.8, y: 1 }}
-                            style={styles.codeInputBorder}
+                            activeOpacity={1}
+                            onPress={() => {
+                              codeInputRefs.current[index]?.focus();
+                            }}
+                            style={styles.codeInputTouchable}
                           >
                             <LinearGradient
-                              colors={['#272727', '#272727']}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 0 }}
-                              style={styles.codeInputWrapper}
+                              colors={
+                                codeError
+                                  ? [
+                                      'rgba(255, 255, 255, 0.14)',
+                                      'rgba(254, 63, 33, 0.22)',
+                                      'rgba(254, 63, 33, 0.44)',
+                                    ]
+                                  : isFocused
+                                  ? [
+                                      'rgba(255, 255, 255, 0.14)',
+                                      'rgba(52, 199, 89, 0.22)',
+                                      'rgba(52, 199, 89, 0.44)',
+                                    ]
+                                  : [
+                                      'rgba(255, 255, 255, 0.14)',
+                                      'rgba(255, 255, 255, 0.02)',
+                                      'rgba(255, 255, 255, 0.14)',
+                                    ]
+                              }
+                              locations={[0.1451, 0.5005, 0.8594]}
+                              start={{ x: 0.2, y: 0 }}
+                              end={{ x: 0.8, y: 1 }}
+                              style={styles.codeInputBorder}
                             >
-                              <TextInput
-                                ref={(ref) => {
-                                  codeInputRefs.current[index] = ref;
-                                }}
-                                style={styles.codeInput}
-                                value={digit}
-                                onChangeText={(value) =>
-                                  handleCodeChange(value, index)
-                                }
-                                onKeyPress={(e) => handleCodeKeyPress(e, index)}
-                                onFocus={() => setFocusedInputIndex(index)}
-                                onBlur={() => setFocusedInputIndex(null)}
-                                keyboardType='number-pad'
-                                maxLength={index === 0 ? 5 : 1}
-                                textContentType={index === 0 ? 'oneTimeCode' : 'none'}
-                                autoComplete={index === 0 ? ('sms-otp' as any) : 'off'}
-                                selectTextOnFocus
-                                selectionColor='#34C759'
-                                textAlign='center'
-                                {...(Platform.OS === 'web' && {
-                                  caretColor: '#34C759',
-                                })}
-                              />
-                              {isFocused && !digit && (
-                                <View style={styles.codeCursor} />
-                              )}
+                              <LinearGradient
+                                colors={['#272727', '#272727']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.codeInputWrapper}
+                              >
+                                <TextInput
+                                  ref={(ref) => {
+                                    codeInputRefs.current[index] = ref;
+                                  }}
+                                  style={styles.codeInput}
+                                  value={digit}
+                                  onChangeText={(value) =>
+                                    handleCodeChange(value, index)
+                                  }
+                                  onKeyPress={(e) => handleCodeKeyPress(e, index)}
+                                  onFocus={() => setFocusedInputIndex(index)}
+                                  onBlur={() => setFocusedInputIndex(null)}
+                                  keyboardType='number-pad'
+                                  maxLength={index === 0 ? 5 : 1}
+                                  textContentType={index === 0 ? 'oneTimeCode' : 'none'}
+                                  autoComplete={index === 0 ? ('sms-otp' as any) : 'off'}
+                                  selectTextOnFocus
+                                  selectionColor='#34C759'
+                                  textAlign='center'
+                                  {...(Platform.OS === 'web' && {
+                                    caretColor: '#34C759',
+                                  })}
+                                />
+                                {isFocused && !digit && (
+                                  <View style={styles.codeCursor} />
+                                )}
+                              </LinearGradient>
                             </LinearGradient>
-                          </LinearGradient>
+                          </TouchableOpacity>
                         );
                       })}
                     </View>
@@ -631,6 +639,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     marginBottom: 40,
+  },
+  codeInputTouchable: {
+    width: 54,
+    height: 48,
   },
   codeInputBorder: {
     width: 54,
