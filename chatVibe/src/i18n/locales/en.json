@@ -15,7 +15,9 @@
     "enterCodeTitle": "Enter the code",
     "codeSentTo": "Code sent to {{phone}}",
     "resend": "Resend",
-    "submitPassword": "Submit password"
+    "submitPassword": "Submit password",
+    "enterPasswordTitle": "Enter password",
+    "passwordSentTo": "Password sent to {{phone}}"
   },
   "chats": {
     "title": "Chats",
@@ -38,8 +40,12 @@
     "questionLabels": {
       "character": "Communication style",
       "communication": "How to communicate better",
-      "mistakes": "Where I make mistakes",
-      "dynamics": "Understand dynamics"
+      "mistakes": "Where I make  mistakes",
+      "dynamics": "Understand dynamics",
+      "personal_love": "Communication style",
+      "personal_sex": "How to communicate better",
+      "personal_relationship": "Where I make mistakes",
+      "personal_communication": "Understand dynamics"
     },
     "tones": {
       "neutral": "Neutral",

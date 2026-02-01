@@ -8,18 +8,18 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { COUNTRIES, getCountryByCode } from '../data/countries';
+import { COUNTRIES, getCountryByIso2 } from '../data/countries';
 
 type CountryCodePickerProps = {
-  selectedCode: string;
+  selectedIso2: string;
   onSelect: () => void; // Changed to just trigger navigation, no code parameter
 };
 
 export function CountryCodePicker({
-  selectedCode,
+  selectedIso2,
   onSelect,
 }: CountryCodePickerProps) {
-  const selectedCountry = getCountryByCode(selectedCode) || getCountryByCode('+7') || COUNTRIES[0];
+  const selectedCountry = getCountryByIso2(selectedIso2) || getCountryByIso2('RU') || COUNTRIES[0];
 
   return (
     <TouchableOpacity onPress={onSelect} activeOpacity={0.8}>

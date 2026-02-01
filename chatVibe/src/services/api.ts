@@ -17,7 +17,12 @@ type Chat = {
 };
 
 const baseQueryWithLogging = async (args: any, api: any, extraOptions: any) => {
-  const result = await fetchBaseQuery({ baseUrl: API_BASE_URL })(
+  const result = await fetchBaseQuery({ 
+    baseUrl: API_BASE_URL,
+    // Include credentials to send cookies with requests
+    // Backend must have AllowCredentials: true and specific origins (not *)
+    credentials: 'include',
+  })(
     args,
     api,
     extraOptions
@@ -64,7 +69,9 @@ export const api = createApi({
       queryFn: async () => {
         try {
           const url = 'https://chatvibe.dategram.io/chats';
-          const response = await fetch(url);
+          const response = await fetch(url, {
+            credentials: 'include', // Include cookies in requests
+          });
           const data = await response.json();
 
           if (!response.ok) {
@@ -100,6 +107,7 @@ export const api = createApi({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ type, ...(tone && { tone }) }),
+            credentials: 'include', // Include cookies in requests
             // No signal - request will continue even if app goes to background
           });
 

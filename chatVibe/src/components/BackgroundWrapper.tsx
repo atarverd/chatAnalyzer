@@ -44,7 +44,7 @@ export function BackgroundWrapper({
       ]}
     >
       {showHeader && (
-        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 }]}>
           <LinearGradient
             colors={['#083C15', '#171E18']}
             locations={[0.1647, 0.8353]}
@@ -115,7 +115,16 @@ export function BackgroundWrapper({
           contentFit='contain'
         />
       )}
-      {showGlow && <View style={styles.greenGlow} />}
+      {showGlow && (
+        <ExpoImage
+          source={ImageAssets.glow}
+          style={[
+            styles.greenGlow,
+            Platform.OS === 'android' && { bottom: insets.bottom },
+          ]}
+          contentFit='fill'
+        />
+      )}
       {showBackButton && onBackPress && (
         <View style={[styles.backButtonContainer, { paddingTop: insets.top + 16 }]}>
           <BackButton onPress={onBackPress} />
@@ -148,22 +157,12 @@ const styles = StyleSheet.create({
   },
   greenGlow: {
     position: 'absolute',
-    bottom: -335,
+    bottom: 0,
     alignSelf: 'center',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: '#016801',
-    opacity: 1,
-    ...(Platform.OS === 'web' && {
-      filter: 'blur(64px)',
-    }),
-    shadowColor: '#016801',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 80,
-    elevation: 0,
+    width: 400,
+    height: 100,
   },
+
   header: {
     width: '100%',
     paddingHorizontal: 16,

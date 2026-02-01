@@ -9,6 +9,7 @@ import {
   Platform,
   SectionList,
   Keyboard,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
@@ -18,18 +19,18 @@ import { ImageAssets } from '../utils/imageCache';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { COUNTRIES } from '../data/countries';
+import { COUNTRIES, getCountryByIso2 } from '../data/countries';
 
 
 type CountrySelectionScreenProps = {
-  selectedCode: string;
+  selectedIso2: string;
   currentPhone: string;
-  onSelect: (code: string) => void;
+  onSelect: (iso2: string) => void;
   onBack: () => void;
 };
 
 export function CountrySelectionScreen({
-  selectedCode,
+  selectedIso2,
   currentPhone,
   onSelect,
   onBack,
@@ -40,6 +41,7 @@ export function CountrySelectionScreen({
   const [showSearch, setShowSearch] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [searchBarTranslateY, setSearchBarTranslateY] = useState(0);
   const searchInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -48,6 +50,13 @@ export function CountrySelectionScreen({
       (e) => {
         setKeyboardVisible(true);
         setKeyboardHeight(e.endCoordinates.height);
+        
+        // On Android, calculate translateY to position search bar above keyboard
+        if (Platform.OS === 'android') {
+          const offset = -(e.endCoordinates.height - 270);
+          setSearchBarTranslateY(offset);
+        }
+        
         // Ensure search is shown when keyboard appears
         if (!showSearch) {
           setShowSearch(true);
@@ -59,6 +68,9 @@ export function CountrySelectionScreen({
       () => {
         setKeyboardVisible(false);
         setKeyboardHeight(0);
+        if (Platform.OS === 'android') {
+          setSearchBarTranslateY(0);
+        }
         // Don't hide search bar automatically - let user close it with X button
       }
     );
@@ -67,7 +79,7 @@ export function CountrySelectionScreen({
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
-  }, [showSearch]);
+  }, []);
 
   // Group countries by first letter
   const groupedCountries = useMemo(() => {
@@ -100,11 +112,10 @@ export function CountrySelectionScreen({
       }));
   }, [searchQuery, i18n.language]);
 
-  const selectedCountry =
-    COUNTRIES.find((c) => c.code === selectedCode) || COUNTRIES[0];
+  const selectedCountry = getCountryByIso2(selectedIso2) || COUNTRIES[0];
 
-  const handleSelect = (code: string) => {
-    onSelect(code);
+  const handleSelect = (iso2: string) => {
+    onSelect(iso2);
     onBack();
   };
 
@@ -129,7 +140,7 @@ export function CountrySelectionScreen({
         style={[
           styles.safeArea,
           {
-            paddingTop: insets.top,
+            paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24,
             paddingBottom: Platform.OS === 'android' ? insets.bottom : 0,
           },
         ]}
@@ -147,7 +158,9 @@ export function CountrySelectionScreen({
             <View
               style={[
                 styles.floatingSearchContainer,
-                keyboardVisible
+                Platform.OS === 'android'
+                  ? { bottom: 30, transform: [{ translateY: searchBarTranslateY }] }
+                  : keyboardVisible
                   ? { bottom: keyboardHeight + 10 }
                   : { bottom: 30 },
               ]}
@@ -174,6 +187,7 @@ export function CountrySelectionScreen({
                     ref={searchInputRef}
                     style={styles.searchInput}
                     placeholder={t('common.search')}
+                    keyboardAppearance='dark'
                     placeholderTextColor='#666'
                     value={searchQuery}
                     onChangeText={setSearchQuery}
@@ -206,7 +220,7 @@ export function CountrySelectionScreen({
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.countryItem}
-                onPress={() => handleSelect(item.code)}
+                onPress={() => handleSelect(item.iso2)}
               >
                 <Text style={styles.countryFlag}>{item.flag}</Text>
                 <View style={styles.countryInfo}>

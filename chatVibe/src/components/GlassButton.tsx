@@ -129,9 +129,14 @@ const styles = StyleSheet.create({
     }),
   },
   backButtonIcon: {
-    fontSize: 20,
+    fontSize: 17,
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '500',
+    fontFamily: Platform.select({
+      ios: 'SF-Pro, sans-serif',
+      android: 'SF-Pro,sans-serif',
+      web: 'SF-Pro, sans-serif',
+    }),
   },
   disabled: {
     filter: 'brightness(0.5)',

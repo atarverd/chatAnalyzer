@@ -24,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { preloadImages, ImageAssets } from './src/utils/imageCache';
 import { useSelector } from 'react-redux';
 import { selectAuth } from './src/store';
+import  NavigationBar  from 'expo-navigation-bar';
 import './src/i18n';
 
 // Prevent auto-hiding splash screen until we're ready
@@ -47,14 +48,16 @@ function Root() {
   const splashOpacity = useRef(new Animated.Value(1)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
 
+  // NavigationBar.setBackgroundColorAsync("white");
+
   const [fontsLoaded] = useFonts({
     'Outfit-Regular': Outfit_400Regular,
     'Outfit-Medium': Outfit_500Medium,
     'Outfit-SemiBold': Outfit_600SemiBold,
     'Onest-Regular': Onest_400Regular,
     'Onest-SemiBold': Onest_600SemiBold,
-  });
-
+    'SF-Pro': require('./assets/fonts/SF-Pro.ttf'),
+  }); 
   useEffect(() => {
     // Hide native splash screen immediately and show our custom one
     SplashScreen.hideAsync();

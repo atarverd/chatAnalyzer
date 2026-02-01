@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +18,7 @@ import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { GlassButton } from '../components/GlassButton';
 import { ImageAssets } from '../utils/imageCache';
+import { processAvatarUrl } from '../utils/avatarUrl';
 import { useTranslation } from 'react-i18next';
 
 type Chat = {
@@ -33,10 +35,12 @@ type AnalysisOptionsScreenProps = {
 };
 
 type QuestionType =
-  | 'character'
-  | 'communication'
-  | 'mistakes'
-  | 'dynamics'
+
+  | 'personal_love'
+  | 'personal_sex'
+  | 'personal_relationship'
+  | 'personal_communication'
+ 
   | null;
 
 type AnalysisTone = 'neutral' | 'direct' | 'supportive';
@@ -52,27 +56,29 @@ export function AnalysisOptionsScreen({
   const [selectedTone, setSelectedTone] = useState<AnalysisTone>('neutral');
 
   const isPersonal =
+    chat.type.toLowerCase() === 'private' ||
     chat.type.toLowerCase().includes('личн') ||
     chat.type.toLowerCase().includes('personal');
+  const avatarUrl = processAvatarUrl(chat.avatar_url);
 
   const questionTypes = [
     {
-      id: 'character' as QuestionType,
+      id: 'personal_love' as QuestionType,
       icon: ImageAssets.heartIcon,
       text: t('analysis.questionLabels.character'),
     },
     {
-      id: 'communication' as QuestionType,
+      id: 'personal_sex' as QuestionType,
       icon: ImageAssets.chatIcon,
       text: t('analysis.questionLabels.communication'),
     },
     {
-      id: 'mistakes' as QuestionType,
+      id: 'personal_relationship' as QuestionType,
       icon: ImageAssets.alertIcon,
       text: t('analysis.questionLabels.mistakes'),
     },
     {
-      id: 'dynamics' as QuestionType,
+      id: 'personal_communication' as QuestionType,
       icon: ImageAssets.chartIcon,
       text: t('analysis.questionLabels.dynamics'),
     },
@@ -92,32 +98,38 @@ export function AnalysisOptionsScreen({
 
   return (
     <BackgroundWrapper showGlow showHeader={false}>
-      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-        <View style={[styles.content, { paddingTop: insets.top + 25 }]}>
-          <View style={styles.header}>
-            <BackButton onPress={onBack} />
-            <View style={styles.headerCenter}>
-              <Text style={styles.headerName}>{chat.title}</Text>
-              <View style={styles.headerTypeContainer}>
-                <ExpoImage
-                  source={
-                    isPersonal
-                      ? ImageAssets.privateChatIcon
-                      : ImageAssets.groupChatIcon
-                  }
-                  style={styles.headerTypeIcon}
-                  contentFit='contain'
-                />
-                <Text style={styles.headerType}>
-                  {isPersonal ? t('chats.personalChat') : t('chats.groupChat')}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.headerAvatar}>
-              <Avatar name={chat.title} size={40} />
+      <SafeAreaView style={styles.safeArea} 
+       edges={Platform.OS === 'android' ? ['bottom'] : []}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 }]}>
+          <BackButton onPress={onBack} />
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerName}>{chat.title}</Text>
+            <View style={styles.headerTypeContainer}>
+              <ExpoImage
+                source={
+                  isPersonal
+                    ? ImageAssets.privateChatIcon
+                    : ImageAssets.groupChatIcon
+                }
+                style={styles.headerTypeIcon}
+                contentFit='contain'
+              />
+              <Text style={styles.headerType}>
+                {isPersonal ? t('chats.personalChat') : t('chats.groupChat')}
+              </Text>
             </View>
           </View>
+          <View style={styles.headerAvatar}>
+            <Avatar name={chat.title} size={40} avatarUrl={avatarUrl} />
+          </View>
+        </View>
 
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('analysis.whatToLearn')}</Text>
             <View style={styles.questionGrid}>
@@ -220,7 +232,7 @@ export function AnalysisOptionsScreen({
               disabled={!selectedQuestion}
             />
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </BackgroundWrapper>
   );
@@ -230,16 +242,19 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingBottom: 26,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 40,
-    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
   },
   headerCenter: {
     flex: 1,
@@ -262,8 +277,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTypeIcon: {
-    width: 23,
-    height: 23,
+    width: 15,
+    height: 15,
     marginRight: 4,
   },
   headerType: {

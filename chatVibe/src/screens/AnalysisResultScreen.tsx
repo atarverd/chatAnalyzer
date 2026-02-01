@@ -7,7 +7,10 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
 import { LottieOrLoader } from '../components/LottieOrLoader';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
@@ -15,6 +18,7 @@ import { BackButton } from '../components/BackButton';
 import { Avatar } from '../components/Avatar';
 import { ImageAssets } from '../utils/imageCache';
 import { useTranslation } from 'react-i18next';
+import { processAvatarUrl } from '../utils/avatarUrl';
 
 type Chat = {
   id: number;
@@ -50,8 +54,10 @@ export function AnalysisResultScreen({
   const { t } = useTranslation();
   const [isDone, setIsDone] = useState(false);
   const isPersonal =
+    chat.type.toLowerCase() === 'private' ||
     chat.type.toLowerCase().includes('личн') ||
     chat.type.toLowerCase().includes('personal');
+  const avatarUrl = processAvatarUrl(chat.avatar_url);
 
   const questionLabel =
     (questionType && t(`analysis.questionLabels.${questionType}`)) ||
@@ -68,43 +74,68 @@ export function AnalysisResultScreen({
     }
   }, [isAnalyzing, result]);
 
+  const insets = useSafeAreaInsets();
+
   return (
     <BackgroundWrapper showGlow showHeader={false}>
        <SafeAreaView
          style={styles.safeArea}
          edges={Platform.OS === 'android' ? ['top', 'bottom'] : ['top']}
        >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <BackButton onPress={onBack} />
-            <View style={styles.headerCenter}>
-              <Text style={styles.headerName}>{chat.title}</Text>
-              <View style={styles.headerTypeContainer}>
-                <ExpoImage
-                  source={
-                    isPersonal
-                      ? ImageAssets.privateChatIcon
-                      : ImageAssets.groupChatIcon
-                  }
-                  style={styles.headerTypeIcon}
-                  contentFit='contain'
-                />
-                <Text style={styles.headerType}>
-                  {isPersonal ? t('chats.personalChat') : t('chats.groupChat')}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.headerAvatar}>
-              <Avatar name={chat.title} size={40} />
+        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 }]}>
+          <BackButton onPress={onBack} />
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerName}>{chat.title}</Text>
+            <View style={styles.headerTypeContainer}>
+              <ExpoImage
+                source={
+                  isPersonal
+                    ? ImageAssets.privateChatIcon
+                    : ImageAssets.groupChatIcon
+                }
+                style={styles.headerTypeIcon}
+                contentFit='contain'
+              />
+              <Text style={styles.headerType}>
+                {isPersonal ? t('chats.personalChat') : t('chats.groupChat')}
+              </Text>
             </View>
           </View>
+          <View style={styles.headerAvatar}>
+            <Avatar name={chat.title} size={40} avatarUrl={avatarUrl} />
+          </View>
+        </View>
 
-          <ScrollView
-            style={styles.bodyScroll}
-            contentContainerStyle={styles.bodyContent}
-            showsVerticalScrollIndicator={false}
-            showsHorizontalScrollIndicator={false}
-          >
+        {isDone && (
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionHeaderLeft}>
+              <Text style={styles.sectionLabel}>
+                {t('analysis.whatToStudy')}
+              </Text>
+              <Text style={styles.sectionValue}>{questionLabel}</Text>
+            </View>
+            {!isAnalyzing && (
+              <TouchableOpacity
+                onPress={onReanalyze}
+                activeOpacity={0.8}
+                style={styles.reanalyzeButton}
+              >
+                <ExpoImage
+                  source={ImageAssets.reAnalyzeIcon}
+                  style={styles.reanalyzeIcon}
+                  contentFit='contain'
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        <ScrollView
+          style={styles.bodyScroll}
+          contentContainerStyle={styles.bodyContent}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        >
             {!isDone ? (
               <View style={styles.loadingContainer}>
                <LottieOrLoader
@@ -121,32 +152,13 @@ export function AnalysisResultScreen({
               </View>
             ) : (
               <View style={styles.resultContainer}>
-                <View style={styles.sectionHeaderRow}>
-                  <View style={styles.sectionHeaderLeft}>
-                    <Text style={styles.sectionLabel}>
-                      {t('analysis.whatToStudy')}
-                    </Text>
-                    <Text style={styles.sectionValue}>{questionLabel}</Text>
-                  </View>
-                  {!isAnalyzing && (
-                    <TouchableOpacity
-                      onPress={onReanalyze}
-                      activeOpacity={0.8}
-                      style={styles.reanalyzeButton}
-                    >
-                      <Text style={styles.reanalyzeIcon}>↺</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-
                 <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
                   {t('analysis.analysisResult')}
                 </Text>
                 <Text style={styles.resultText}>{result}</Text>
               </View>
             )}
-          </ScrollView>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </BackgroundWrapper>
   );
@@ -158,37 +170,34 @@ const styles = StyleSheet.create({
   },
   sectionHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 0,
+    flexShrink: 0,
   },
   sectionHeaderLeft: {
     flex: 1,
   },
   reanalyzeButton: {
-    width: 40,
-    height: 40,
+    width: 24,
+    height: 24,
     borderRadius: 20,
-    backgroundColor: '#39E478',
+    // backgroundColor: '#39E478',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 16,
     flexShrink: 0,
   },
   reanalyzeIcon: {
-    fontSize: 24,
-    color: '#000000',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 0,
+    width: 24,
+    height: 24,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32,
-    paddingTop: 8,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
   headerCenter: {
     flex: 1,
@@ -211,8 +220,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTypeIcon: {
-    width: 23,
-    height: 23,
+    width: 15,
+    height: 15,
     marginRight: 4,
   },
   headerType: {
@@ -231,6 +240,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bodyContent: {
+    paddingHorizontal: 24,
     paddingBottom: 32,
     flexGrow: 1,
   },
@@ -280,12 +290,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
+    textAlign: 'left',
   },
   sectionValue: {
     fontSize: 18,
     fontWeight: '600',
     color: '#fff',
     marginBottom: 24,
+    textAlign: 'left',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
       android: 'Onest_600SemiBold',

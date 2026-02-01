@@ -1,6 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, Platform } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image as ExpoImage } from 'expo-image';
+import { ImageAssets } from '../utils/imageCache';
 
 type BackButtonProps = {
   onPress: () => void;
@@ -21,7 +23,12 @@ export function BackButton({ onPress }: BackButtonProps) {
         style={styles.backButtonBorder}
       >
         <View style={styles.backButton}>
-          <Text style={styles.backButtonIcon}>←</Text>
+          <ExpoImage
+            source={ImageAssets.backIcon}
+            style={styles.backButtonIcon}
+            contentFit='contain'
+            tintColor='#fff'
+          />
         </View>
       </LinearGradient>
     </TouchableOpacity>
@@ -47,17 +54,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#151515CC',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 9,
-    paddingBottom: 9,
     ...(Platform.OS === 'web' && {
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
     }),
   },
   backButtonIcon: {
-    fontSize: 20,
-    color: '#fff',
-    fontWeight: '600',
+    width: 20,
+    height: 20,
+    marginLeft: -2,
   },
 });
 

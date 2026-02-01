@@ -234,4 +234,8 @@ export function getCountryByCode(code: string): Country | undefined {
   return COUNTRIES.find((c) => c.code === code);
 }
 
+export function getCountryByIso2(iso2: string): Country | undefined {
+  return COUNTRIES.find((c) => c.iso2 === iso2);
+}
+
 

@@ -29,7 +29,11 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.atarverd.cahtvibe",
-      "navigationBarHidden": true
+      "navigationBarHidden": true,
+      "softwareKeyboardLayoutMode": "resize",
+      "navigationBarColor": "#141414"
+
+
     },
     "web": {
       "favicon": "./assets/icon.png",
@@ -48,7 +52,8 @@
     "owner": "atarverd",
     "plugins": [
       "expo-font",
-      "expo-localization"
+      "expo-localization",
+      "expo-navigation-bar"
     ]
   }
 }

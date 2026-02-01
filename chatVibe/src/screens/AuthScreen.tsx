@@ -10,6 +10,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -29,23 +30,31 @@ import { CountryCodePicker } from '../components/CountryCodePicker';
 import { CountrySelectionScreen } from './CountrySelectionScreen';
 import { useTranslation } from 'react-i18next';
 import { triggerHaptic } from '../utils/haptics';
+import { getCountryByIso2 } from '../data/countries';
+import { Image as ExpoImage } from 'expo-image';
+import { ImageAssets } from '../utils/imageCache';
 
 export function AuthScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const auth = useSelector(selectAuth);
   const { t } = useTranslation();
   // const auth = {
-  //   step: 'phone',
-  //   phone: '79123456789',
-  // };
+  //   step: 'password',
+  //   phone: '123',
+  // }
   const [code, setCode] = useState(['', '', '', '', '']);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [countryCode, setCountryCode] = useState('+7');
+  const [selectedCountryIso2, setSelectedCountryIso2] = useState<string>('RU'); 
   const [focusedInputIndex, setFocusedInputIndex] = useState<number | null>(0);
   const [showCountrySelection, setShowCountrySelection] = useState(false);
   const [codeError, setCodeError] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [paddingBottom, setPaddingBottom] = useState(36);
+  const paddingBottomAnim = useRef(new Animated.Value(36)).current;
+  const buttonBottomAnim = useRef(new Animated.Value(0)).current;
   const codeInputRefs = useRef<(TextInput | null)[]>([]);
   const isVerifyingRef = useRef(false);
   const [sendCode, { isLoading }] = useSendCodeMutation();
@@ -139,12 +148,81 @@ export function AuthScreen() {
     }
   }, [code]);
 
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        console.log('Keyboard is open', e.endCoordinates.height);
+        setKeyboardVisible(true);
+        setKeyboardHeight(e.endCoordinates.height);
+        
+        // On Android, we'll handle button positioning separately
+        const targetPadding = 26;
+        
+        Animated.timing(paddingBottomAnim, {
+          toValue: targetPadding,
+          duration: 250,
+          useNativeDriver: false,
+        }).start((finished) => {
+          if (finished) {
+            setPaddingBottom(targetPadding);
+          }
+        });
+
+        // On Android, animate button position above keyboard
+        if (Platform.OS === 'android' && e.endCoordinates.height > 0) {
+          Animated.timing(buttonBottomAnim, {
+            toValue: -(e.endCoordinates.height - 270),
+            duration: 250,
+            useNativeDriver: true,
+          }).start();
+        }
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      console.log('Keyboard is closed');
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+      Animated.timing(paddingBottomAnim, {
+        toValue: 36,
+        duration: 250,
+        useNativeDriver: false,
+      }).start((finished) => {
+        if (finished) {
+          setPaddingBottom(36);
+        }
+      });
+
+      // Reset button position on Android
+      if (Platform.OS === 'android') {
+        Animated.timing(buttonBottomAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }).start();
+      }
+    });
+
+    // Update state during animation
+    const listenerId = paddingBottomAnim.addListener(({ value }) => {
+      setPaddingBottom(value);
+    });
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+      paddingBottomAnim.removeListener(listenerId);
+    };
+  }, []);
+
   const handleSendCode = async () => {
     const phoneNumber = auth.phone.trim();
     if (!phoneNumber) {
       setStatus(t('errors.generic'));
       return;
     }
+    const selectedCountry = getCountryByIso2(selectedCountryIso2);
+    const countryCode = selectedCountry?.code || '+7';
     const phone = `${countryCode}${phoneNumber}`;
     // setStatus('Sending verification code...');
     try {
@@ -164,6 +242,8 @@ export function AuthScreen() {
     // setStatus('Verifying code...');
     try {
       const phoneNumber = auth.phone.trim();
+      const selectedCountry = getCountryByIso2(selectedCountryIso2);
+      const countryCode = selectedCountry?.code || '+7';
       const phone = `${countryCode}${phoneNumber}`;
       const res = await signIn({
         phone,
@@ -211,9 +291,9 @@ export function AuthScreen() {
   if (showCountrySelection) {
     return (
       <CountrySelectionScreen
-        selectedCode={countryCode}
+        selectedIso2={selectedCountryIso2}
         currentPhone={auth.phone}
-        onSelect={setCountryCode}
+        onSelect={setSelectedCountryIso2}
         onBack={() => setShowCountrySelection(false)}
       />
     );
@@ -221,15 +301,16 @@ export function AuthScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    keyboardVerticalOffset={0}
       style={styles.keyboardAvoid}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      enabled={true}
     >
       <BackgroundWrapper
         showGlow
         showHeader
-        showBackButton={auth.step === 'code'}
-        onBackPress={auth.step === 'code' ? handleBack : undefined}
+        showBackButton={auth.step === 'code' || auth.step === 'password'}
+        onBackPress={auth.step === 'code' || auth.step === 'password' ? handleBack : undefined}
       >
         <SafeAreaView style={styles.safeArea} edges={[]}>
           <TouchableWithoutFeedback
@@ -238,7 +319,12 @@ export function AuthScreen() {
             disabled={Platform.OS === 'web'}
           >
             <ScrollView
-              contentContainerStyle={styles.scrollContent}
+              contentContainerStyle={[
+                styles.scrollContent,
+                {
+                  paddingBottom: Platform.OS === 'web' ? 36 : paddingBottom,
+                },
+              ]}
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
               keyboardShouldPersistTaps='handled'
@@ -254,7 +340,7 @@ export function AuthScreen() {
                     </Text>
                     <View style={styles.phoneInputContainer}>
                       <CountryCodePicker
-                        selectedCode={countryCode}
+                        selectedIso2={selectedCountryIso2}
                         onSelect={() => setShowCountrySelection(true)}
                       />
                       <View style={styles.phoneInputWrapper}>
@@ -267,6 +353,7 @@ export function AuthScreen() {
                           autoFocus={Platform.OS === 'web'}
                           inputMode='numeric'
                           selectionColor='#34C759'
+                          keyboardAppearance='dark'
                         />
                         {!auth.phone && (
                           <Text style={styles.phoneInputPlaceholder}>
@@ -284,7 +371,7 @@ export function AuthScreen() {
                     </Text>
                     <Text style={styles.codeSubtitle}>
                       {t('auth.codeSentTo', {
-                        phone: `${countryCode} ${auth.phone}`,
+                        phone: `${getCountryByIso2(selectedCountryIso2)?.code || '+7'} ${auth.phone}`,
                       })}
                     </Text>
                     <View style={styles.codeInputsContainer}>
@@ -343,6 +430,7 @@ export function AuthScreen() {
                                   onFocus={() => setFocusedInputIndex(index)}
                                   onBlur={() => setFocusedInputIndex(null)}
                                   keyboardType='number-pad'
+                                  keyboardAppearance='dark'
                                   maxLength={index === 0 ? 5 : 1}
                                   textContentType={index === 0 ? 'oneTimeCode' : 'none'}
                                   autoComplete={index === 0 ? ('sms-otp' as any) : 'off'}
@@ -366,36 +454,71 @@ export function AuthScreen() {
                 )}
                 {auth.step === 'password' && (
                   <React.Fragment key='password-step'>
-                    <TouchableOpacity
-                      onPress={handleBack}
-                      style={styles.backButton}
-                    >
-                      <Text style={styles.backButtonText}>← Back</Text>
-                    </TouchableOpacity>
-                    <View style={styles.passwordRow}>
-                      <TextInput
-                        style={[styles.input, styles.passwordInput]}
-                        placeholder='Password'
-                        secureTextEntry={!showPassword}
-                        value={password}
-                        onChangeText={setPassword}
-                        autoFocus={Platform.OS === 'web'}
-                      />
-                      <TouchableOpacity
-                        onPress={() => setShowPassword((v) => !v)}
-                        style={styles.togglePasswordButton}
+                    <Text style={styles.codeTitle}>
+                      {t('auth.enterPasswordTitle')}
+                    </Text>
+                    <Text style={styles.codeSubtitle}>
+                      {t('auth.passwordSentTo', {
+                        phone: `${getCountryByIso2(selectedCountryIso2)?.code || '+7'} ${auth.phone}`,
+                      })}
+                    </Text>
+                    <View style={styles.passwordInputContainer}>
+                      <LinearGradient
+                        colors={[
+                          'rgba(255, 255, 255, 0.14)',
+                          'rgba(52, 199, 89, 0.22)',
+                          'rgba(52, 199, 89, 0.44)',
+                        ]}
+                        locations={[0.1451, 0.5005, 0.8594]}
+                        start={{ x: 0.50, y: 0 }}
+                        end={{ x: 0.515, y: 1 }}
+                        style={styles.passwordInputBorder}
                       >
-                        <Text style={styles.togglePasswordText}>
-                          {showPassword ? 'Hide' : 'Show'}
-                        </Text>
-                      </TouchableOpacity>
+                        <View style={styles.passwordInputWrapper}>
+                          <TextInput
+                            style={styles.passwordInput}
+                            placeholder=''
+                            secureTextEntry={!showPassword}
+                            keyboardAppearance='dark'
+                            value={password}
+                            onChangeText={setPassword}
+                            autoFocus={Platform.OS === 'web'}
+                            selectionColor='#34C759'
+                            placeholderTextColor='#C5C1B9'
+                            {...(Platform.OS === 'web' && {
+                              outlineStyle: 'none' as any,
+                              WebkitAppearance: 'none' as any,
+                              caretColor: '#34C759',
+                            })}
+                          />
+                          <TouchableOpacity
+                            onPress={() => setShowPassword((v) => !v)}
+                            style={styles.eyeIconButton}
+                            activeOpacity={0.7}
+                          >
+                            <ExpoImage
+                              source={showPassword ? ImageAssets.eye : ImageAssets.eyeClosed}
+                              style={styles.eyeIcon}
+                              contentFit='contain'
+                              tintColor='#fff'
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </LinearGradient>
                     </View>
                   </React.Fragment>
                 )}
                 {status ? <Text style={styles.status}>{status}</Text> : null}
               </View>
 
-              <View style={styles.buttonContainer}>
+              <Animated.View
+                style={[
+                  styles.buttonContainer,
+                  Platform.OS === 'android' && {
+                    transform: [{ translateY: buttonBottomAnim }],
+                  },
+                ]}
+              >
                 {auth.step === 'phone' && (
                   <GlassButton
                     title={isLoading ? t('auth.sending') : t('auth.getCode')}
@@ -422,7 +545,7 @@ export function AuthScreen() {
                     disabled={isVerifyingPassword}
                   />
                 )}
-              </View>
+              </Animated.View>
             </ScrollView>
           </TouchableWithoutFeedback>
         </SafeAreaView>
@@ -440,9 +563,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 34,
     paddingTop: 110,
-    paddingBottom: 26,
   },
   content: {
     flex: 1,
@@ -463,7 +585,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     color: '#fff',
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
@@ -475,7 +597,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '400',
     color: '#C5C1B9',
-    marginBottom: 24,
+    marginBottom: 32,
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
@@ -529,7 +651,8 @@ const styles = StyleSheet.create({
     // lineHeight: 17,
     letterSpacing: 2,
     textAlign: 'left',
-    textAlignVertical: 'bottom',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
     ...(Platform.OS === 'web' && {
       outlineStyle: 'none' as any,
       WebkitAppearance: 'none' as any,
@@ -577,23 +700,53 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     letterSpacing: 0,
   },
-  passwordRow: {
+  passwordInputContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  passwordInputBorder: {
+    width: '100%',
+    maxWidth: 334,
+    borderRadius: 999,
+    padding: 1,
+  },
+  passwordInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    width: '100%',
+    borderRadius: 998,
+    backgroundColor: '#272727',
+    paddingLeft: 16,
+    paddingRight: 12,
+    minHeight: 48,
   },
   passwordInput: {
     flex: 1,
-    marginBottom: 0,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#fff',
+    fontFamily: Platform.select({
+      ios: 'Onest-SemiBold',
+      android: 'Onest_600SemiBold',
+      web: 'Onest, sans-serif',
+    }),
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    textAlign: 'left',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
-  togglePasswordButton: {
+  eyeIconButton: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginLeft: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
   },
-  togglePasswordText: {
-    color: '#007AFF',
-    fontSize: 14,
+  eyeIcon: {
+    width: 19,
+    height: 14,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -624,7 +777,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 44,
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
       android: 'Onest_400Regular',
@@ -637,8 +790,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 40,
+    gap: 7,
+    marginBottom: 44,
   },
   codeInputTouchable: {
     width: 54,

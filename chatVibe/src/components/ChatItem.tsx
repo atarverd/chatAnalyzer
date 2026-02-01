@@ -4,6 +4,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { Avatar } from './Avatar';
 import { ImageAssets } from '../utils/imageCache';
 import { useTranslation } from 'react-i18next';
+import { processAvatarUrl } from '../utils/avatarUrl';
 
 type Chat = {
   id: number;
@@ -20,9 +21,13 @@ type ChatItemProps = {
 
 export function ChatItem({ chat, onAnalyze, hasAnalysis = false }: ChatItemProps) {
   const { t } = useTranslation();
-  const isPersonal = chat.type.toLowerCase().includes('личн') || chat.type.toLowerCase().includes('personal');
+  const isPersonal = 
+    chat.type.toLowerCase() === 'private' ||
+    chat.type.toLowerCase().includes('личн') || 
+    chat.type.toLowerCase().includes('personal');
   const chatTypeText = isPersonal ? t('chats.personalChat') : t('chats.groupChat');
   const chatTypeIconSource = isPersonal ? ImageAssets.privateChatIcon : ImageAssets.groupChatIcon;
+  const avatarUrl = processAvatarUrl(chat.avatar_url);
 
   return (
     <TouchableOpacity
@@ -31,7 +36,7 @@ export function ChatItem({ chat, onAnalyze, hasAnalysis = false }: ChatItemProps
       activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>
-        <Avatar name={chat.title} size={56} />
+        <Avatar name={chat.title} size={56} avatarUrl={avatarUrl} />
       </View>
       <View style={styles.chatInfo}>
         <Text numberOfLines={1} style={styles.chatTitle}>
@@ -114,8 +119,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chatTypeIcon: {
-    width: 23,
-    height: 23,
+    width: 15,
+    height: 15,
     marginRight: 4,
   },
   chatType: {

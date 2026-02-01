@@ -320,7 +320,8 @@ export function ChatsScreen() {
     const matchesFilter =
       filterType === 'all' ||
       (filterType === 'personal' &&
-        (chat.type.toLowerCase().includes('личн') ||
+        (chat.type.toLowerCase() === 'private' ||
+          chat.type.toLowerCase().includes('личн') ||
           chat.type.toLowerCase().includes('personal'))) ||
       (filterType === 'group' &&
         (chat.type.toLowerCase().includes('групп') ||
@@ -458,13 +459,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 354,
+    // width: 354,
     height: 44,
     borderRadius: 296,
     paddingLeft: 11,
     paddingRight: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     marginBottom: 12,
+    marginHorizontal: 24,
     position: 'relative',
   },
   searchInput: {
@@ -516,7 +518,7 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: 'row',
-    width: 354,
+    // width: 354,
     height: 36,
     borderRadius: 100,
     borderWidth: 1,
@@ -527,7 +529,8 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
     paddingRight: 4,
     gap: 2,
-    marginBottom: 30,
+    // marginBottom: 30,
+    marginHorizontal: 24,
   },
   filterSegment: {
     flex: 1,
@@ -568,8 +571,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingBottom: 0,
+    // marginTop: 24,
   },
   listContent: {
     paddingBottom: 0,
+    paddingTop: 24,
   },
 });

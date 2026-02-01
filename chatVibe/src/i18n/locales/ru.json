@@ -15,7 +15,9 @@
     "enterCodeTitle": "Введите код",
     "codeSentTo": "Код отправлен на {{phone}}",
     "resend": "Отправить снова",
-    "submitPassword": "Отправить пароль"
+    "submitPassword": "Отправить пароль",
+    "enterPasswordTitle": "Введите пароль",
+    "passwordSentTo": "Пароль отправлен на {{phone}}"
   },
   "chats": {
     "title": "Чаты",
@@ -39,7 +41,11 @@
       "character": "Характер общения",
       "communication": "Как лучше общаться",
       "mistakes": "Где я делаю ошибки",
-      "dynamics": "Понять динамику"
+      "dynamics": "Понять динамику",
+      "personal_love": "Характер общения",
+      "personal_sex": "Как лучше общаться",
+      "personal_relationship": "Где я делаю ошибки",
+      "personal_communication": "Понять динамику"
     },
     "tones": {
       "neutral": "Нейтральный",
