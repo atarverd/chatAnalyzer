@@ -39,8 +39,8 @@ export function AuthScreen() {
   const auth = useSelector(selectAuth);
   const { t } = useTranslation();
   // const auth = {
-  //   step: 'password',
-  //   phone: '123',
+  //   step: 'phone',
+  //   phone: '1233',
   // }
   const [code, setCode] = useState(['', '', '', '', '']);
   const [password, setPassword] = useState('');
@@ -57,6 +57,7 @@ export function AuthScreen() {
   const buttonBottomAnim = useRef(new Animated.Value(0)).current;
   const codeInputRefs = useRef<(TextInput | null)[]>([]);
   const isVerifyingRef = useRef(false);
+  const scrollViewRef = useRef<ScrollView>(null);
   const [sendCode, { isLoading }] = useSendCodeMutation();
   const [signIn, { isLoading: isVerifyingCode }] = useSignInMutation();
   const [submitPassword, { isLoading: isVerifyingPassword }] =
@@ -74,8 +75,9 @@ export function AuthScreen() {
       setCode(['', '', '', '', '']);
       setStatus(null);
     } else if (auth.step === 'password') {
-      dispatch(setStep('code'));
+      dispatch(setStep('phone'));
       setPassword('');
+      setCode(['', '', '', '', '']);
       setStatus(null);
     }
   };
@@ -87,6 +89,15 @@ export function AuthScreen() {
     }
     // Only allow numbers
     const numbersOnly = value.replace(/\D/g, '');
+
+    // If value is empty (backspace on selected text or empty input)
+    if (numbersOnly === '' && code[index]) {
+      // Clear current input
+      const newCode = [...code];
+      newCode[index] = '';
+      setCode(newCode);
+      return;
+    }
 
     // If multiple digits pasted (autofill/paste), distribute them
     if (numbersOnly.length > 1) {
@@ -118,8 +129,23 @@ export function AuthScreen() {
   };
 
   const handleCodeKeyPress = (e: any, index: number) => {
-    if (e.nativeEvent.key === 'Backspace' && !code[index] && index > 0) {
-      codeInputRefs.current[index - 1]?.focus();
+    if (e.nativeEvent.key === 'Backspace') {
+      if (code[index]) {
+        // If current input has a value, clear it immediately
+        // This will be handled by handleCodeChange when onChangeText is called
+        // But we also handle it here to ensure immediate response
+        const newCode = [...code];
+        newCode[index] = '';
+        setCode(newCode);
+      } else if (index > 0) {
+        // If current input is empty, move to previous and clear it
+        const newCode = [...code];
+        newCode[index - 1] = '';
+        setCode(newCode);
+        setTimeout(() => {
+          codeInputRefs.current[index - 1]?.focus();
+        }, 0);
+      }
     }
   };
 
@@ -312,13 +338,14 @@ export function AuthScreen() {
         showBackButton={auth.step === 'code' || auth.step === 'password'}
         onBackPress={auth.step === 'code' || auth.step === 'password' ? handleBack : undefined}
       >
-        <SafeAreaView style={styles.safeArea} edges={[]}>
+        <SafeAreaView style={styles.safeArea} edges={Platform.OS === 'android' ? ['bottom'] : []}>
           <TouchableWithoutFeedback
             onPress={Keyboard.dismiss}
             accessible={false}
             disabled={Platform.OS === 'web'}
           >
             <ScrollView
+              ref={scrollViewRef}
               contentContainerStyle={[
                 styles.scrollContent,
                 {
@@ -354,6 +381,14 @@ export function AuthScreen() {
                           inputMode='numeric'
                           selectionColor='#34C759'
                           keyboardAppearance='dark'
+                          onFocus={() => {
+                            // Scroll to bottom on Android when phone input is focused
+                            if (Platform.OS === 'android') {
+                              setTimeout(() => {
+                                scrollViewRef.current?.scrollToEnd({ animated: true });
+                              }, 100);
+                            }
+                          }}
                         />
                         {!auth.phone && (
                           <Text style={styles.phoneInputPlaceholder}>
@@ -427,7 +462,15 @@ export function AuthScreen() {
                                     handleCodeChange(value, index)
                                   }
                                   onKeyPress={(e) => handleCodeKeyPress(e, index)}
-                                  onFocus={() => setFocusedInputIndex(index)}
+                                  onFocus={() => {
+                                    setFocusedInputIndex(index);
+                                    // Scroll to bottom on Android when code input is focused
+                                    if (Platform.OS === 'android') {
+                                      setTimeout(() => {
+                                        scrollViewRef.current?.scrollToEnd({ animated: true });
+                                      }, 100);
+                                    }
+                                  }}
                                   onBlur={() => setFocusedInputIndex(null)}
                                   keyboardType='number-pad'
                                   keyboardAppearance='dark'
@@ -437,13 +480,10 @@ export function AuthScreen() {
                                   selectTextOnFocus
                                   selectionColor='#34C759'
                                   textAlign='center'
-                                  {...(Platform.OS === 'web' && {
-                                    caretColor: '#34C759',
+                                  {...(Platform.OS !== 'ios' && {
+                                    caretColor: '#34C759' as any,
                                   })}
                                 />
-                                {isFocused && !digit && (
-                                  <View style={styles.codeCursor} />
-                                )}
                               </LinearGradient>
                             </LinearGradient>
                           </TouchableOpacity>
@@ -485,6 +525,14 @@ export function AuthScreen() {
                             autoFocus={Platform.OS === 'web'}
                             selectionColor='#34C759'
                             placeholderTextColor='#C5C1B9'
+                            onFocus={() => {
+                              // Scroll to bottom on Android when password input is focused
+                              if (Platform.OS === 'android') {
+                                setTimeout(() => {
+                                  scrollViewRef.current?.scrollToEnd({ animated: true });
+                                }, 100);
+                              }
+                            }}
                             {...(Platform.OS === 'web' && {
                               outlineStyle: 'none' as any,
                               WebkitAppearance: 'none' as any,
@@ -564,6 +612,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 34,
+    paddingBottom: 26,
     paddingTop: 110,
   },
   content: {
@@ -828,6 +877,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     textAlign: 'center',
+    ...(Platform.OS === 'ios' && {
+      tintColor: '#34C759',
+    } as any),
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
       android: 'Onest_600SemiBold',

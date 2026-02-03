@@ -133,6 +133,38 @@ export const api = createApi({
         }
       },
     }),
+    logout: builder.mutation<{ success?: boolean }, void>({
+      queryFn: async () => {
+        try {
+          const url = 'https://chatvibe.dategram.io/api/auth/logout';
+          const response = await fetch(url, {
+            method: 'POST',
+            credentials: 'include',
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            return {
+              error: {
+                status: response.status,
+                data: data,
+              },
+            };
+          }
+
+          return { data };
+        } catch (error: any) {
+          return {
+            error: {
+              status: 'FETCH_ERROR',
+              error: error.message || 'Failed to logout',
+            },
+          };
+        }
+      },
+      invalidatesTags: ['Auth'],
+    }),
   }),
 });
 
@@ -143,4 +175,5 @@ export const {
   useSubmitPasswordMutation,
   useGetChatsQuery,
   useAnalyzeChatMutation,
+  useLogoutMutation,
 } = api;

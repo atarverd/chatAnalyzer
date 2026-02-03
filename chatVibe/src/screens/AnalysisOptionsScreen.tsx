@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif',
+      android: 'SF-Pro',
       web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
     lineHeight: 22,

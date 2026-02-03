@@ -126,7 +126,11 @@ export function BackgroundWrapper({
         />
       )}
       {showBackButton && onBackPress && (
-        <View style={[styles.backButtonContainer, { paddingTop: insets.top + 16 }]}>
+        <View style={[styles.backButtonContainer, { 
+          top: Platform.OS === 'web' 
+            ? 24 + (49 - 48) / 2  // Header paddingTop (24) + half the difference between header height (49) and button height (48)
+            : insets.top + 24 + (49 - 48) / 2  // Header paddingTop (insets.top + 24) + half the difference
+        }]}>
           <BackButton onPress={onBackPress} />
         </View>
       )}
@@ -250,7 +254,6 @@ const styles = StyleSheet.create({
   backButtonContainer: {
     position: 'absolute',
     left: 24,
-    top: 0,
     zIndex: 10,
   },
 });

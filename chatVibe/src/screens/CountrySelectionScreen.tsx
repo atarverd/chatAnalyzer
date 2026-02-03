@@ -41,37 +41,26 @@ export function CountrySelectionScreen({
   const [showSearch, setShowSearch] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [searchBarTranslateY, setSearchBarTranslateY] = useState(0);
   const searchInputRef = useRef<TextInput>(null);
+  const keyboardHeightRef = useRef(0);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
       (e) => {
+        const height = e.endCoordinates.height;
+        console.log('Keyboard opened, height:', height);
+        keyboardHeightRef.current = height;
         setKeyboardVisible(true);
-        setKeyboardHeight(e.endCoordinates.height);
-        
-        // On Android, calculate translateY to position search bar above keyboard
-        if (Platform.OS === 'android') {
-          const offset = -(e.endCoordinates.height - 270);
-          setSearchBarTranslateY(offset);
-        }
-        
-        // Ensure search is shown when keyboard appears
-        if (!showSearch) {
-          setShowSearch(true);
-        }
+        setKeyboardHeight(height);
       }
     );
     const keyboardDidHideListener = Keyboard.addListener(
       'keyboardDidHide',
       () => {
+        keyboardHeightRef.current = 0;
         setKeyboardVisible(false);
         setKeyboardHeight(0);
-        if (Platform.OS === 'android') {
-          setSearchBarTranslateY(0);
-        }
-        // Don't hide search bar automatically - let user close it with X button
       }
     );
 
@@ -158,11 +147,15 @@ export function CountrySelectionScreen({
             <View
               style={[
                 styles.floatingSearchContainer,
-                Platform.OS === 'android'
-                  ? { bottom: 30, transform: [{ translateY: searchBarTranslateY }] }
-                  : keyboardVisible
-                  ? { bottom: keyboardHeight + 10 }
-                  : { bottom: 30 },
+                (() => {
+                  if (Platform.OS === 'android') {
+                    return { bottom: 16 }
+                  } else {
+                    return keyboardVisible && keyboardHeight > 0
+                      ? { bottom: keyboardHeight + 10 }
+                      : { bottom: 30 };
+                  }
+                })(),
               ]}
             >
               <LinearGradient
@@ -193,7 +186,7 @@ export function CountrySelectionScreen({
                     onChangeText={setSearchQuery}
                     autoFocus={true}
                     onFocus={() => {
-                      // Keyboard will show automatically when focused
+                      // Position is handled by keyboard listeners via bottom style
                     }}
                   />
                 </View>
@@ -223,10 +216,10 @@ export function CountrySelectionScreen({
                 onPress={() => handleSelect(item.iso2)}
               >
                 <Text style={styles.countryFlag}>{item.flag}</Text>
-                <View style={styles.countryInfo}>
-                  <Text style={styles.countryName}>
-                    {i18n.language === 'ru' ? item.nameRu : item.nameEn}
-                  </Text>
+                <Text style={styles.countryName}>
+                  {i18n.language === 'ru' ? item.nameRu : item.nameEn}
+                </Text>
+                <View style={styles.countryCodeContainer}>
                   <Text style={styles.countryCode}>{item.code}</Text>
                 </View>
               </TouchableOpacity>
@@ -351,7 +344,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif-medium',
+      android: 'SF-Pro',
       web: 'SF Pro Text, sans-serif',
     }),
     fontWeight: '500',
@@ -370,14 +363,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   sectionHeaderText: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '500',
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif',
-      web: 'SF Pro Text, sans-serif',
+      android: 'SF-Pro',
+      web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
+    lineHeight: 17,
   },
   countryItem: {
     flexDirection: 'row',
@@ -386,32 +380,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   countryFlag: {
-    fontSize: 24,
+    fontSize: 20,
+    fontWeight: '300',
+    fontFamily: Platform.select({
+      ios: 'SF Compact',
+      android: 'SF-Pro',
+      web: 'SF Compact, -apple-system, BlinkMacSystemFont, sans-serif',
+    }),
+    lineHeight: 20,
     marginRight: 12,
-  },
-  countryInfo: {
-    flex: 1,
+    textAlign: 'center',
   },
   countryName: {
+    flex: 1,
     fontSize: 16,
     color: '#fff',
     fontFamily: Platform.select({
-      ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
-      web: 'Onest, sans-serif',
+      ios: 'SF Pro Text',
+      android: 'SF-Pro',
+      web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
     fontWeight: '400',
-    marginBottom: 4,
+    lineHeight: 16,
+    letterSpacing: -0.32,
+  },
+  countryCodeContainer: {
+    marginLeft: 'auto',
   },
   countryCode: {
-    fontSize: 14,
-    color: '#C5C1B9',
+    fontSize: 17,
+    fontWeight: '500',
+    color: '#999999',
     fontFamily: Platform.select({
-      ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
-      web: 'Onest, sans-serif',
+      ios: 'SF Pro Text',
+      android: 'SF-Pro',
+      web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
-    fontWeight: '400',
+    lineHeight: 17,
+    textAlign: 'right',
   },
   myPhoneSection: {
     paddingVertical: 16,
@@ -424,7 +430,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif',
+      android: 'SF-Pro',
       web: 'SF Pro Text, sans-serif',
     }),
   },
@@ -434,7 +440,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif',
+      android: 'SF-Pro',
       web: 'SF Pro Text, sans-serif',
     }),
   },
@@ -461,7 +467,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif',
+      android: 'SF-Pro',
       web: 'SF Pro Text, sans-serif',
     }),
   },
@@ -470,7 +476,7 @@ const styles = StyleSheet.create({
     color: '#C5C1B9',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif',
+      android: 'SF-Pro',
       web: 'SF Pro Text, sans-serif',
     }),
   },

@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif-medium',
+      android: 'SF-Pro',
       web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
     lineHeight: 20,

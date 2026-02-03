@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif-medium',
+      android: 'SF-Pro',
       web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
     lineHeight: 17,
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif-medium',
+      android: 'SF-Pro',
       web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
     lineHeight: 17,
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     fontFamily: Platform.select({
       ios: 'SF Pro Text',
-      android: 'sans-serif-medium',
+      android: 'SF-Pro',
       web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
     lineHeight: 18,

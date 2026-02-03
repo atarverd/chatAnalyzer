@@ -26,10 +26,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#141414"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.atarverd.cahtvibe",
       "navigationBarHidden": true,
+      "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "navigationBarColor": "#141414"
 
@@ -47,7 +47,7 @@
     },
     "statusBar": {
       "hidden": true,
-      "translucent": true
+      "translucent": false
     },
     "owner": "atarverd",
     "plugins": [

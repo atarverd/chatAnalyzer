@@ -4,6 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundWrapper } from './BackgroundWrapper';
 import { Button } from './Button';
 import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '../store';
+import { logout } from '../features/auth/authSlice';
+import { useLogoutMutation, api } from '../services/api';
 
 type ErrorViewProps = {
   error: any;
@@ -12,6 +16,9 @@ type ErrorViewProps = {
 
 export function ErrorView({ error, onRetry }: ErrorViewProps) {
   const { t } = useTranslation();
+  const dispatch = useDispatch<AppDispatch>();
+  const [logoutMutation] = useLogoutMutation();
+
   let errorMessage = t('errors.failedToLoadChats');
   if ('status' in error) {
     if (error.status === 'FETCH_ERROR') {
@@ -28,6 +35,19 @@ export function ErrorView({ error, onRetry }: ErrorViewProps) {
     errorMessage = error.message;
   }
 
+  const handleLogout = async () => {
+    try {
+      await logoutMutation().unwrap();
+    } catch (error) {
+      // Ignore errors, still logout locally
+    } finally {
+      // Clear auth state
+      dispatch(logout());
+      // Clear RTK Query cache
+      dispatch(api.util.resetApiState());
+    }
+  };
+
   return (
     <BackgroundWrapper>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -37,6 +57,9 @@ export function ErrorView({ error, onRetry }: ErrorViewProps) {
           </Text>
           <Text style={styles.errorDetails}>{errorMessage}</Text>
           <Button title={t('common.retry')} onPress={onRetry} />
+          <View style={styles.logoutButtonContainer}>
+            <Button title={t('common.logout')} onPress={handleLogout} />
+          </View>
         </View>
       </SafeAreaView>
     </BackgroundWrapper>
@@ -81,5 +104,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
     paddingHorizontal: 16,
+  },
+  logoutButtonContainer: {
+    marginTop: 12,
   },
 });

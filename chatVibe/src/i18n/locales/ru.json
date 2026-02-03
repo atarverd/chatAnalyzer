@@ -5,7 +5,8 @@
     "search": "Поиск",
     "retry": "Повторить",
     "close": "Закрыть",
-    "country": "Страна"
+    "country": "Страна",
+    "logout": "Выйти"
   },
   "auth": {
     "connectTelegram": "Подключите Telegram",
