@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,9 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Animated,
+  Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch } from '../store';
 import { selectAuth } from '../store';
@@ -34,96 +35,154 @@ import { getCountryByIso2 } from '../data/countries';
 import { Image as ExpoImage } from 'expo-image';
 import { ImageAssets } from '../utils/imageCache';
 
+const BOTTOM_BAR_PADDING = 26;
+const BOTTOM_BAR_HEIGHT_APPROX = 64;
+
 export function AuthScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const auth = useSelector(selectAuth);
   const { t } = useTranslation();
-  // const auth = {
-  //   step: 'phone',
-  //   phone: '1233',
-  // }
+  const insets = useSafeAreaInsets();
+
   const [code, setCode] = useState(['', '', '', '', '']);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [selectedCountryIso2, setSelectedCountryIso2] = useState<string>('RU'); 
+  const [selectedCountryIso2, setSelectedCountryIso2] = useState<string>('RU');
   const [focusedInputIndex, setFocusedInputIndex] = useState<number | null>(0);
   const [showCountrySelection, setShowCountrySelection] = useState(false);
   const [codeError, setCodeError] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [paddingBottom, setPaddingBottom] = useState(36);
-  const paddingBottomAnim = useRef(new Animated.Value(36)).current;
-  const buttonBottomAnim = useRef(new Animated.Value(0)).current;
+  const [isPhoneInputFocused, setIsPhoneInputFocused] = useState(false);
+  const [isCodeInputFocused, setIsCodeInputFocused] = useState(false);
+  const [isPasswordInputFocused, setIsPasswordInputFocused] = useState(false);
+
   const codeInputRefs = useRef<(TextInput | null)[]>([]);
   const isVerifyingRef = useRef(false);
   const scrollViewRef = useRef<ScrollView>(null);
+
   const [sendCode, { isLoading }] = useSendCodeMutation();
   const [signIn, { isLoading: isVerifyingCode }] = useSignInMutation();
   const [submitPassword, { isLoading: isVerifyingPassword }] =
     useSubmitPasswordMutation();
 
+  // ✅ Bottom bar animation value (Android only when needed)
+  const bottomTranslateY = useRef(new Animated.Value(0)).current;
+
+  // ✅ Track whether Android is actually resizing (to avoid double shift)
+  const baseWindowHeightRef = useRef(Dimensions.get('window').height);
+
+  const bottomBarExtraPadding = useMemo(() => {
+    return BOTTOM_BAR_PADDING + (Platform.OS === 'android' ? insets.bottom : 0);
+  }, [insets.bottom]);
+
+  const scrollPaddingBottom = useMemo(() => {
+    return bottomBarExtraPadding + BOTTOM_BAR_HEIGHT_APPROX + 24;
+  }, [bottomBarExtraPadding]);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = (e: any) => {
+      const h = e?.endCoordinates?.height ?? 0;
+
+      // iOS handled by KeyboardAvoidingView
+      if (Platform.OS !== 'android') return;
+
+      // Give Android a frame to apply adjustResize (if it will)
+      requestAnimationFrame(() => {
+        const newH = Dimensions.get('window').height;
+        const baseH = baseWindowHeightRef.current;
+        const resized = baseH - newH > 40; // threshold
+
+        // If resized => do NOT translate (otherwise it goes too high)
+        const target = resized ? 0 : -h;
+
+        Animated.timing(bottomTranslateY, {
+          toValue: target,
+          duration: 220,
+          useNativeDriver: true,
+        }).start();
+      });
+    };
+
+    const onHide = () => {
+      if (Platform.OS === 'android') {
+        Animated.timing(bottomTranslateY, {
+          toValue: 0,
+          duration: 220,
+          useNativeDriver: true,
+        }).start();
+
+        // reset baseline height after keyboard closes
+        requestAnimationFrame(() => {
+          baseWindowHeightRef.current = Dimensions.get('window').height;
+        });
+      }
+    };
+
+    const subShow = Keyboard.addListener(showEvent as any, onShow);
+    const subHide = Keyboard.addListener(hideEvent as any, onHide);
+
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, [bottomTranslateY]);
+
   const handleChangePhone = (value: string) => {
-    // Only allow numbers
-    const numbersOnly = value.replace(/\D/g, '');
+    const numbersOnly = value.replace(/\D/g, '').slice(0, 16);
     dispatch(setPhone(numbersOnly));
   };
 
   const handleBack = () => {
+    // Reset all focus states
+    setIsPhoneInputFocused(false);
+    setIsCodeInputFocused(false);
+    setIsPasswordInputFocused(false);
+    
     if (auth.step === 'code') {
       dispatch(setStep('phone'));
       setCode(['', '', '', '', '']);
       setStatus(null);
+      setCodeError(false);
     } else if (auth.step === 'password') {
       dispatch(setStep('phone'));
       setPassword('');
       setCode(['', '', '', '', '']);
       setStatus(null);
+      setCodeError(false);
     }
   };
 
   const handleCodeChange = (value: string, index: number) => {
-    // Clear error when user starts typing
-    if (codeError) {
-      setCodeError(false);
-    }
-    // Only allow numbers
+    if (codeError) setCodeError(false);
     const numbersOnly = value.replace(/\D/g, '');
 
-    // If value is empty (backspace on selected text or empty input)
     if (numbersOnly === '' && code[index]) {
-      // Clear current input
       const newCode = [...code];
       newCode[index] = '';
       setCode(newCode);
       return;
     }
 
-    // If multiple digits pasted (autofill/paste), distribute them
     if (numbersOnly.length > 1) {
       const newCode = [...code];
       const digits = numbersOnly.split('').slice(0, 5);
       digits.forEach((digit, i) => {
-        if (index + i < 5) {
-          newCode[index + i] = digit;
-        }
+        if (index + i < 5) newCode[index + i] = digit;
       });
       setCode(newCode);
-      // Focus the last filled input
+
       const lastFilledIndex = Math.min(index + digits.length - 1, 4);
-      setTimeout(() => {
-        codeInputRefs.current[lastFilledIndex]?.focus();
-      }, 0);
+      setTimeout(() => codeInputRefs.current[lastFilledIndex]?.focus(), 0);
     } else {
-      // Single digit entered
       const newCode = [...code];
       newCode[index] = numbersOnly;
       setCode(newCode);
-      // Auto-focus next input if digit entered and not the last one
+
       if (numbersOnly && index < 4) {
-        setTimeout(() => {
-          codeInputRefs.current[index + 1]?.focus();
-        }, 0);
+        setTimeout(() => codeInputRefs.current[index + 1]?.focus(), 0);
       }
     }
   };
@@ -131,35 +190,48 @@ export function AuthScreen() {
   const handleCodeKeyPress = (e: any, index: number) => {
     if (e.nativeEvent.key === 'Backspace') {
       if (code[index]) {
-        // If current input has a value, clear it immediately
-        // This will be handled by handleCodeChange when onChangeText is called
-        // But we also handle it here to ensure immediate response
         const newCode = [...code];
         newCode[index] = '';
         setCode(newCode);
       } else if (index > 0) {
-        // If current input is empty, move to previous and clear it
         const newCode = [...code];
         newCode[index - 1] = '';
         setCode(newCode);
-        setTimeout(() => {
-          codeInputRefs.current[index - 1]?.focus();
-        }, 0);
+        setTimeout(() => codeInputRefs.current[index - 1]?.focus(), 0);
       }
     }
   };
 
+  // Reset focus states on mount and unmount
+  useEffect(() => {
+    setIsPhoneInputFocused(false);
+    setIsCodeInputFocused(false);
+    setIsPasswordInputFocused(false);
+
+    return () => {
+      setIsPhoneInputFocused(false);
+      setIsCodeInputFocused(false);
+      setIsPasswordInputFocused(false);
+    };
+  }, []);
+
   useEffect(() => {
     if (auth.step === 'code') {
-      // Focus first input when code step is shown
-      setTimeout(() => {
-        codeInputRefs.current[0]?.focus();
-      }, 100);
+      setTimeout(() => codeInputRefs.current[0]?.focus(), 100);
+    }
+    // Reset focus states when step changes
+    if (auth.step !== 'phone') {
+      setIsPhoneInputFocused(false);
+    }
+    if (auth.step !== 'code') {
+      setIsCodeInputFocused(false);
+    }
+    if (auth.step !== 'password') {
+      setIsPasswordInputFocused(false);
     }
   }, [auth.step]);
 
   useEffect(() => {
-    // Auto-submit when all 5 digits are entered
     const fullCode = code.join('');
     if (
       fullCode.length === 5 &&
@@ -172,74 +244,8 @@ export function AuthScreen() {
         isVerifyingRef.current = false;
       });
     }
-  }, [code]);
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      (e) => {
-        console.log('Keyboard is open', e.endCoordinates.height);
-        setKeyboardVisible(true);
-        setKeyboardHeight(e.endCoordinates.height);
-        
-        // On Android, we'll handle button positioning separately
-        const targetPadding = 26;
-        
-        Animated.timing(paddingBottomAnim, {
-          toValue: targetPadding,
-          duration: 250,
-          useNativeDriver: false,
-        }).start((finished) => {
-          if (finished) {
-            setPaddingBottom(targetPadding);
-          }
-        });
-
-        // On Android, animate button position above keyboard
-        if (Platform.OS === 'android' && e.endCoordinates.height > 0) {
-          Animated.timing(buttonBottomAnim, {
-            toValue: -(e.endCoordinates.height - 270),
-            duration: 250,
-            useNativeDriver: true,
-          }).start();
-        }
-      }
-    );
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      console.log('Keyboard is closed');
-      setKeyboardVisible(false);
-      setKeyboardHeight(0);
-      Animated.timing(paddingBottomAnim, {
-        toValue: 36,
-        duration: 250,
-        useNativeDriver: false,
-      }).start((finished) => {
-        if (finished) {
-          setPaddingBottom(36);
-        }
-      });
-
-      // Reset button position on Android
-      if (Platform.OS === 'android') {
-        Animated.timing(buttonBottomAnim, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true,
-        }).start();
-      }
-    });
-
-    // Update state during animation
-    const listenerId = paddingBottomAnim.addListener(({ value }) => {
-      setPaddingBottom(value);
-    });
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-      paddingBottomAnim.removeListener(listenerId);
-    };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, auth.step, isVerifyingCode]);
 
   const handleSendCode = async () => {
     const phoneNumber = auth.phone.trim();
@@ -247,13 +253,19 @@ export function AuthScreen() {
       setStatus(t('errors.generic'));
       return;
     }
+    if (phoneNumber.length < 7 || phoneNumber.length > 16) {
+      setStatus(t('errors.invalidPhoneLength'));
+      return;
+    }
+
     const selectedCountry = getCountryByIso2(selectedCountryIso2);
     const countryCode = selectedCountry?.code || '+7';
     const phone = `${countryCode}${phoneNumber}`;
-    // setStatus('Sending verification code...');
+
     try {
-      const res = await sendCode({ phone }).unwrap();
-      //   setStatus(res.message || 'Code sent! Check your Telegram app');
+      await sendCode({ phone }).unwrap();
+      setStatus(null);
+      dispatch(setStep('code'));
     } catch {
       setStatus(t('errors.failedToSendCode'));
     }
@@ -265,24 +277,24 @@ export function AuthScreen() {
       setStatus(t('errors.invalidCode'));
       return;
     }
-    // setStatus('Verifying code...');
+
     try {
       const phoneNumber = auth.phone.trim();
       const selectedCountry = getCountryByIso2(selectedCountryIso2);
       const countryCode = selectedCountry?.code || '+7';
       const phone = `${countryCode}${phoneNumber}`;
-      const res = await signIn({
-        phone,
-        code: fullCode,
-      }).unwrap();
+
+      const res = await signIn({ phone, code: fullCode }).unwrap();
+
       if (res.needPassword) {
-        // setStatus('2FA enabled. Please enter your password');
+        setStatus(null);
         setCodeError(false);
+        dispatch(setStep('password'));
       } else if (res.success) {
-        // setStatus('Successfully authenticated!');
+        setStatus(null);
         setCodeError(false);
       } else {
-        setStatus(res.error || 'Invalid code');
+        setStatus(res.error || t('errors.invalidCode'));
         setCodeError(true);
         await triggerHaptic('error');
       }
@@ -295,24 +307,24 @@ export function AuthScreen() {
 
   const handleSubmitPassword = async () => {
     const trimmedPassword = password.trim();
-    if (!trimmedPassword) {
-      //   setStatus('Please enter your password');
-      return;
-    }
-    // setStatus('Verifying password...');
+    if (!trimmedPassword) return;
+
     try {
       const res = await submitPassword({ password: trimmedPassword }).unwrap();
       if (res.success) {
-        // setStatus('Successfully authenticated!');
+        setStatus(null);
       } else {
-        setStatus(res.error || 'Invalid password');
+        setStatus(res.error || t('errors.generic'));
         await triggerHaptic('error');
       }
     } catch {
-      setStatus('Failed to verify password. Please try again.');
+      setStatus(
+        t('errors.failedToVerifyPassword') || 'Failed to verify password. Please try again.'
+      );
       await triggerHaptic('error');
     }
   };
+  // const isFloatingKeyboard = useIsFloatingKeyboard();
 
   if (showCountrySelection) {
     return (
@@ -320,17 +332,22 @@ export function AuthScreen() {
         selectedIso2={selectedCountryIso2}
         currentPhone={auth.phone}
         onSelect={setSelectedCountryIso2}
-        onBack={() => setShowCountrySelection(false)}
+        onBack={() => {
+          setIsPhoneInputFocused(false);
+          setIsCodeInputFocused(false);
+          setIsPasswordInputFocused(false);
+          setShowCountrySelection(false);
+        }}
       />
     );
   }
 
   return (
     <KeyboardAvoidingView
-    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    keyboardVerticalOffset={0}
       style={styles.keyboardAvoid}
-      enabled={true}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={0}
+      // enabled={!isFloatingKeyboard}
     >
       <BackgroundWrapper
         showGlow
@@ -344,237 +361,251 @@ export function AuthScreen() {
             accessible={false}
             disabled={Platform.OS === 'web'}
           >
-            <ScrollView
-              ref={scrollViewRef}
-              contentContainerStyle={[
-                styles.scrollContent,
-                {
-                  paddingBottom: Platform.OS === 'web' ? 36 : paddingBottom,
-                },
-              ]}
-              showsVerticalScrollIndicator={false}
-              showsHorizontalScrollIndicator={false}
-              keyboardShouldPersistTaps='handled'
-            >
-              <View style={styles.content}>
-                {auth.step === 'phone' && (
-                  <React.Fragment key='phone-step'>
-                    <Text style={styles.mainTitle}>
-                      {t('auth.connectTelegram')}
-                    </Text>
-                    <Text style={styles.secondaryText}>
-                      {t('auth.connectTelegramSubtitle')}
-                    </Text>
-                    <View style={styles.phoneInputContainer}>
-                      <CountryCodePicker
-                        selectedIso2={selectedCountryIso2}
-                        onSelect={() => setShowCountrySelection(true)}
-                      />
-                      <View style={styles.phoneInputWrapper}>
-                        <TextInput
-                          style={styles.phoneInput}
-                          placeholder=''
-                          keyboardType='phone-pad'
-                          value={auth.phone}
-                          onChangeText={handleChangePhone}
-                          autoFocus={Platform.OS === 'web'}
-                          inputMode='numeric'
-                          selectionColor='#34C759'
-                          keyboardAppearance='dark'
-                          onFocus={() => {
-                            // Scroll to bottom on Android when phone input is focused
-                            if (Platform.OS === 'android') {
-                              setTimeout(() => {
-                                scrollViewRef.current?.scrollToEnd({ animated: true });
-                              }, 100);
-                            }
+            <View style={styles.screen}>
+              <ScrollView
+                ref={scrollViewRef}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollPaddingBottom }]}
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.content}>
+                  {auth.step === 'phone' && (
+                    <React.Fragment key="phone-step">
+                      <Text style={styles.mainTitle}>{t('auth.connectTelegram')}</Text>
+                      <Text style={styles.secondaryText}>{t('auth.connectTelegramSubtitle')}</Text>
+
+                      <View style={styles.phoneInputContainer}>
+                        <CountryCodePicker
+                          selectedIso2={selectedCountryIso2}
+                          onSelect={() => {
+                            setIsPhoneInputFocused(false);
+                            setIsCodeInputFocused(false);
+                            setIsPasswordInputFocused(false);
+                            setShowCountrySelection(true);
                           }}
                         />
-                        {!auth.phone && (
-                          <Text style={styles.phoneInputPlaceholder}>
-                            555 44 32
-                          </Text>
-                        )}
+                        <View style={styles.phoneInputWrapper}>
+                          <TextInput
+                            style={styles.phoneInput}
+                            placeholder=""
+                            keyboardType="phone-pad"
+                            value={auth.phone}
+                            onChangeText={handleChangePhone}
+                            autoFocus={Platform.OS === 'web'}
+                            inputMode="numeric"
+                            selectionColor="#34C759"
+                            keyboardAppearance="dark"
+                            onFocus={() => setIsPhoneInputFocused(true)}
+                            onBlur={() => setIsPhoneInputFocused(false)}
+                          />
+                          {!auth.phone && (
+                            <Text style={styles.phoneInputPlaceholder}>555 44 32</Text>
+                          )}
+                        </View>
                       </View>
-                    </View>
-                  </React.Fragment>
-                )}
-                {auth.step === 'code' && (
-                  <React.Fragment key='code-step'>
-                    <Text style={styles.codeTitle}>
-                      {t('auth.enterCodeTitle')}
-                    </Text>
-                    <Text style={styles.codeSubtitle}>
-                      {t('auth.codeSentTo', {
-                        phone: `${getCountryByIso2(selectedCountryIso2)?.code || '+7'} ${auth.phone}`,
-                      })}
-                    </Text>
-                    <View style={styles.codeInputsContainer}>
-                      {code.map((digit, index) => {
-                        const isFocused = focusedInputIndex === index;
-                        return (
-                          <TouchableOpacity
-                            key={index}
-                            activeOpacity={1}
-                            onPress={() => {
-                              codeInputRefs.current[index]?.focus();
-                            }}
-                            style={styles.codeInputTouchable}
-                          >
-                            <LinearGradient
-                              colors={
-                                codeError
-                                  ? [
-                                      'rgba(255, 255, 255, 0.14)',
-                                      'rgba(254, 63, 33, 0.22)',
-                                      'rgba(254, 63, 33, 0.44)',
-                                    ]
-                                  : isFocused
-                                  ? [
-                                      'rgba(255, 255, 255, 0.14)',
-                                      'rgba(52, 199, 89, 0.22)',
-                                      'rgba(52, 199, 89, 0.44)',
-                                    ]
-                                  : [
-                                      'rgba(255, 255, 255, 0.14)',
-                                      'rgba(255, 255, 255, 0.02)',
-                                      'rgba(255, 255, 255, 0.14)',
-                                    ]
-                              }
-                              locations={[0.1451, 0.5005, 0.8594]}
-                              start={{ x: 0.2, y: 0 }}
-                              end={{ x: 0.8, y: 1 }}
-                              style={styles.codeInputBorder}
+                      {Platform.OS === 'android' && isPhoneInputFocused && (
+                        <View style={styles.phoneButtonContainer}>
+                          <GlassButton
+                            title={isLoading ? t('auth.sending') : t('auth.getCode')}
+                            onPress={handleSendCode}
+                            disabled={isLoading || !auth.phone || auth.phone.length < 7}
+                          />
+                        </View>
+                      )}
+                    </React.Fragment>
+                  )}
+
+                  {auth.step === 'code' && (
+                    <React.Fragment key="code-step">
+                      <Text style={styles.codeTitle}>{t('auth.enterCodeTitle')}</Text>
+                      <Text style={styles.codeSubtitle}>
+                        {t('auth.codeSentTo', {
+                          phone: `${getCountryByIso2(selectedCountryIso2)?.code || '+7'} ${auth.phone}`,
+                        })}
+                      </Text>
+
+                      <View style={styles.codeInputsContainer}>
+                        {code.map((digit, index) => {
+                          const isFocused = focusedInputIndex === index;
+                          return (
+                            <TouchableOpacity
+                              key={index}
+                              activeOpacity={1}
+                              onPress={() => codeInputRefs.current[index]?.focus()}
+                              style={styles.codeInputTouchable}
                             >
                               <LinearGradient
-                                colors={['#272727', '#272727']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.codeInputWrapper}
+                                colors={
+                                  codeError
+                                    ? [
+                                        'rgba(255, 255, 255, 0.14)',
+                                        'rgba(254, 63, 33, 0.22)',
+                                        'rgba(254, 63, 33, 0.44)',
+                                      ]
+                                    : isFocused
+                                      ? [
+                                          'rgba(255, 255, 255, 0.14)',
+                                          'rgba(52, 199, 89, 0.22)',
+                                          'rgba(52, 199, 89, 0.44)',
+                                        ]
+                                      : [
+                                          'rgba(255, 255, 255, 0.14)',
+                                          'rgba(255, 255, 255, 0.02)',
+                                          'rgba(255, 255, 255, 0.14)',
+                                        ]
+                                }
+                                locations={[0.1451, 0.5005, 0.8594]}
+                                start={{ x: 0.2, y: 0 }}
+                                end={{ x: 0.8, y: 1 }}
+                                style={styles.codeInputBorder}
                               >
-                                <TextInput
-                                  ref={(ref) => {
-                                    codeInputRefs.current[index] = ref;
-                                  }}
-                                  style={styles.codeInput}
-                                  value={digit}
-                                  onChangeText={(value) =>
-                                    handleCodeChange(value, index)
-                                  }
-                                  onKeyPress={(e) => handleCodeKeyPress(e, index)}
-                                  onFocus={() => {
-                                    setFocusedInputIndex(index);
-                                    // Scroll to bottom on Android when code input is focused
-                                    if (Platform.OS === 'android') {
-                                      setTimeout(() => {
-                                        scrollViewRef.current?.scrollToEnd({ animated: true });
-                                      }, 100);
-                                    }
-                                  }}
-                                  onBlur={() => setFocusedInputIndex(null)}
-                                  keyboardType='number-pad'
-                                  keyboardAppearance='dark'
-                                  maxLength={index === 0 ? 5 : 1}
-                                  textContentType={index === 0 ? 'oneTimeCode' : 'none'}
-                                  autoComplete={index === 0 ? ('sms-otp' as any) : 'off'}
-                                  selectTextOnFocus
-                                  selectionColor='#34C759'
-                                  textAlign='center'
-                                  {...(Platform.OS !== 'ios' && {
-                                    caretColor: '#34C759' as any,
-                                  })}
-                                />
+                                <LinearGradient
+                                  colors={['#272727', '#272727']}
+                                  start={{ x: 0, y: 0 }}
+                                  end={{ x: 1, y: 0 }}
+                                  style={styles.codeInputWrapper}
+                                >
+                                  <TextInput
+                                    ref={(ref) => {
+                                      codeInputRefs.current[index] = ref;
+                                    }}
+                                    style={styles.codeInput}
+                                    value={digit}
+                                    onChangeText={(value) => handleCodeChange(value, index)}
+                                    onKeyPress={(e) => handleCodeKeyPress(e, index)}
+                                    onFocus={() => {
+                                      setFocusedInputIndex(index);
+                                      setIsCodeInputFocused(true);
+                                    }}
+                                    onBlur={() => {
+                                      setFocusedInputIndex(null);
+                                      setIsCodeInputFocused(false);
+                                    }}
+                                    keyboardType="number-pad"
+                                    keyboardAppearance="dark"
+                                    maxLength={index === 0 ? 5 : 1}
+                                    textContentType={index === 0 ? 'oneTimeCode' : 'none'}
+                                    autoComplete={index === 0 ? ('sms-otp' as any) : 'off'}
+                                    selectTextOnFocus
+                                    selectionColor="#34C759"
+                                    textAlign="center"
+                                    {...(Platform.OS !== 'ios' && {
+                                      caretColor: '#34C759' as any,
+                                    })}
+                                  />
+                                </LinearGradient>
                               </LinearGradient>
-                            </LinearGradient>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </React.Fragment>
-                )}
-                {auth.step === 'password' && (
-                  <React.Fragment key='password-step'>
-                    <Text style={styles.codeTitle}>
-                      {t('auth.enterPasswordTitle')}
-                    </Text>
-                    <Text style={styles.codeSubtitle}>
-                      {t('auth.passwordSentTo', {
-                        phone: `${getCountryByIso2(selectedCountryIso2)?.code || '+7'} ${auth.phone}`,
-                      })}
-                    </Text>
-                    <View style={styles.passwordInputContainer}>
-                      <LinearGradient
-                        colors={[
-                          'rgba(255, 255, 255, 0.14)',
-                          'rgba(52, 199, 89, 0.22)',
-                          'rgba(52, 199, 89, 0.44)',
-                        ]}
-                        locations={[0.1451, 0.5005, 0.8594]}
-                        start={{ x: 0.50, y: 0 }}
-                        end={{ x: 0.515, y: 1 }}
-                        style={styles.passwordInputBorder}
-                      >
-                        <View style={styles.passwordInputWrapper}>
-                          <TextInput
-                            style={styles.passwordInput}
-                            placeholder=''
-                            secureTextEntry={!showPassword}
-                            keyboardAppearance='dark'
-                            value={password}
-                            onChangeText={setPassword}
-                            autoFocus={Platform.OS === 'web'}
-                            selectionColor='#34C759'
-                            placeholderTextColor='#C5C1B9'
-                            onFocus={() => {
-                              // Scroll to bottom on Android when password input is focused
-                              if (Platform.OS === 'android') {
-                                setTimeout(() => {
-                                  scrollViewRef.current?.scrollToEnd({ animated: true });
-                                }, 100);
-                              }
-                            }}
-                            {...(Platform.OS === 'web' && {
-                              outlineStyle: 'none' as any,
-                              WebkitAppearance: 'none' as any,
-                              caretColor: '#34C759',
-                            })}
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                      {Platform.OS === 'android' && isCodeInputFocused && (
+                        <View style={styles.codeButtonContainer}>
+                          <ResendButton
+                            title={t('auth.resend')}
+                            onPress={handleSendCode}
+                            disabled={isLoading}
+                            width={141}
+                            height={32}
+                            fontSize={12}
                           />
-                          <TouchableOpacity
-                            onPress={() => setShowPassword((v) => !v)}
-                            style={styles.eyeIconButton}
-                            activeOpacity={0.7}
-                          >
-                            <ExpoImage
-                              source={showPassword ? ImageAssets.eye : ImageAssets.eyeClosed}
-                              style={styles.eyeIcon}
-                              contentFit='contain'
-                              tintColor='#fff'
-                            />
-                          </TouchableOpacity>
                         </View>
-                      </LinearGradient>
-                    </View>
-                  </React.Fragment>
-                )}
-                {status ? <Text style={styles.status}>{status}</Text> : null}
-              </View>
+                      )}
+                    </React.Fragment>
+                  )}
+
+                  {auth.step === 'password' && (
+                    <React.Fragment key="password-step">
+                      <Text style={styles.codeTitle}>{t('auth.enterPasswordTitle')}</Text>
+                      <Text style={styles.codeSubtitle}>
+                        {t('auth.passwordSentTo', {
+                          phone: `${getCountryByIso2(selectedCountryIso2)?.code || '+7'} ${auth.phone}`,
+                        })}
+                      </Text>
+
+                      <View style={styles.passwordInputContainer}>
+                        <LinearGradient
+                          colors={[
+                            'rgba(255, 255, 255, 0.14)',
+                            'rgba(52, 199, 89, 0.22)',
+                            'rgba(52, 199, 89, 0.44)',
+                          ]}
+                          locations={[0.1451, 0.5005, 0.8594]}
+                          start={{ x: 0.5, y: 0 }}
+                          end={{ x: 0.515, y: 1 }}
+                          style={styles.passwordInputBorder}
+                        >
+                          <View style={styles.passwordInputWrapper}>
+                            <TextInput
+                              style={styles.passwordInput}
+                              placeholder=""
+                              secureTextEntry={!showPassword}
+                              keyboardAppearance="dark"
+                              value={password}
+                              onChangeText={setPassword}
+                              autoFocus={Platform.OS === 'web'}
+                              selectionColor="#34C759"
+                              placeholderTextColor="#C5C1B9"
+                              onFocus={() => setIsPasswordInputFocused(true)}
+                              onBlur={() => setIsPasswordInputFocused(false)}
+                              {...(Platform.OS === 'web' && {
+                                outlineStyle: 'none' as any,
+                                WebkitAppearance: 'none' as any,
+                                caretColor: '#34C759',
+                              })}
+                            />
+                            <TouchableOpacity
+                              onPress={() => setShowPassword((v) => !v)}
+                              style={styles.eyeIconButton}
+                              activeOpacity={0.7}
+                            >
+                              <ExpoImage
+                                source={showPassword ? ImageAssets.eye : ImageAssets.eyeClosed}
+                                style={styles.eyeIcon}
+                                contentFit="contain"
+                                tintColor="#fff"
+                              />
+                            </TouchableOpacity>
+                          </View>
+                        </LinearGradient>
+                      </View>
+                      {Platform.OS === 'android' && isPasswordInputFocused && (
+                        <View style={styles.passwordButtonContainer}>
+                          <GlassButton
+                            title={isVerifyingPassword ? t('auth.sending') : t('auth.submitPassword')}
+                            onPress={handleSubmitPassword}
+                            disabled={isVerifyingPassword}
+                          />
+                        </View>
+                      )}
+                    </React.Fragment>
+                  )}
+
+                  {status ? <Text style={styles.status}>{status}</Text> : null}
+                </View>
+              </ScrollView>
 
               <Animated.View
                 style={[
-                  styles.buttonContainer,
-                  Platform.OS === 'android' && {
-                    transform: [{ translateY: buttonBottomAnim }],
+                  styles.bottomBar,
+                  {
+                    paddingBottom: bottomBarExtraPadding,
+                    transform:
+                      Platform.OS === 'android'  
+                        ? [{ translateY: bottomTranslateY }]
+                        : undefined,
                   },
                 ]}
               >
-                {auth.step === 'phone' && (
+                {auth.step === 'phone' && (Platform.OS !== 'android' || !isPhoneInputFocused) && (
                   <GlassButton
                     title={isLoading ? t('auth.sending') : t('auth.getCode')}
                     onPress={handleSendCode}
-                    disabled={isLoading}
+                    disabled={isLoading || !auth.phone || auth.phone.length < 7}
                   />
                 )}
-                {auth.step === 'code' && (
+                {auth.step === 'code' && (Platform.OS !== 'android' || !isCodeInputFocused) && (
                   <ResendButton
                     title={t('auth.resend')}
                     onPress={handleSendCode}
@@ -584,17 +615,15 @@ export function AuthScreen() {
                     fontSize={12}
                   />
                 )}
-                {auth.step === 'password' && (
+                {auth.step === 'password' && (Platform.OS !== 'android' || !isPasswordInputFocused) && (
                   <GlassButton
-                    title={
-                      isVerifyingPassword ? t('auth.sending') : t('auth.submitPassword')
-                    }
+                    title={isVerifyingPassword ? t('auth.sending') : t('auth.submitPassword')}
                     onPress={handleSubmitPassword}
                     disabled={isVerifyingPassword}
                   />
                 )}
               </Animated.View>
-            </ScrollView>
+            </View>
           </TouchableWithoutFeedback>
         </SafeAreaView>
       </BackgroundWrapper>
@@ -609,27 +638,19 @@ const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
   },
+  screen: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 34,
-    paddingBottom: 26,
     paddingTop: 110,
   },
   content: {
     flex: 1,
     alignItems: 'center',
   },
-  container: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    paddingTop: 110,
-    paddingHorizontal: 24,
-    ...(Platform.OS === 'web' && {
-      maxWidth: 500,
-      width: '100%',
-      alignSelf: 'center',
-    }),
-  },
+
   mainTitle: {
     fontSize: 24,
     fontWeight: '600',
@@ -638,7 +659,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
   },
@@ -650,23 +671,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 16,
-    fontSize: 16,
-    ...(Platform.OS === 'web' && {
-      outlineStyle: 'none' as any,
-      WebkitAppearance: 'none' as any,
-    }),
-  },
+
   phoneInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -676,6 +685,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     alignSelf: 'center',
     maxWidth: 300,
+  },
+  phoneButtonContainer: {
+    marginTop: 0,
+    alignItems: 'center',
+    width: '100%',
+  },
+  codeButtonContainer: {
+    marginTop: 0,
+    alignItems: 'center',
+    width: '100%',
+  },
+  passwordButtonContainer: {
+    marginTop: 0,
+    alignItems: 'center',
+    width: '100%',
   },
   phoneInputWrapper: {
     position: 'relative',
@@ -694,10 +718,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
-    // lineHeight: 17,
     letterSpacing: 2,
     textAlign: 'left',
     textAlignVertical: 'center',
@@ -719,7 +742,7 @@ const styles = StyleSheet.create({
     color: '#666',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
     lineHeight: 48,
@@ -727,28 +750,102 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     textAlignVertical: 'center',
     pointerEvents: 'none',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  buttonContainer: {
-    marginTop: 'auto',
-    alignItems: 'center',
-    width: '100%',
-  },
+
   status: {
-    marginTop: 12,
+    marginTop: 8,
+    marginBottom: 8,
     textAlign: 'center',
     color: '#FE3F21',
     fontSize: 16,
     fontWeight: '400',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
     lineHeight: 20,
-    letterSpacing: 0,
   },
+
+  codeTitle: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 12,
+    fontFamily: Platform.select({
+      ios: 'Onest-SemiBold',
+      android: 'Onest-SemiBold',
+      web: 'Onest, sans-serif',
+    }),
+    lineHeight: 22,
+  },
+  codeSubtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 44,
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest-Regular',
+      web: 'Onest, sans-serif',
+    }),
+    lineHeight: 20,
+  },
+
+  codeInputsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 7,
+    marginBottom: 44,
+  },
+  codeInputTouchable: {
+    width: 54,
+    height: 48,
+  },
+  codeInputBorder: {
+    width: 54,
+    height: 48,
+    borderRadius: 999,
+    padding: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  codeInputWrapper: {
+    flex: 1,
+    width: '100%',
+    borderRadius: 998,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  codeInput: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    ...(Platform.OS === 'ios' && {
+      tintColor: '#34C759',
+    } as any),
+    fontFamily: Platform.select({
+      ios: 'Onest-SemiBold',
+      android: 'Onest-SemiBold',
+      web: 'Onest, sans-serif',
+    }),
+    padding: 0,
+    margin: 0,
+    includeFontPadding: false,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none' as any,
+      WebkitAppearance: 'none' as any,
+    }),
+  },
+
   passwordInputContainer: {
     width: '100%',
     alignItems: 'center',
@@ -777,7 +874,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
     paddingVertical: 0,
@@ -797,125 +894,13 @@ const styles = StyleSheet.create({
     width: 19,
     height: 14,
   },
-  backButton: {
-    alignSelf: 'flex-start',
-    marginBottom: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
-  },
-  codeTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 12,
-    fontFamily: Platform.select({
-      ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
-      web: 'Onest, sans-serif',
-    }),
-    lineHeight: 22,
-    letterSpacing: 0,
-  },
-  codeSubtitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 44,
-    fontFamily: Platform.select({
-      ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
-      web: 'Onest, sans-serif',
-    }),
-    lineHeight: 20,
-    letterSpacing: 0,
-  },
-  codeInputsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 7,
-    marginBottom: 44,
-  },
-  codeInputTouchable: {
-    width: 54,
-    height: 48,
-  },
-  codeInputBorder: {
-    width: 54,
-    height: 48,
-    borderRadius: 999,
-    padding: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  codeInputWrapper: {
-    flex: 1,
-    width: '100%',
-    borderRadius: 998,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  codeCursor: {
+
+  bottomBar: {
     position: 'absolute',
-    width: 2,
-    height: 24,
-    backgroundColor: '#34C759',
-    borderRadius: 1,
-  },
-  codeInput: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-    ...(Platform.OS === 'ios' && {
-      tintColor: '#34C759',
-    } as any),
-    fontFamily: Platform.select({
-      ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
-      web: 'Onest, sans-serif',
-    }),
-    // lineHeight: 17,
-    // letterSpacing: 12,
-    padding: 0,
-    margin: 0,
-    includeFontPadding: false,
-    ...(Platform.OS === 'web' && {
-      outlineStyle: 'none' as any,
-      WebkitAppearance: 'none' as any,
-    }),
-  },
-  resendButtonContainer: {
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 34,
     alignItems: 'center',
-    marginTop: 'auto',
-    marginBottom: 26,
-  },
-  resendButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  resendButtonText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#fff',
-    fontFamily: Platform.select({
-      ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
-      web: 'Onest, sans-serif',
-    }),
   },
 });

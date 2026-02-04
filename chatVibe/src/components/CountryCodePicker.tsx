@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
     fontWeight: '400',

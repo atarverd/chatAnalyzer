@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     color: '#FE3F21',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
     fontWeight: '400',
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     color: '#FE3F21',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
     fontWeight: '400',

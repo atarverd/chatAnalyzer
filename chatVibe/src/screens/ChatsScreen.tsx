@@ -46,7 +46,7 @@ export function ChatsScreen() {
     'none' | 'options' | 'result'
   >('none');
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<string>('');
+  const [analysisResults, setAnalysisResults] = useState<Map<number, string>>(new Map());
   const [currentQuestionType, setCurrentQuestionType] = useState<string | null>(
     null
   );
@@ -58,6 +58,10 @@ export function ChatsScreen() {
   const [chatsWithAnalysis, setChatsWithAnalysis] = useState<Set<number>>(
     new Set()
   );
+  const [chatsWithPendingAnalysis, setChatsWithPendingAnalysis] = useState<Set<number>>(
+    new Set()
+  );
+  const [analyzingChatId, setAnalyzingChatId] = useState<number | null>(null);
   const appStateRef = useRef(AppState.currentState);
   const isAppActiveRef = useRef(true);
 
@@ -100,13 +104,8 @@ export function ChatsScreen() {
           // App has come to the foreground
           isAppActiveRef.current = true;
 
-          // Check if there's a pending analysis that might have completed
-          const pendingAnalysis = await AsyncStorage.getItem('pendingAnalysis');
-          if (pendingAnalysis) {
-            // Analysis was in progress when app was backgrounded
-            // The request might have completed - we'll handle it in the catch block
-            // or the user can check manually
-          }
+          // Check if there are any pending analyses that might have completed
+          // This is handled per-chat when navigating to the result screen
         } else if (nextAppState.match(/inactive|background/)) {
           // App has gone to the background
           isAppActiveRef.current = false;
@@ -124,16 +123,15 @@ export function ChatsScreen() {
     setSelectedChat(chat);
 
     try {
-      // If there is a pending analysis for this chat, go straight to result
-      const pending = await AsyncStorage.getItem('pendingAnalysis');
+      // If there is a pending analysis for this specific chat, go straight to result
+      const pending = await AsyncStorage.getItem(`pendingAnalysis:${chat.id}`);
       if (pending) {
         const info = JSON.parse(pending);
-        if (info.chatId === chat.id) {
-          setCurrentQuestionType(info.questionType || info.type || null);
-          setCurrentTone(info.tone || 'neutral');
-          setAnalysisView('result');
-          return;
-        }
+        setCurrentQuestionType(info.questionType || info.type || null);
+        setCurrentTone(info.tone || 'neutral');
+        setAnalysisView('result');
+        setAnalyzingChatId(chat.id);
+        return;
       }
 
       // If there is a saved completed analysis for this chat, show it
@@ -142,8 +140,9 @@ export function ChatsScreen() {
         const info = JSON.parse(saved);
         setCurrentQuestionType(info.questionType || info.type || null);
         setCurrentTone(info.tone || 'neutral');
-        setAnalysisResult(info.analysis || '');
+        setAnalysisResults((prev) => new Map(prev).set(chat.id, info.analysis || ''));
         setAnalysisView('result');
+        setAnalyzingChatId(null);
         return;
       }
     } catch (e) {
@@ -151,11 +150,37 @@ export function ChatsScreen() {
     }
 
     setAnalysisView('options');
+    setAnalyzingChatId(null);
   };
 
-  const handleBackFromOptions = () => {
+  const handleBackFromOptions = async () => {
+    if (!selectedChat) {
+      setAnalysisView('none');
+      setSelectedChat(null);
+      setAnalyzingChatId(null);
+      return;
+    }
+
+    // Check if there's a saved analysis for this chat
+    try {
+      const saved = await AsyncStorage.getItem(`analysisResult:${selectedChat.id}`);
+      if (saved) {
+        const info = JSON.parse(saved);
+        setCurrentQuestionType(info.questionType || info.type || null);
+        setCurrentTone(info.tone || 'neutral');
+        setAnalysisResults((prev) => new Map(prev).set(selectedChat.id, info.analysis || ''));
+        setAnalysisView('result');
+        setAnalyzingChatId(null);
+        return;
+      }
+    } catch (e) {
+      // ignore and fall back to chats screen
+    }
+
+    // No saved analysis, go back to chats screen
     setAnalysisView('none');
     setSelectedChat(null);
+    setAnalyzingChatId(null);
   };
 
   const handleStartAnalysis = (questionType: string, tone: string) => {
@@ -164,7 +189,12 @@ export function ChatsScreen() {
     setCurrentQuestionType(questionType);
     setCurrentTone(tone);
     setAnalysisView('result');
-    setAnalysisResult('');
+    setAnalysisResults((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(selectedChat.id, '');
+      return newMap;
+    });
+    setAnalyzingChatId(selectedChat.id);
 
     // Start the analysis
     runAnalysisWithParams(questionType, tone);
@@ -173,7 +203,10 @@ export function ChatsScreen() {
   const runAnalysisWithParams = async (questionType: string, tone: string) => {
     if (!selectedChat) return;
 
-    // Store analysis info for background completion
+    const chatTitle = selectedChat.title;
+    const chatId = selectedChat.id;
+
+    // Store analysis info for background completion (per-chat)
     const analysisInfo = {
       chatId: selectedChat.id,
       chatTitle: selectedChat.title,
@@ -181,10 +214,9 @@ export function ChatsScreen() {
       tone,
       timestamp: Date.now(),
     };
-    await AsyncStorage.setItem('pendingAnalysis', JSON.stringify(analysisInfo));
-
-    const chatTitle = selectedChat.title;
-    const chatId = selectedChat.id;
+      await AsyncStorage.setItem(`pendingAnalysis:${chatId}`, JSON.stringify(analysisInfo));
+      setAnalyzingChatId(chatId);
+      setChatsWithPendingAnalysis((prev) => new Set(prev).add(chatId));
 
     try {
       // Start the analysis
@@ -194,7 +226,13 @@ export function ChatsScreen() {
         tone,
       }).unwrap();
 
-      await AsyncStorage.removeItem('pendingAnalysis');
+      await AsyncStorage.removeItem(`pendingAnalysis:${chatId}`);
+      setAnalyzingChatId(null);
+      setChatsWithPendingAnalysis((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(chatId);
+        return newSet;
+      });
 
       // Save successful result per chat for reuse
       const storedResult = {
@@ -229,17 +267,26 @@ export function ChatsScreen() {
             trigger: null,
           });
         } catch (error) {
-          setAnalysisResult(result.analysis);
+          // Update result only for this specific chat
+          setAnalysisResults((prev) => new Map(prev).set(chatId, result.analysis));
         }
       } else {
-        setAnalysisResult(result.analysis);
+        // Update result only for this specific chat
+        setAnalysisResults((prev) => new Map(prev).set(chatId, result.analysis));
       }
     } catch (error: any) {
-      await AsyncStorage.removeItem('pendingAnalysis');
+      await AsyncStorage.removeItem(`pendingAnalysis:${chatId}`);
+      setAnalyzingChatId(null);
+      setChatsWithPendingAnalysis((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(chatId);
+        return newSet;
+      });
 
       const currentAppState = AppState.currentState;
       if (currentAppState === 'active') {
-        setAnalysisResult(t('errors.failedToAnalyze'));
+        // Update error only for this specific chat
+        setAnalysisResults((prev) => new Map(prev).set(chatId, t('errors.failedToAnalyze')));
       }
     }
   };
@@ -247,23 +294,30 @@ export function ChatsScreen() {
   const handleBackFromResult = () => {
     setAnalysisView('none');
     setSelectedChat(null);
-    setAnalysisResult('');
     setCurrentQuestionType(null);
+    setAnalyzingChatId(null);
     // Refresh analysis status when returning from result
     checkAnalysisResults();
   };
 
-  // Check which chats have analysis results
+  // Check which chats have analysis results and pending analyses
   const checkAnalysisResults = async () => {
     if (!data) return;
     const chatIdsWithAnalysis = new Set<number>();
+    const chatIdsWithPending = new Set<number>();
     for (const chat of data) {
       const saved = await AsyncStorage.getItem(`analysisResult:${chat.id}`);
       if (saved) {
         chatIdsWithAnalysis.add(chat.id);
       }
+      // Check for pending analysis
+      const pending = await AsyncStorage.getItem(`pendingAnalysis:${chat.id}`);
+      if (pending) {
+        chatIdsWithPending.add(chat.id);
+      }
     }
     setChatsWithAnalysis(chatIdsWithAnalysis);
+    setChatsWithPendingAnalysis(chatIdsWithPending);
   };
 
   // Check for analysis results when chats data changes
@@ -298,12 +352,16 @@ export function ChatsScreen() {
 
   // Show analysis result screen
   if (analysisView === 'result' && selectedChat) {
+    // Only show loading if this specific chat is being analyzed
+    const isThisChatAnalyzing = analyzingChatId === selectedChat.id && isAnalyzing;
+    // Get result only for this specific chat
+    const chatResult = analysisResults.get(selectedChat.id) || '';
     return (
       <AnalysisResultScreen
         chat={selectedChat}
         questionType={currentQuestionType}
-        result={analysisResult}
-        isAnalyzing={isAnalyzing}
+        result={chatResult}
+        isAnalyzing={isThisChatAnalyzing}
         onBack={handleBackFromResult}
         onReanalyze={() => {
           setAnalysisView('options');
@@ -435,6 +493,7 @@ export function ChatsScreen() {
                     chat={item}
                     onAnalyze={handleAnalyze}
                     hasAnalysis={chatsWithAnalysis.has(item.id)}
+                    isPending={chatsWithPendingAnalysis.has(item.id)}
                   />
                 )}
               />
@@ -460,6 +519,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     // width: 354,
+    width:Platform.OS === 'web' ?'-webkit-fill-available' : 'unset',
     height: 44,
     borderRadius: 296,
     paddingLeft: 11,
@@ -519,6 +579,7 @@ const styles = StyleSheet.create({
   filterContainer: {
     flexDirection: 'row',
     // width: 354,
+    width:Platform.OS === 'web' ?'-webkit-fill-available' : 'unset',
     height: 36,
     borderRadius: 100,
     borderWidth: 1,

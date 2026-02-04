@@ -109,9 +109,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 34,
     paddingTop: 90,
-    paddingBottom: 26,
+    paddingBottom: 36,
   },
   content: {
     flex: 1,
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
     lineHeight: 22,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
     lineHeight: 13,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
     lineHeight: 20,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
     lineHeight: 20,

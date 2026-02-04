@@ -80,7 +80,8 @@
     "failedToAnalyze": "Failed to analyze chat. Please try again.",
     "failedToSendCode": "Failed to send code. Please try again.",
     "failedToVerifyCode": "Failed to verify code. Please try again.",
-    "invalidCode": "Invalid code"
+    "invalidCode": "Invalid code",
+    "invalidPhoneLength": "Phone number must be between 7 and 16 digits"
   },
   "empty": {
     "noChatsFound": "No chats found"

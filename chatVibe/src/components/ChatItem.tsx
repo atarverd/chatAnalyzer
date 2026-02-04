@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { Avatar } from './Avatar';
 import { ImageAssets } from '../utils/imageCache';
@@ -17,9 +17,10 @@ type ChatItemProps = {
   chat: Chat;
   onAnalyze: (chat: Chat) => void;
   hasAnalysis?: boolean;
+  isPending?: boolean;
 };
 
-export function ChatItem({ chat, onAnalyze, hasAnalysis = false }: ChatItemProps) {
+export function ChatItem({ chat, onAnalyze, hasAnalysis = false, isPending = false }: ChatItemProps) {
   const { t } = useTranslation();
   const isPersonal = 
     chat.type.toLowerCase() === 'private' ||
@@ -56,7 +57,16 @@ export function ChatItem({ chat, onAnalyze, hasAnalysis = false }: ChatItemProps
         onPress={() => onAnalyze(chat)}
         activeOpacity={0.7}
       >
-        {hasAnalysis ? (
+        {isPending ? (
+          <>
+            <ActivityIndicator size="small" color="#34C759" style={styles.loadingIndicator} />
+            <ExpoImage
+              source={ImageAssets.arrowIcon}
+              style={styles.analyzeButtonArrow}
+              contentFit='contain'
+            />
+          </>
+        ) : hasAnalysis ? (
           <>
             <View style={styles.checkmarkContainer}>
               <View style={styles.checkmarkCircle} />
@@ -108,7 +118,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
     letterSpacing: 0,
@@ -181,6 +191,9 @@ const styles = StyleSheet.create({
     width: 11,
     height: 11,
     zIndex: 1,
+  },
+  loadingIndicator: {
+    marginRight: 16,
   },
 });
 

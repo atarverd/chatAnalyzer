@@ -80,7 +80,7 @@ export function AnalysisResultScreen({
     <BackgroundWrapper showGlow showHeader={false}>
        <SafeAreaView
          style={styles.safeArea}
-         edges={Platform.OS === 'android' ? ['top', 'bottom'] : ['top']}
+         edges={Platform.OS === 'android' ? ['bottom'] : []}
        >
         <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 }]}>
           <BackButton onPress={onBack} />
@@ -109,7 +109,7 @@ export function AnalysisResultScreen({
         {isDone && (
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionHeaderLeft}>
-              <Text style={styles.sectionLabel}>
+              <Text style={styles.sectionLabelTop}>
                 {t('analysis.whatToStudy')}
               </Text>
               <Text style={styles.sectionValue}>{questionLabel}</Text>
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
   },
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     color: '#C5C1B9',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
   },
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
   },
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
     lineHeight: 20,
@@ -283,14 +283,33 @@ const styles = StyleSheet.create({
   resultContainer: {
     flex: 1,
   },
+   sectionLabelTop: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8C8C8C',
+    letterSpacing: 1,
+    marginBottom: 8,
+    textAlign: 'left',
+    fontFamily: Platform.select({
+      ios: 'SF Pro Text',
+      android: 'SF-Pro',
+      web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+    }),
+  },
   sectionLabel: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#9A9A9A',
+    fontWeight: '600',
+    color: '#F7FDFA',
+    opacity: 0.4,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
     textAlign: 'left',
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest-Regular',
+      web: 'Onest, sans-serif',
+    }),
   },
   sectionValue: {
     fontSize: 18,
@@ -300,7 +319,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
   },
@@ -310,6 +329,6 @@ const styles = StyleSheet.create({
   resultText: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#fff',
+    color: '#C5C1B9',
   },
 });

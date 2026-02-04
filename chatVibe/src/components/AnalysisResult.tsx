@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
   },
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
     lineHeight: 20,
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
   },

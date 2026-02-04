@@ -4,12 +4,10 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  FlatList,
+  SectionList,
   TouchableOpacity,
   Platform,
-  SectionList,
   Keyboard,
-  KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
@@ -20,7 +18,6 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { COUNTRIES, getCountryByIso2 } from '../data/countries';
-
 
 type CountrySelectionScreenProps = {
   selectedIso2: string;
@@ -37,38 +34,38 @@ export function CountrySelectionScreen({
 }: CountrySelectionScreenProps) {
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+
   const searchInputRef = useRef<TextInput>(null);
-  const keyboardHeightRef = useRef(0);
+
+
 
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      (e) => {
-        const height = e.endCoordinates.height;
-        console.log('Keyboard opened, height:', height);
-        keyboardHeightRef.current = height;
-        setKeyboardVisible(true);
-        setKeyboardHeight(height);
-      }
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        keyboardHeightRef.current = 0;
-        setKeyboardVisible(false);
-        setKeyboardHeight(0);
-      }
-    );
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent as any, (e) => {
+      const height = e?.endCoordinates?.height ?? 0;
+      setKeyboardVisible(true);
+      setKeyboardHeight(height);
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent as any, () => {
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+    });
 
     return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
+      showSub.remove();
+      hideSub.remove();
     };
   }, []);
+
 
   // Group countries by first letter
   const groupedCountries = useMemo(() => {
@@ -87,9 +84,7 @@ export function CountrySelectionScreen({
     const grouped: { [key: string]: typeof COUNTRIES } = {};
     filtered.forEach((country) => {
       const firstLetter = getName(country).charAt(0).toUpperCase();
-      if (!grouped[firstLetter]) {
-        grouped[firstLetter] = [];
-      }
+      if (!grouped[firstLetter]) grouped[firstLetter] = [];
       grouped[firstLetter].push(country);
     });
 
@@ -108,23 +103,21 @@ export function CountrySelectionScreen({
     onBack();
   };
 
-  const dialPadNumbers = [
-    ['1', ''],
-    ['2', 'ABC'],
-    ['3', 'DEF'],
-    ['4', 'GHI'],
-    ['5', 'JKL'],
-    ['6', 'MNO'],
-    ['7', 'PQRS'],
-    ['8', 'TUV'],
-    ['9', 'WXYZ'],
-    ['*', ''],
-    ['0', '+'],
-    ['#', ''],
-  ];
+
+  const floatingBottomClosed = Platform.OS === 'android' ? 16 : 30;
+
+  const floatingBottomOpen =
+    keyboardHeight + // keyboard height
+    10 + // gap above keyboard
+    (Platform.OS === 'android' ? insets.bottom : 0);
+
+  const floatingBottomFinal = keyboardVisible && keyboardHeight > 0 ? floatingBottomOpen : floatingBottomClosed;
+
+  const searchButtonBottom =
+    (keyboardVisible ? keyboardHeight : 0) + 20 + insets.bottom;
 
   return (
-    <BackgroundWrapper showGlow showHeader={false}>
+    <BackgroundWrapper showGlow showHeader={false} >
       <View
         style={[
           styles.safeArea,
@@ -142,20 +135,51 @@ export function CountrySelectionScreen({
             <View style={styles.headerSpacer} />
           </View>
 
-          {/* Floating Search Bar - shown when search is active */}
-          {showSearch && (
+          {/* Static Search Bar for Android/Web */}
+          {Platform.OS !== 'ios' && (
+            <View style={styles.staticSearchContainer}>
+              <LinearGradient
+                colors={[
+                  'rgba(255, 255, 255, 0.12)',
+                  'rgba(255, 255, 255, 0.02)',
+                  'rgba(255, 255, 255, 0.12)',
+                ]}
+                locations={[0.1443, 0.4978, 0.8512]}
+                start={{ x: 0.2, y: 0 }}
+                end={{ x: 0.8, y: 1 }}
+                style={[
+                  styles.searchInputBorder,
+                  Platform.OS === 'android' && styles.searchInputBorderFullWidth,
+                ]}
+              >
+                <View style={styles.searchBar}>
+                  <ExpoImage
+                    source={ImageAssets.searchIcon}
+                    style={styles.searchIcon}
+                    contentFit="contain"
+                    tintColor="#fff"
+                  />
+                  <TextInput
+                    ref={searchInputRef}
+                    style={styles.searchInput}
+                    placeholder={t('common.search')}
+                    keyboardAppearance="dark"
+                    placeholderTextColor="#666"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    returnKeyType="search"
+                  />
+                </View>
+              </LinearGradient>
+            </View>
+          )}
+
+          {/* Floating Search Bar for iOS */}
+          {Platform.OS === 'ios' && showSearch && (
             <View
               style={[
                 styles.floatingSearchContainer,
-                (() => {
-                  if (Platform.OS === 'android') {
-                    return { bottom: 16 }
-                  } else {
-                    return keyboardVisible && keyboardHeight > 0
-                      ? { bottom: keyboardHeight + 10 }
-                      : { bottom: 30 };
-                  }
-                })(),
+                { bottom: floatingBottomFinal },
               ]}
             >
               <LinearGradient
@@ -173,24 +197,23 @@ export function CountrySelectionScreen({
                   <ExpoImage
                     source={ImageAssets.searchIcon}
                     style={styles.searchIcon}
-                    contentFit='contain'
-                    tintColor='#fff'
+                    contentFit="contain"
+                    tintColor="#fff"
                   />
                   <TextInput
                     ref={searchInputRef}
                     style={styles.searchInput}
                     placeholder={t('common.search')}
-                    keyboardAppearance='dark'
-                    placeholderTextColor='#666'
+                    keyboardAppearance="dark"
+                    placeholderTextColor="#666"
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    autoFocus={true}
-                    onFocus={() => {
-                      // Position is handled by keyboard listeners via bottom style
-                    }}
+                    autoFocus
+                    returnKeyType="search"
                   />
                 </View>
               </LinearGradient>
+
               <View style={styles.closeButtonWrapper}>
                 <CloseButton
                   onPress={() => {
@@ -207,7 +230,7 @@ export function CountrySelectionScreen({
           <SectionList
             sections={groupedCountries}
             keyExtractor={(item, index) => `${item.code}-${item.nameEn}-${index}`}
-            keyboardShouldPersistTaps='handled'
+            keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => (
@@ -232,7 +255,8 @@ export function CountrySelectionScreen({
             style={styles.countryList}
             contentContainerStyle={[
               styles.countryListContent,
-              keyboardVisible &&
+              Platform.OS === 'ios' &&
+                keyboardVisible &&
                 showSearch && {
                   paddingBottom: keyboardHeight + 100,
                 },
@@ -240,13 +264,12 @@ export function CountrySelectionScreen({
             stickySectionHeadersEnabled={false}
           />
 
-          {/* Search Button - bottom right */}
-          {!showSearch && (
+          {/* Search Button - bottom right (iOS only) */}
+          {Platform.OS === 'ios' && !showSearch && (
             <TouchableOpacity
-              style={styles.searchButton}
+              style={[styles.searchButton, { bottom: searchButtonBottom }]}
               onPress={() => {
                 setShowSearch(true);
-                // Small delay to ensure the TextInput is rendered before focusing
                 setTimeout(() => {
                   searchInputRef.current?.focus();
                 }, 100);
@@ -256,7 +279,7 @@ export function CountrySelectionScreen({
               <ExpoImage
                 source={ImageAssets.searchIcon}
                 style={styles.searchButtonIcon}
-                contentFit='contain'
+                contentFit="contain"
               />
             </TouchableOpacity>
           )}
@@ -285,7 +308,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
     flex: 1,
@@ -293,6 +316,16 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 60,
+  },
+
+  staticSearchContainer: {
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...(Platform.OS === 'android' && {
+      marginHorizontal: -24,
+      paddingHorizontal: 24,
+    }),
   },
   floatingSearchContainer: {
     position: 'absolute',
@@ -306,7 +339,7 @@ const styles = StyleSheet.create({
     borderRadius: 296,
     padding: 1,
     flex: 1,
-    marginRight: 12,
+    marginRight: Platform.OS === 'ios' ? 12 : 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -316,6 +349,9 @@ const styles = StyleSheet.create({
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
     }),
+  },
+  searchInputBorderFullWidth: {
+    marginRight: 0,
   },
   searchBar: {
     flexDirection: 'row',
@@ -348,9 +384,9 @@ const styles = StyleSheet.create({
       web: 'SF Pro Text, sans-serif',
     }),
     fontWeight: '500',
-    // lineHeight: 17,
     letterSpacing: 0,
   },
+
   countryList: {
     flex: 1,
   },
@@ -360,6 +396,8 @@ const styles = StyleSheet.create({
   sectionHeader: {
     paddingVertical: 8,
     paddingHorizontal: 8,
+    paddingBottom: 12,
+    paddingTop: 20,
     backgroundColor: 'transparent',
   },
   sectionHeaderText: {
@@ -419,70 +457,9 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     textAlign: 'right',
   },
-  myPhoneSection: {
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  myPhoneLabel: {
-    fontSize: 14,
-    color: '#fff',
-    marginBottom: 8,
-    fontFamily: Platform.select({
-      ios: 'SF Pro Text',
-      android: 'SF-Pro',
-      web: 'SF Pro Text, sans-serif',
-    }),
-  },
-  myPhoneNumber: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
-    fontFamily: Platform.select({
-      ios: 'SF Pro Text',
-      android: 'SF-Pro',
-      web: 'SF Pro Text, sans-serif',
-    }),
-  },
-  dialPad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  dialPadButton: {
-    width: '30%',
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  dialPadNumber: {
-    fontSize: 24,
-    fontWeight: '400',
-    color: '#fff',
-    fontFamily: Platform.select({
-      ios: 'SF Pro Text',
-      android: 'SF-Pro',
-      web: 'SF Pro Text, sans-serif',
-    }),
-  },
-  dialPadLetters: {
-    fontSize: 10,
-    color: '#C5C1B9',
-    fontFamily: Platform.select({
-      ios: 'SF Pro Text',
-      android: 'SF-Pro',
-      web: 'SF Pro Text, sans-serif',
-    }),
-  },
+
   searchButton: {
     position: 'absolute',
-    bottom: 20,
     right: 24,
     width: 56,
     height: 56,

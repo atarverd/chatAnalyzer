@@ -130,7 +130,8 @@ export function AnalysisOptionsScreen({
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
-          <View style={styles.section}>
+      <View>
+      <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('analysis.whatToLearn')}</Text>
             <View style={styles.questionGrid}>
               {questionTypes.map((question) => {
@@ -224,6 +225,7 @@ export function AnalysisOptionsScreen({
               })}
             </View>
           </View>
+      </View>
 
           <View style={styles.buttonContainer}>
             <GlassButton
@@ -247,8 +249,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 26,
+    paddingHorizontal: 34,
+    paddingBottom: 36,
+    justifyContent: 'space-between',
   },
   header: {
     flexDirection: 'row',
@@ -268,7 +271,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
   },
@@ -286,7 +289,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
   },
@@ -303,7 +306,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
-      android: 'Onest_600SemiBold',
+      android: 'Onest-SemiBold',
       web: 'Onest, sans-serif',
     }),
   },
@@ -370,7 +373,7 @@ const styles = StyleSheet.create({
     color: '#999999',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
-      android: 'Onest_400Regular',
+      android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
   },
@@ -380,7 +383,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 32,
-    marginBottom: 26,
     alignItems: 'center',
   },
 });
