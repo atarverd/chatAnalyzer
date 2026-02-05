@@ -361,7 +361,7 @@ export function AuthScreen() {
             accessible={false}
             disabled={Platform.OS === 'web'}
           >
-            <View style={styles.screen}>
+            <View style={styles.screen} pointerEvents="box-none">
               <ScrollView
                 ref={scrollViewRef}
                 contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollPaddingBottom }]}
@@ -385,7 +385,7 @@ export function AuthScreen() {
                             setShowCountrySelection(true);
                           }}
                         />
-                        <View style={styles.phoneInputWrapper}>
+                        <View style={styles.phoneInputWrapper} pointerEvents="box-none">
                           <TextInput
                             style={styles.phoneInput}
                             placeholder=""
@@ -398,6 +398,8 @@ export function AuthScreen() {
                             keyboardAppearance="dark"
                             onFocus={() => setIsPhoneInputFocused(true)}
                             onBlur={() => setIsPhoneInputFocused(false)}
+                            editable={true}
+                            importantForAccessibility="yes"
                           />
                           {!auth.phone && (
                             <Text style={styles.phoneInputPlaceholder}>555 44 32</Text>
@@ -707,6 +709,10 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
     marginLeft: 15,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: 'white',
+    zIndex: 1,
   },
   phoneInput: {
     width: 230,
@@ -844,6 +850,7 @@ const styles = StyleSheet.create({
       outlineStyle: 'none' as any,
       WebkitAppearance: 'none' as any,
     }),
+    border:'1px solid white'
   },
 
   passwordInputContainer: {
