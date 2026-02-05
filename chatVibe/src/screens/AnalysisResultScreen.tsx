@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    paddingHorizontal: 34,
     paddingBottom: 0,
     flexShrink: 0,
   },
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bodyContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 34,
     paddingBottom: 32,
     flexGrow: 1,
   },

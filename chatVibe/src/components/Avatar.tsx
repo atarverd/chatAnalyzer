@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 
@@ -9,6 +9,8 @@ type AvatarProps = {
 };
 
 export function Avatar({ name, size = 40, avatarUrl }: AvatarProps) {
+  const [imageError, setImageError] = useState(false);
+
   const getInitials = (name: string) => {
     if (!name || name.trim() === '') return '?';
     
@@ -42,10 +44,7 @@ export function Avatar({ name, size = 40, avatarUrl }: AvatarProps) {
   const initials = getInitials(name);
   const backgroundColor = getBackgroundColor(name);
 
-  
-  const shouldShowImage = avatarUrl && avatarUrl.includes('chatvibe.dategram.io');
-  console.log('shouldShowImage', shouldShowImage);
-  console.log('avatarUrl', avatarUrl);
+  const shouldShowImage = avatarUrl && avatarUrl.includes('chatvibe.dategram.io') && !imageError;
 
   if (shouldShowImage) {
     return (
@@ -68,6 +67,7 @@ export function Avatar({ name, size = 40, avatarUrl }: AvatarProps) {
           }}
           contentFit='cover'
           contentPosition='center'
+          onError={() => setImageError(true)}
         />
       </View>
     );

@@ -110,12 +110,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 34,
-    paddingTop: 90,
     paddingBottom: 36,
   },
   content: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   mainHeading: {
     fontSize: 22,

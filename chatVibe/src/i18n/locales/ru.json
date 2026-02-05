@@ -43,10 +43,10 @@
       "communication": "Как лучше общаться",
       "mistakes": "Где я делаю ошибки",
       "dynamics": "Понять динамику",
-      "personal_love": "Характер общения",
-      "personal_sex": "Как лучше общаться",
-      "personal_relationship": "Где я делаю ошибки",
-      "personal_communication": "Понять динамику"
+      "personal_love": "Есть ли любовь",
+      "personal_sex": "Хочет ли секса",
+      "personal_relationship": "Динамика отношений",
+      "personal_communication": "Стиль переписки"
     },
     "tones": {
       "neutral": "Нейтральный",

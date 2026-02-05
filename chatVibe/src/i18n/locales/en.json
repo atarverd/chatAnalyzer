@@ -43,10 +43,10 @@
       "communication": "How to communicate better",
       "mistakes": "Where I make  mistakes",
       "dynamics": "Understand dynamics",
-      "personal_love": "Communication style",
-      "personal_sex": "How to communicate better",
-      "personal_relationship": "Where I make mistakes",
-      "personal_communication": "Understand dynamics"
+      "personal_love": "Is there love",
+    "personal_sex": "Wants sex",
+        "personal_relationship": "Relationship dynamics",
+        "personal_communication": "Communication style"
     },
     "tones": {
       "neutral": "Neutral",

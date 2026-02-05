@@ -65,22 +65,22 @@ export function AnalysisOptionsScreen({
     {
       id: 'personal_love' as QuestionType,
       icon: ImageAssets.heartIcon,
-      text: t('analysis.questionLabels.character'),
+      text: t('analysis.questionLabels.personal_love'),
     },
     {
       id: 'personal_sex' as QuestionType,
       icon: ImageAssets.chatIcon,
-      text: t('analysis.questionLabels.communication'),
+      text: t('analysis.questionLabels.personal_sex'),
     },
     {
       id: 'personal_relationship' as QuestionType,
       icon: ImageAssets.alertIcon,
-      text: t('analysis.questionLabels.mistakes'),
+      text: t('analysis.questionLabels.personal_relationship'),
     },
     {
       id: 'personal_communication' as QuestionType,
       icon: ImageAssets.chartIcon,
-      text: t('analysis.questionLabels.dynamics'),
+      text: t('analysis.questionLabels.personal_communication'),
     },
   ];
 
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingBottom: 20,
+    paddingBottom: 32,
   },
   headerCenter: {
     flex: 1,
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   questionGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 16,
   },
   questionCardWrapper: {
     width: '47%',

@@ -8,7 +8,7 @@ export function LoadingView() {
     <BackgroundWrapper>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.center}>
-          <ActivityIndicator />
+          <ActivityIndicator color="#34C759" />
         </View>
       </SafeAreaView>
     </BackgroundWrapper>
