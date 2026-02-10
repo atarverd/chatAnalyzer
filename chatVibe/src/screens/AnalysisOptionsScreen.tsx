@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Platform,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -50,8 +51,14 @@ export function AnalysisOptionsScreen({
 }: AnalysisOptionsScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionType>(null);
   const [selectedTone, setSelectedTone] = useState<AnalysisTone>('neutral');
+
+  const contentPaddingHorizontal = 34;
+  const questionGridGap = 16;
+  const questionCardWidth =
+    (screenWidth - contentPaddingHorizontal * 2 - questionGridGap) / 2;
 
   const isPersonal =
     chat.type.toLowerCase() === 'private' ||
@@ -67,7 +74,7 @@ export function AnalysisOptionsScreen({
     },
     {
       id: 'personal_sex' as QuestionType,
-      icon: ImageAssets.chatIcon,
+      icon: ImageAssets.chatIconCard,
       text: t('analysis.questionLabels.personal_sex'),
     },
     {
@@ -153,7 +160,10 @@ export function AnalysisOptionsScreen({
                       key={question.id}
                       onPress={() => setSelectedQuestion(question.id)}
                       activeOpacity={0.8}
-                      style={styles.questionCardWrapper}
+                      style={[
+                        styles.questionCardWrapper,
+                        { width: questionCardWidth },
+                      ]}
                     >
                       <LinearGradient
                         colors={
@@ -175,17 +185,20 @@ export function AnalysisOptionsScreen({
                           colors={['#141715', '#141715']}
                           style={styles.questionCard}
                         >
-                          <ExpoImage
-                            source={question.icon}
-                            style={styles.questionIcon}
-                            contentFit='contain'
-                            tintColor={isSelected ? '#34C759' : undefined}
-                          />
+                          <View style={styles.questionIconWrapper}>
+                            <ExpoImage
+                              source={question.icon}
+                              style={styles.questionIcon}
+                              contentFit='contain'
+                              tintColor={isSelected ? '#34C759' : undefined}
+                            />
+                          </View>
                           <Text
                             style={[
                               styles.questionText,
                               isSelected && styles.questionTextActive,
                             ]}
+                            numberOfLines={2}
                           >
                             {question.text}
                           </Text>
@@ -334,28 +347,40 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   questionCardWrapper: {
-    width: '47%',
-    // aspectRatio: 1.2,
+    minWidth: 0,
+    maxWidth: '100%',
   },
   questionCardBorder: {
     borderRadius: 16,
     padding: 1,
+    overflow: 'hidden',
   },
   questionCard: {
     borderRadius: 15,
     justifyContent: 'center',
-    alignItems: 'flex-start',
-    padding: 16,
+    alignItems: 'center',
+    padding: 12,
     flexDirection: 'row',
-    gap: 20,
+    gap: 12,
+    overflow: 'hidden',
+    minWidth: 0,
+    flex: 1,
   },
-  questionIcon: {
+  questionIconWrapper: {
     width: 21,
     height: 21,
-    marginBottom: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  questionIcon: {
+    width: 20,
+    height: 20,
   },
   questionText: {
-    fontSize: 17,
+    flex: 1,
+    minWidth: 0,
+    fontSize: 15,
     fontWeight: '400',
     color: '#999999',
     textAlign: 'left',
@@ -364,8 +389,7 @@ const styles = StyleSheet.create({
       android: 'SF-Pro',
       web: 'SF-Pro, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
-    lineHeight: 22,
-    letterSpacing: -0.43,
+    lineHeight: 20,
   },
   questionTextActive: {
     color: '#34C759',

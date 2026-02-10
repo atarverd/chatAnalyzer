@@ -5,6 +5,7 @@ export const ImageAssets = {
   bgTop: require('../../assets/bg_top.png'),
   icon: require('../../assets/icon.png'),
   chatIcon: require('../../assets/chatIcon.png'),
+  chatIconCard: require('../../assets/chatIconCard.png'),
   sprakIcon: require('../../assets/sprakIcon.png'),
   graphIcon: require('../../assets/graphIcon.png'),
   shieldIcon: require('../../assets/shieldIcon.png'),
