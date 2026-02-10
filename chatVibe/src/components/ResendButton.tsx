@@ -75,12 +75,12 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 17,
-    fontWeight: '400',
+    fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.7)',
     fontFamily: Platform.select({
-      ios: 'Onest-Regular',
-      android: 'Onest-Regular',
-      web: 'Onest, sans-serif',
+      ios: 'SF-Pro',
+      android: 'SF-Pro',
+      web: 'SF-Pro, sans-serif',
     }),
     textAlign: 'center',
   },
@@ -88,4 +88,3 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.3)',
   },
 });
-

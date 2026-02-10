@@ -17,7 +17,11 @@ import { ImageAssets } from '../utils/imageCache';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { COUNTRIES, getCountryByIso2 } from '../data/countries';
+import {
+  COUNTRIES,
+  getCountryByIso2,
+  getCountryPhoneLength,
+} from '../data/countries';
 
 type CountrySelectionScreenProps = {
   selectedIso2: string;
@@ -43,11 +47,11 @@ export function CountrySelectionScreen({
 
   const searchInputRef = useRef<TextInput>(null);
 
-
-
   useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const showSub = Keyboard.addListener(showEvent as any, (e) => {
       const height = e?.endCoordinates?.height ?? 0;
@@ -66,7 +70,6 @@ export function CountrySelectionScreen({
     };
   }, []);
 
-
   // Group countries by first letter
   const groupedCountries = useMemo(() => {
     const getName = (c: (typeof COUNTRIES)[number]) =>
@@ -78,7 +81,7 @@ export function CountrySelectionScreen({
         getName(country).toLowerCase().includes(q) ||
         country.nameEn.toLowerCase().includes(q) ||
         country.nameRu.toLowerCase().includes(q) ||
-        country.code.includes(searchQuery)
+        country.code.includes(searchQuery),
     );
 
     const grouped: { [key: string]: typeof COUNTRIES } = {};
@@ -103,7 +106,6 @@ export function CountrySelectionScreen({
     onBack();
   };
 
-
   const floatingBottomClosed = Platform.OS === 'android' ? 16 : 30;
 
   const floatingBottomOpen =
@@ -111,13 +113,16 @@ export function CountrySelectionScreen({
     10 + // gap above keyboard
     (Platform.OS === 'android' ? insets.bottom : 0);
 
-  const floatingBottomFinal = keyboardVisible && keyboardHeight > 0 ? floatingBottomOpen : floatingBottomClosed;
+  const floatingBottomFinal =
+    keyboardVisible && keyboardHeight > 0
+      ? floatingBottomOpen
+      : floatingBottomClosed;
 
   const searchButtonBottom =
     (keyboardVisible ? keyboardHeight : 0) + 20 + insets.bottom;
 
   return (
-    <BackgroundWrapper showGlow showHeader={false} >
+    <BackgroundWrapper showGlow showHeader={false}>
       <View
         style={[
           styles.safeArea,
@@ -149,25 +154,26 @@ export function CountrySelectionScreen({
                 end={{ x: 0.8, y: 1 }}
                 style={[
                   styles.searchInputBorder,
-                  Platform.OS === 'android' && styles.searchInputBorderFullWidth,
+                  Platform.OS === 'android' &&
+                    styles.searchInputBorderFullWidth,
                 ]}
               >
                 <View style={styles.searchBar}>
                   <ExpoImage
                     source={ImageAssets.searchIcon}
                     style={styles.searchIcon}
-                    contentFit="contain"
-                    tintColor="#fff"
+                    contentFit='contain'
+                    tintColor='#fff'
                   />
                   <TextInput
                     ref={searchInputRef}
                     style={styles.searchInput}
                     placeholder={t('common.search')}
-                    keyboardAppearance="dark"
-                    placeholderTextColor="#666"
+                    keyboardAppearance='dark'
+                    placeholderTextColor='#666'
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    returnKeyType="search"
+                    returnKeyType='search'
                   />
                 </View>
               </LinearGradient>
@@ -197,19 +203,19 @@ export function CountrySelectionScreen({
                   <ExpoImage
                     source={ImageAssets.searchIcon}
                     style={styles.searchIcon}
-                    contentFit="contain"
-                    tintColor="#fff"
+                    contentFit='contain'
+                    tintColor='#fff'
                   />
                   <TextInput
                     ref={searchInputRef}
                     style={styles.searchInput}
                     placeholder={t('common.search')}
-                    keyboardAppearance="dark"
-                    placeholderTextColor="#666"
+                    keyboardAppearance='dark'
+                    placeholderTextColor='#666'
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     autoFocus
-                    returnKeyType="search"
+                    returnKeyType='search'
                   />
                 </View>
               </LinearGradient>
@@ -229,8 +235,10 @@ export function CountrySelectionScreen({
           {/* Country List */}
           <SectionList
             sections={groupedCountries}
-            keyExtractor={(item, index) => `${item.code}-${item.nameEn}-${index}`}
-            keyboardShouldPersistTaps="handled"
+            keyExtractor={(item, index) =>
+              `${item.code}-${item.nameEn}-${index}`
+            }
+            keyboardShouldPersistTaps='handled'
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => (
@@ -244,6 +252,9 @@ export function CountrySelectionScreen({
                 </Text>
                 <View style={styles.countryCodeContainer}>
                   <Text style={styles.countryCode}>{item.code}</Text>
+                  {/* <Text style={styles.countryPhoneLength}>
+                    {getCountryPhoneLength(item)} {t('common.digits')}
+                  </Text> */}
                 </View>
               </TouchableOpacity>
             )}
@@ -279,7 +290,7 @@ export function CountrySelectionScreen({
               <ExpoImage
                 source={ImageAssets.searchIcon}
                 style={styles.searchButtonIcon}
-                contentFit="contain"
+                contentFit='contain'
               />
             </TouchableOpacity>
           )}
@@ -444,6 +455,7 @@ const styles = StyleSheet.create({
   },
   countryCodeContainer: {
     marginLeft: 'auto',
+    alignItems: 'flex-end',
   },
   countryCode: {
     fontSize: 17,
@@ -455,6 +467,17 @@ const styles = StyleSheet.create({
       web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
     lineHeight: 17,
+    textAlign: 'right',
+  },
+  countryPhoneLength: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+    fontFamily: Platform.select({
+      ios: 'SF Pro Text',
+      android: 'SF-Pro',
+      web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+    }),
     textAlign: 'right',
   },
 

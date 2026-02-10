@@ -13,7 +13,10 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch } from '../store';
 import { selectAuth } from '../store';
@@ -31,7 +34,7 @@ import { CountryCodePicker } from '../components/CountryCodePicker';
 import { CountrySelectionScreen } from './CountrySelectionScreen';
 import { useTranslation } from 'react-i18next';
 import { triggerHaptic } from '../utils/haptics';
-import { getCountryByIso2 } from '../data/countries';
+import { getCountryByIso2, getCountryPhoneLength, formatPhoneForDisplay, formatNationalForDisplay } from '../data/countries';
 import { Image as ExpoImage } from 'expo-image';
 import { ImageAssets } from '../utils/imageCache';
 
@@ -58,6 +61,8 @@ export function AuthScreen() {
 
   const codeInputRefs = useRef<(TextInput | null)[]>([]);
   const isVerifyingRef = useRef(false);
+  const lastSubmittedCodeRef = useRef<string | null>(null);
+  const signInRequestRef = useRef<{ abort: () => void } | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [sendCode, { isLoading }] = useSendCodeMutation();
@@ -65,7 +70,6 @@ export function AuthScreen() {
   const [submitPassword, { isLoading: isVerifyingPassword }] =
     useSubmitPasswordMutation();
 
-  // ✅ Bottom bar animation value (Android only when needed)
   const bottomTranslateY = useRef(new Animated.Value(0)).current;
 
   // ✅ Track whether Android is actually resizing (to avoid double shift)
@@ -80,8 +84,10 @@ export function AuthScreen() {
   }, [bottomBarExtraPadding]);
 
   useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = (e: any) => {
       const h = e?.endCoordinates?.height ?? 0;
@@ -107,6 +113,11 @@ export function AuthScreen() {
     };
 
     const onHide = () => {
+      // When keyboard closes, reset focus states so the button goes back to the bottom
+      setIsPhoneInputFocused(false);
+      setIsCodeInputFocused(false);
+      setIsPasswordInputFocused(false);
+
       if (Platform.OS === 'android') {
         Animated.timing(bottomTranslateY, {
           toValue: 0,
@@ -131,7 +142,12 @@ export function AuthScreen() {
   }, [bottomTranslateY]);
 
   const handleChangePhone = (value: string) => {
-    const numbersOnly = value.replace(/\D/g, '').slice(0, 16);
+    setStatus(null);
+    const selectedCountry = getCountryByIso2(selectedCountryIso2);
+    const maxLength = selectedCountry
+      ? getCountryPhoneLength(selectedCountry)
+      : 16;
+    const numbersOnly = value.replace(/\D/g, '').slice(0, maxLength);
     dispatch(setPhone(numbersOnly));
   };
 
@@ -140,7 +156,7 @@ export function AuthScreen() {
     setIsPhoneInputFocused(false);
     setIsCodeInputFocused(false);
     setIsPasswordInputFocused(false);
-    
+
     if (auth.step === 'code') {
       dispatch(setStep('phone'));
       setCode(['', '', '', '', '']);
@@ -156,7 +172,10 @@ export function AuthScreen() {
   };
 
   const handleCodeChange = (value: string, index: number) => {
+    abortSignIn();
+    lastSubmittedCodeRef.current = null;
     if (codeError) setCodeError(false);
+    setStatus(null);
     const numbersOnly = value.replace(/\D/g, '');
 
     if (numbersOnly === '' && code[index]) {
@@ -189,6 +208,9 @@ export function AuthScreen() {
 
   const handleCodeKeyPress = (e: any, index: number) => {
     if (e.nativeEvent.key === 'Backspace') {
+      abortSignIn();
+      lastSubmittedCodeRef.current = null;
+      setStatus(null);
       if (code[index]) {
         const newCode = [...code];
         newCode[index] = '';
@@ -233,12 +255,15 @@ export function AuthScreen() {
 
   useEffect(() => {
     const fullCode = code.join('');
+    const alreadySubmittedThisCode = fullCode === lastSubmittedCodeRef.current;
     if (
       fullCode.length === 5 &&
       auth.step === 'code' &&
       !isVerifyingCode &&
-      !isVerifyingRef.current
+      !isVerifyingRef.current &&
+      !alreadySubmittedThisCode
     ) {
+      lastSubmittedCodeRef.current = fullCode;
       isVerifyingRef.current = true;
       handleVerifyCode().finally(() => {
         isVerifyingRef.current = false;
@@ -253,22 +278,45 @@ export function AuthScreen() {
       setStatus(t('errors.generic'));
       return;
     }
-    if (phoneNumber.length < 7 || phoneNumber.length > 16) {
-      setStatus(t('errors.invalidPhoneLength'));
+
+    const selectedCountry = getCountryByIso2(selectedCountryIso2);
+    const expectedLength = selectedCountry
+      ? getCountryPhoneLength(selectedCountry)
+      : 10;
+    if (phoneNumber.length !== expectedLength) {
+      setStatus(t('errors.incorrectNumber'));
       return;
     }
 
-    const selectedCountry = getCountryByIso2(selectedCountryIso2);
     const countryCode = selectedCountry?.code || '+7';
     const phone = `${countryCode}${phoneNumber}`;
 
     try {
-      await sendCode({ phone }).unwrap();
+      const sendRes = await sendCode({ phone }).unwrap() as { error?: string };
+      const sendError = typeof sendRes?.error === 'string'
+        ? sendRes.error.toUpperCase()
+        : '';
+      if (sendError.includes('PHONE_NUMBER_INVALID')) {
+        setStatus(t('errors.incorrectNumber'));
+        return;
+      }
       setStatus(null);
       dispatch(setStep('code'));
-    } catch {
-      setStatus(t('errors.failedToSendCode'));
+    } catch (err: any) {
+      const data = err?.data;
+      const isInvalidNumber =
+        data?.code === 'PHONE_NUMBER_INVALID' ||
+        data?.error === 'PHONE_NUMBER_INVALID' ||
+        (typeof data?.message === 'string' &&
+          data.message.toUpperCase().includes('PHONE_NUMBER_INVALID'));
+      setStatus(
+        isInvalidNumber ? t('errors.incorrectNumber') : t('errors.failedToSendCode')
+      );
     }
+  };
+
+  const abortSignIn = () => {
+    signInRequestRef.current?.abort();
   };
 
   const handleVerifyCode = async () => {
@@ -284,24 +332,56 @@ export function AuthScreen() {
       const countryCode = selectedCountry?.code || '+7';
       const phone = `${countryCode}${phoneNumber}`;
 
-      const res = await signIn({ phone, code: fullCode }).unwrap();
+      const request = signIn({ phone, code: fullCode });
+      signInRequestRef.current = request as unknown as { abort: () => void };
+      const res = await request.unwrap();
 
       if (res.needPassword) {
+        lastSubmittedCodeRef.current = null;
         setStatus(null);
         setCodeError(false);
         dispatch(setStep('password'));
       } else if (res.success) {
+        lastSubmittedCodeRef.current = null;
         setStatus(null);
         setCodeError(false);
       } else {
-        setStatus(res.error || t('errors.invalidCode'));
+        const errStr = typeof res.error === 'string' ? res.error.toUpperCase() : '';
+        const isInvalidCode = errStr.includes('PHONE_CODE_INVALID');
+        const isInvalidNumber = errStr.includes('PHONE_NUMBER_INVALID');
+        const message = isInvalidCode
+          ? t('errors.invalidCode')
+          : isInvalidNumber
+            ? t('errors.incorrectNumber')
+            : (res.error || t('errors.invalidCode'));
+        setStatus(message);
         setCodeError(true);
         await triggerHaptic('error');
       }
-    } catch {
-      setStatus(t('errors.failedToVerifyCode'));
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        return;
+      }
+      const data = err?.data;
+      const msg = typeof data?.message === 'string' ? data.message.toUpperCase() : '';
+      const isInvalidCode =
+        data?.code === 'PHONE_CODE_INVALID' ||
+        data?.error === 'PHONE_CODE_INVALID' ||
+        msg.includes('PHONE_CODE_INVALID');
+      const isInvalidNumber =
+        data?.code === 'PHONE_NUMBER_INVALID' ||
+        data?.error === 'PHONE_NUMBER_INVALID' ||
+        msg.includes('PHONE_NUMBER_INVALID');
+      const statusMessage = isInvalidCode
+        ? t('errors.invalidCode')
+        : isInvalidNumber
+          ? t('errors.incorrectNumber')
+          : t('errors.failedToVerifyCode');
+      setStatus(statusMessage);
       setCodeError(true);
       await triggerHaptic('error');
+    } finally {
+      signInRequestRef.current = null;
     }
   };
 
@@ -319,7 +399,8 @@ export function AuthScreen() {
       }
     } catch {
       setStatus(
-        t('errors.failedToVerifyPassword') || 'Failed to verify password. Please try again.'
+        t('errors.failedToVerifyPassword') ||
+          'Failed to verify password. Please try again.',
       );
       await triggerHaptic('error');
     }
@@ -353,27 +434,41 @@ export function AuthScreen() {
         showGlow
         showHeader
         showBackButton={auth.step === 'code' || auth.step === 'password'}
-        onBackPress={auth.step === 'code' || auth.step === 'password' ? handleBack : undefined}
+        onBackPress={
+          auth.step === 'code' || auth.step === 'password'
+            ? handleBack
+            : undefined
+        }
       >
-        <SafeAreaView style={styles.safeArea} edges={Platform.OS === 'android' ? ['bottom'] : []}>
+        <SafeAreaView
+          style={styles.safeArea}
+          edges={Platform.OS === 'android' ? ['bottom'] : []}
+        >
           <TouchableWithoutFeedback
             onPress={Keyboard.dismiss}
             accessible={false}
             disabled={Platform.OS === 'web'}
           >
-            <View style={styles.screen} pointerEvents="box-none">
+            <View style={styles.screen} pointerEvents='box-none'>
               <ScrollView
                 ref={scrollViewRef}
-                contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollPaddingBottom }]}
+                contentContainerStyle={[
+                  styles.scrollContent,
+                  { paddingBottom: scrollPaddingBottom },
+                ]}
                 showsVerticalScrollIndicator={false}
                 showsHorizontalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
+                keyboardShouldPersistTaps='handled'
               >
                 <View style={styles.content}>
                   {auth.step === 'phone' && (
-                    <React.Fragment key="phone-step">
-                      <Text style={styles.mainTitle}>{t('auth.connectTelegram')}</Text>
-                      <Text style={styles.secondaryText}>{t('auth.connectTelegramSubtitle')}</Text>
+                    <React.Fragment key='phone-step'>
+                      <Text style={styles.mainTitle}>
+                        {t('auth.connectTelegram')}
+                      </Text>
+                      <Text style={styles.secondaryText}>
+                        {t('auth.connectTelegramSubtitle')}
+                      </Text>
 
                       <View style={styles.phoneInputContainer}>
                         <CountryCodePicker
@@ -385,33 +480,49 @@ export function AuthScreen() {
                             setShowCountrySelection(true);
                           }}
                         />
-                        <View style={styles.phoneInputWrapper} pointerEvents="box-none">
+                        <View
+                          style={styles.phoneInputWrapper}
+                          pointerEvents='box-none'
+                        >
                           <TextInput
                             style={styles.phoneInput}
-                            placeholder=""
-                            keyboardType="phone-pad"
-                            value={auth.phone}
+                            placeholder=''
+                            keyboardType='phone-pad'
+                            value={formatNationalForDisplay(auth.phone, selectedCountryIso2)}
                             onChangeText={handleChangePhone}
                             autoFocus={Platform.OS === 'web'}
-                            inputMode="numeric"
-                            selectionColor="#34C759"
-                            keyboardAppearance="dark"
-                            onFocus={() => setIsPhoneInputFocused(true)}
+                            inputMode='numeric'
+                            selectionColor='#34C759'
+                            keyboardAppearance='dark'
+                            onFocus={() => {
+                              setIsPhoneInputFocused(true);
+                            }}
                             onBlur={() => setIsPhoneInputFocused(false)}
                             editable={true}
-                            importantForAccessibility="yes"
+                            importantForAccessibility='yes'
                           />
                           {!auth.phone && (
-                            <Text style={styles.phoneInputPlaceholder}>555 44 32</Text>
+                            <Text
+                              style={styles.phoneInputPlaceholder}
+                              onPress={() => {
+                                console.log('onPressIn');
+                              }}
+                            >
+                              555 44 32
+                            </Text>
                           )}
                         </View>
                       </View>
                       {Platform.OS === 'android' && isPhoneInputFocused && (
                         <View style={styles.phoneButtonContainer}>
                           <GlassButton
-                            title={isLoading ? t('auth.sending') : t('auth.getCode')}
+                            title={
+                              isLoading ? t('auth.sending') : t('auth.getCode')
+                            }
                             onPress={handleSendCode}
-                            disabled={isLoading || !auth.phone || auth.phone.length < 7}
+                            disabled={
+                              isLoading || !auth.phone || auth.phone.length < 7
+                            }
                           />
                         </View>
                       )}
@@ -419,11 +530,17 @@ export function AuthScreen() {
                   )}
 
                   {auth.step === 'code' && (
-                    <React.Fragment key="code-step">
-                      <Text style={styles.codeTitle}>{t('auth.enterCodeTitle')}</Text>
+                    <React.Fragment key='code-step'>
+                      <Text style={styles.codeTitle}>
+                        {t('auth.enterCodeTitle')}
+                      </Text>
                       <Text style={styles.codeSubtitle}>
                         {t('auth.codeSentTo', {
-                          phone: `${getCountryByIso2(selectedCountryIso2)?.code || '+7'} ${auth.phone}`,
+                          phone: formatPhoneForDisplay(
+                            getCountryByIso2(selectedCountryIso2)?.code ?? '+7',
+                            auth.phone,
+                            selectedCountryIso2
+                          ),
                         })}
                       </Text>
 
@@ -434,7 +551,9 @@ export function AuthScreen() {
                             <TouchableOpacity
                               key={index}
                               activeOpacity={1}
-                              onPress={() => codeInputRefs.current[index]?.focus()}
+                              onPress={() =>
+                                codeInputRefs.current[index]?.focus()
+                              }
                               style={styles.codeInputTouchable}
                             >
                               <LinearGradient
@@ -474,8 +593,12 @@ export function AuthScreen() {
                                     }}
                                     style={styles.codeInput}
                                     value={digit}
-                                    onChangeText={(value) => handleCodeChange(value, index)}
-                                    onKeyPress={(e) => handleCodeKeyPress(e, index)}
+                                    onChangeText={(value) =>
+                                      handleCodeChange(value, index)
+                                    }
+                                    onKeyPress={(e) =>
+                                      handleCodeKeyPress(e, index)
+                                    }
                                     onFocus={() => {
                                       setFocusedInputIndex(index);
                                       setIsCodeInputFocused(true);
@@ -484,14 +607,18 @@ export function AuthScreen() {
                                       setFocusedInputIndex(null);
                                       setIsCodeInputFocused(false);
                                     }}
-                                    keyboardType="number-pad"
-                                    keyboardAppearance="dark"
+                                    keyboardType='number-pad'
+                                    keyboardAppearance='dark'
                                     maxLength={index === 0 ? 5 : 1}
-                                    textContentType={index === 0 ? 'oneTimeCode' : 'none'}
-                                    autoComplete={index === 0 ? ('sms-otp' as any) : 'off'}
+                                    textContentType={
+                                      index === 0 ? 'oneTimeCode' : 'none'
+                                    }
+                                    autoComplete={
+                                      index === 0 ? ('sms-otp' as any) : 'off'
+                                    }
                                     selectTextOnFocus
-                                    selectionColor="#34C759"
-                                    textAlign="center"
+                                    selectionColor='#34C759'
+                                    textAlign='center'
                                     {...(Platform.OS !== 'ios' && {
                                       caretColor: '#34C759' as any,
                                     })}
@@ -518,11 +645,17 @@ export function AuthScreen() {
                   )}
 
                   {auth.step === 'password' && (
-                    <React.Fragment key="password-step">
-                      <Text style={styles.codeTitle}>{t('auth.enterPasswordTitle')}</Text>
+                    <React.Fragment key='password-step'>
+                      <Text style={styles.codeTitle}>
+                        {t('auth.enterPasswordTitle')}
+                      </Text>
                       <Text style={styles.codeSubtitle}>
                         {t('auth.passwordSentTo', {
-                          phone: `${getCountryByIso2(selectedCountryIso2)?.code || '+7'} ${auth.phone}`,
+                          phone: formatPhoneForDisplay(
+                            getCountryByIso2(selectedCountryIso2)?.code ?? '+7',
+                            auth.phone,
+                            selectedCountryIso2
+                          ),
                         })}
                       </Text>
 
@@ -541,14 +674,17 @@ export function AuthScreen() {
                           <View style={styles.passwordInputWrapper}>
                             <TextInput
                               style={styles.passwordInput}
-                              placeholder=""
+                              placeholder=''
                               secureTextEntry={!showPassword}
-                              keyboardAppearance="dark"
+                              keyboardAppearance='dark'
                               value={password}
-                              onChangeText={setPassword}
+                              onChangeText={(value) => {
+                                setPassword(value);
+                                setStatus(null);
+                              }}
                               autoFocus={Platform.OS === 'web'}
-                              selectionColor="#34C759"
-                              placeholderTextColor="#C5C1B9"
+                              selectionColor='#34C759'
+                              placeholderTextColor='#C5C1B9'
                               onFocus={() => setIsPasswordInputFocused(true)}
                               onBlur={() => setIsPasswordInputFocused(false)}
                               {...(Platform.OS === 'web' && {
@@ -563,10 +699,14 @@ export function AuthScreen() {
                               activeOpacity={0.7}
                             >
                               <ExpoImage
-                                source={showPassword ? ImageAssets.eye : ImageAssets.eyeClosed}
+                                source={
+                                  showPassword
+                                    ? ImageAssets.eye
+                                    : ImageAssets.eyeClosed
+                                }
                                 style={styles.eyeIcon}
-                                contentFit="contain"
-                                tintColor="#fff"
+                                contentFit='contain'
+                                tintColor='#fff'
                               />
                             </TouchableOpacity>
                           </View>
@@ -575,7 +715,11 @@ export function AuthScreen() {
                       {Platform.OS === 'android' && isPasswordInputFocused && (
                         <View style={styles.passwordButtonContainer}>
                           <GlassButton
-                            title={isVerifyingPassword ? t('auth.sending') : t('auth.submitPassword')}
+                            title={
+                              isVerifyingPassword
+                                ? t('auth.sending')
+                                : t('auth.submitPassword')
+                            }
                             onPress={handleSubmitPassword}
                             disabled={isVerifyingPassword}
                           />
@@ -594,36 +738,45 @@ export function AuthScreen() {
                   {
                     paddingBottom: bottomBarExtraPadding,
                     transform:
-                      Platform.OS === 'android'  
+                      Platform.OS === 'android'
                         ? [{ translateY: bottomTranslateY }]
                         : undefined,
                   },
                 ]}
               >
-                {auth.step === 'phone' && (Platform.OS !== 'android' || !isPhoneInputFocused) && (
-                  <GlassButton
-                    title={isLoading ? t('auth.sending') : t('auth.getCode')}
-                    onPress={handleSendCode}
-                    disabled={isLoading || !auth.phone || auth.phone.length < 7}
-                  />
-                )}
-                {auth.step === 'code' && (Platform.OS !== 'android' || !isCodeInputFocused) && (
-                  <ResendButton
-                    title={t('auth.resend')}
-                    onPress={handleSendCode}
-                    disabled={isLoading}
-                    width={141}
-                    height={32}
-                    fontSize={12}
-                  />
-                )}
-                {auth.step === 'password' && (Platform.OS !== 'android' || !isPasswordInputFocused) && (
-                  <GlassButton
-                    title={isVerifyingPassword ? t('auth.sending') : t('auth.submitPassword')}
-                    onPress={handleSubmitPassword}
-                    disabled={isVerifyingPassword}
-                  />
-                )}
+                {auth.step === 'phone' &&
+                  (Platform.OS !== 'android' || !isPhoneInputFocused) && (
+                    <GlassButton
+                      title={isLoading ? t('auth.sending') : t('auth.getCode')}
+                      onPress={handleSendCode}
+                      disabled={
+                        isLoading || !auth.phone || auth.phone.length < 7
+                      }
+                    />
+                  )}
+                {auth.step === 'code' &&
+                  (Platform.OS !== 'android' || !isCodeInputFocused) && (
+                    <ResendButton
+                      title={t('auth.resend')}
+                      onPress={handleSendCode}
+                      disabled={isLoading}
+                      width={141}
+                      height={32}
+                      fontSize={12}
+                    />
+                  )}
+                {auth.step === 'password' &&
+                  (Platform.OS !== 'android' || !isPasswordInputFocused) && (
+                    <GlassButton
+                      title={
+                        isVerifyingPassword
+                          ? t('auth.sending')
+                          : t('auth.submitPassword')
+                      }
+                      onPress={handleSubmitPassword}
+                      disabled={isVerifyingPassword}
+                    />
+                  )}
               </Animated.View>
             </View>
           </TouchableWithoutFeedback>
@@ -709,9 +862,6 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
     marginLeft: 15,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: 'white',
     zIndex: 1,
   },
   phoneInput: {
@@ -835,9 +985,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     textAlign: 'center',
-    ...(Platform.OS === 'ios' && {
-      tintColor: '#34C759',
-    } as any),
+    ...(Platform.OS === 'ios' &&
+      ({
+        tintColor: '#34C759',
+      } as any)),
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
       android: 'Onest-SemiBold',
@@ -850,7 +1001,6 @@ const styles = StyleSheet.create({
       outlineStyle: 'none' as any,
       WebkitAppearance: 'none' as any,
     }),
-    border:'1px solid white'
   },
 
   passwordInputContainer: {

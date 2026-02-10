@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Animated, Dimensions,BackHandler } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Animated,
+  Dimensions,
+  BackHandler,
+} from 'react-native';
 
 import { Image as ExpoImage } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
@@ -24,7 +30,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { preloadImages, ImageAssets } from './src/utils/imageCache';
 import { useSelector } from 'react-redux';
 import { selectAuth } from './src/store';
-import  NavigationBar  from 'expo-navigation-bar';
+import NavigationBar from 'expo-navigation-bar';
 import './src/i18n';
 
 // Prevent auto-hiding splash screen until we're ready
@@ -57,7 +63,7 @@ function Root() {
     'Onest-Regular': Onest_400Regular,
     'Onest-SemiBold': Onest_600SemiBold,
     'SF-Pro': require('./assets/fonts/SF-Pro.ttf'),
-  }); 
+  });
   useEffect(() => {
     // Hide native splash screen immediately and show our custom one
     SplashScreen.hideAsync();
@@ -173,7 +179,7 @@ function Root() {
   useEffect(() => {
     const subscription = BackHandler.addEventListener(
       'hardwareBackPress',
-      () => true 
+      () => true,
     );
 
     return () => subscription.remove();
@@ -212,7 +218,7 @@ function Root() {
         ]}
         pointerEvents={appIsReady ? 'auto' : 'none'}
       >
-         {/* <AuthScreen /> */}
+        {/* <AuthScreen /> */}
         {appIsReady && introChecked ? (
           showIntro === true ? (
             <IntroScreen onStart={handleIntroComplete} />

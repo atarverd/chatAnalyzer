@@ -6,7 +6,8 @@
     "retry": "Retry",
     "close": "Close",
     "country": "Country",
-    "logout": "Logout"
+    "logout": "Logout",
+    "digits": "digits"
   },
   "auth": {
     "connectTelegram": "Connect Telegram",
@@ -33,20 +34,18 @@
     "whatToLearn": "What do you want to know?",
     "tone": "Tone",
     "start": "Start analysis",
+    "startAgain": "Start again",
     "reanalyze": "Reanalyze",
     "analyzingTitle": "Analyzing messages",
     "analyzingSubtitle": "Importing chats for analysis",
     "whatToStudy": "What to study",
     "analysisResult": "Analysis result",
     "questionLabels": {
-      "character": "Communication style",
-      "communication": "How to communicate better",
-      "mistakes": "Where I make  mistakes",
-      "dynamics": "Understand dynamics",
-      "personal_love": "Is there love",
-    "personal_sex": "Wants sex",
-        "personal_relationship": "Relationship dynamics",
-        "personal_communication": "Communication style"
+      "personal_love": "Communication style",
+      "personal_sex": "How to communicate better",
+      "personal_relationship": "Where I make  mistakes",
+      "personal_communication": "Where I make  mistakes",
+      "what_to_answer": "What to answer now"
     },
     "tones": {
       "neutral": "Neutral",
@@ -81,11 +80,10 @@
     "failedToSendCode": "Failed to send code. Please try again.",
     "failedToVerifyCode": "Failed to verify code. Please try again.",
     "invalidCode": "Invalid code",
-    "invalidPhoneLength": "Phone number must be between 7 and 16 digits"
+    "invalidPhoneLength": "Phone number must be between 7 and 16 digits",
+    "incorrectNumber": "Incorrect number"
   },
   "empty": {
     "noChatsFound": "No chats found"
   }
 }
-
-

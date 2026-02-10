@@ -6,7 +6,8 @@
     "retry": "Повторить",
     "close": "Закрыть",
     "country": "Страна",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "digits": "цифр"
   },
   "auth": {
     "connectTelegram": "Подключите Telegram",
@@ -33,20 +34,18 @@
     "whatToLearn": "Что вы хотите узнать?",
     "tone": "Тон анализа",
     "start": "Начать анализ",
+    "startAgain": "Начать снова",
     "reanalyze": "Переанализировать",
     "analyzingTitle": "Анализируем сообщения",
     "analyzingSubtitle": "Импортируем чаты для анализа",
     "whatToStudy": "Что нужно изучить",
     "analysisResult": "Результат анализа",
     "questionLabels": {
-      "character": "Характер общения",
-      "communication": "Как лучше общаться",
-      "mistakes": "Где я делаю ошибки",
-      "dynamics": "Понять динамику",
-      "personal_love": "Есть ли любовь",
-      "personal_sex": "Хочет ли секса",
-      "personal_relationship": "Динамика отношений",
-      "personal_communication": "Стиль переписки"
+      "personal_love": "Характер общения",
+      "personal_sex": "Как лучше общаться",
+      "personal_relationship": "Где я делаю ошибки",
+      "personal_communication": "Понять динамику",
+      "what_to_answer": "Что сейчас ответить"
     },
     "tones": {
       "neutral": "Нейтральный",
@@ -81,11 +80,10 @@
     "failedToSendCode": "Не удалось отправить код. Попробуйте ещё раз.",
     "failedToVerifyCode": "Не удалось проверить код. Попробуйте ещё раз.",
     "invalidCode": "Неверный код",
-    "invalidPhoneLength": "Номер телефона должен содержать от 7 до 16 цифр"
+    "invalidPhoneLength": "Номер телефона должен содержать от 7 до 16 цифр",
+    "incorrectNumber": "Неверный номер"
   },
   "empty": {
     "noChatsFound": "Чаты не найдены"
   }
 }
-
-

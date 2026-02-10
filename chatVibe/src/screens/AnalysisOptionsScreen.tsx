@@ -35,12 +35,10 @@ type AnalysisOptionsScreenProps = {
 };
 
 type QuestionType =
-
   | 'personal_love'
   | 'personal_sex'
   | 'personal_relationship'
   | 'personal_communication'
- 
   | null;
 
 type AnalysisTone = 'neutral' | 'direct' | 'supportive';
@@ -82,6 +80,11 @@ export function AnalysisOptionsScreen({
       icon: ImageAssets.chartIcon,
       text: t('analysis.questionLabels.personal_communication'),
     },
+    {
+      id: 'what_to_answer' as QuestionType,
+      icon: ImageAssets.questionIcon,
+      text: t('analysis.questionLabels.what_to_answer'),
+    },
   ];
 
   const tones = [
@@ -98,9 +101,16 @@ export function AnalysisOptionsScreen({
 
   return (
     <BackgroundWrapper showGlow showHeader={false}>
-      <SafeAreaView style={styles.safeArea} 
-       edges={Platform.OS === 'android' ? ['bottom'] : []}>
-        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 }]}>
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={Platform.OS === 'android' ? ['bottom'] : []}
+      >
+        <View
+          style={[
+            styles.header,
+            { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 },
+          ]}
+        >
           <BackButton onPress={onBack} />
           <View style={styles.headerCenter}>
             <Text style={styles.headerName}>{chat.title}</Text>
@@ -130,102 +140,110 @@ export function AnalysisOptionsScreen({
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
-      <View>
-      <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('analysis.whatToLearn')}</Text>
-            <View style={styles.questionGrid}>
-              {questionTypes.map((question) => {
-                const isSelected = selectedQuestion === question.id;
-                return (
-                  <TouchableOpacity
-                    key={question.id}
-                    onPress={() => setSelectedQuestion(question.id)}
-                    activeOpacity={0.8}
-                    style={styles.questionCardWrapper}
-                  >
-                    <LinearGradient
-                      colors={
-                        isSelected
-                          ? ['rgba(52, 199, 89, 0.3)', 'rgba(25, 97, 43, 0.3)']
-                          : [
-                              'rgba(255, 255, 255, 0.2)',
-                              'rgba(255, 255, 255, 0.2)',
-                            ]
-                      }
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={styles.questionCardBorder}
+          <View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                {t('analysis.whatToLearn')}
+              </Text>
+              <View style={styles.questionGrid}>
+                {questionTypes.map((question) => {
+                  const isSelected = selectedQuestion === question.id;
+                  return (
+                    <TouchableOpacity
+                      key={question.id}
+                      onPress={() => setSelectedQuestion(question.id)}
+                      activeOpacity={0.8}
+                      style={styles.questionCardWrapper}
                     >
                       <LinearGradient
-                        colors={['#141715', '#141715']}
-                        style={styles.questionCard}
+                        colors={
+                          isSelected
+                            ? [
+                                'rgba(52, 199, 89, 0.3)',
+                                'rgba(25, 97, 43, 0.3)',
+                              ]
+                            : [
+                                'rgba(255, 255, 255, 0.2)',
+                                'rgba(255, 255, 255, 0.2)',
+                              ]
+                        }
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={styles.questionCardBorder}
                       >
-                        <ExpoImage
-                          source={question.icon}
-                          style={styles.questionIcon}
-                          contentFit='contain'
-                          tintColor={isSelected ? '#34C759' : undefined}
-                        />
-                        <Text
-                          style={[
-                            styles.questionText,
-                            isSelected && styles.questionTextActive,
-                          ]}
+                        <LinearGradient
+                          colors={['#141715', '#141715']}
+                          style={styles.questionCard}
                         >
-                          {question.text}
-                        </Text>
+                          <ExpoImage
+                            source={question.icon}
+                            style={styles.questionIcon}
+                            contentFit='contain'
+                            tintColor={isSelected ? '#34C759' : undefined}
+                          />
+                          <Text
+                            style={[
+                              styles.questionText,
+                              isSelected && styles.questionTextActive,
+                            ]}
+                          >
+                            {question.text}
+                          </Text>
+                        </LinearGradient>
                       </LinearGradient>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                );
-              })}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
-          </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('analysis.tone')}</Text>
-            <View style={styles.toneContainer}>
-              {tones.map((tone) => {
-                const isSelected = selectedTone === tone.id;
-                return (
-                  <TouchableOpacity
-                    key={tone.id}
-                    onPress={() => setSelectedTone(tone.id)}
-                    activeOpacity={0.8}
-                  >
-                    <LinearGradient
-                      colors={
-                        isSelected
-                          ? ['rgba(52, 199, 89, 0.3)', 'rgba(25, 97, 43, 0.3)']
-                          : [
-                              'rgba(255, 255, 255, 0.2)',
-                              'rgba(255, 255, 255, 0.2)',
-                            ]
-                      }
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={styles.toneButtonBorder}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('analysis.tone')}</Text>
+              <View style={styles.toneContainer}>
+                {tones.map((tone) => {
+                  const isSelected = selectedTone === tone.id;
+                  return (
+                    <TouchableOpacity
+                      key={tone.id}
+                      onPress={() => setSelectedTone(tone.id)}
+                      activeOpacity={0.8}
                     >
                       <LinearGradient
-                        colors={['#141715', '#141715']}
-                        style={styles.toneButton}
+                        colors={
+                          isSelected
+                            ? [
+                                'rgba(52, 199, 89, 0.3)',
+                                'rgba(25, 97, 43, 0.3)',
+                              ]
+                            : [
+                                'rgba(255, 255, 255, 0.2)',
+                                'rgba(255, 255, 255, 0.2)',
+                              ]
+                        }
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={styles.toneButtonBorder}
                       >
-                        <Text
-                          style={[
-                            styles.toneButtonText,
-                            isSelected && styles.toneButtonTextActive,
-                          ]}
+                        <LinearGradient
+                          colors={['#141715', '#141715']}
+                          style={styles.toneButton}
                         >
-                          {tone.text}
-                        </Text>
+                          <Text
+                            style={[
+                              styles.toneButtonText,
+                              isSelected && styles.toneButtonTextActive,
+                            ]}
+                          >
+                            {tone.text}
+                          </Text>
+                        </LinearGradient>
                       </LinearGradient>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                );
-              })}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
           </View>
-      </View>
 
           <View style={styles.buttonContainer}>
             <GlassButton
@@ -317,25 +335,24 @@ const styles = StyleSheet.create({
   },
   questionCardWrapper: {
     width: '47%',
-    aspectRatio: 1.2,
+    // aspectRatio: 1.2,
   },
   questionCardBorder: {
-    flex: 1,
     borderRadius: 16,
     padding: 1,
   },
   questionCard: {
-    flex: 1,
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'flex-start',
     padding: 16,
+    flexDirection: 'row',
+    gap: 20,
   },
   questionIcon: {
     width: 21,
     height: 21,
     marginBottom: 8,
-    
   },
   questionText: {
     fontSize: 17,
@@ -343,9 +360,9 @@ const styles = StyleSheet.create({
     color: '#999999',
     textAlign: 'left',
     fontFamily: Platform.select({
-      ios: 'SF Pro Text',
+      ios: 'SF-Pro',
       android: 'SF-Pro',
-      web: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
+      web: 'SF-Pro, -apple-system, BlinkMacSystemFont, sans-serif',
     }),
     lineHeight: 22,
     letterSpacing: -0.43,

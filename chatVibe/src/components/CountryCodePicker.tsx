@@ -6,9 +6,11 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { COUNTRIES, getCountryByIso2 } from '../data/countries';
+import { ImageAssets } from '../utils/imageCache';
 
 type CountryCodePickerProps = {
   selectedIso2: string;
@@ -19,7 +21,8 @@ export function CountryCodePicker({
   selectedIso2,
   onSelect,
 }: CountryCodePickerProps) {
-  const selectedCountry = getCountryByIso2(selectedIso2) || getCountryByIso2('RU') || COUNTRIES[0];
+  const selectedCountry =
+    getCountryByIso2(selectedIso2) || getCountryByIso2('RU') || COUNTRIES[0];
 
   return (
     <TouchableOpacity onPress={onSelect} activeOpacity={0.8}>
@@ -40,9 +43,13 @@ export function CountryCodePicker({
           end={{ x: 1, y: 0 }}
           style={styles.selector}
         >
-          <Text style={styles.flag}>{selectedCountry.flag}</Text>
           <Text style={styles.code}>{selectedCountry.code}</Text>
-          <Text style={styles.chevron}>▼</Text>
+          <Text style={styles.flag}>{selectedCountry.flag}</Text>
+          <ExpoImage
+            source={ImageAssets.arrowDown}
+            style={styles.chevron}
+            contentFit='contain'
+          />
         </LinearGradient>
       </LinearGradient>
     </TouchableOpacity>
@@ -73,14 +80,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontFamily: Platform.select({
-      ios: 'Onest-Regular',
-      android: 'Onest-Regular',
-      web: 'Onest, sans-serif',
+      ios: 'Onest-SemiBold',
+      android: 'Onest-SemiBold',
+      web: 'Onest-SemiBold, sans-serif',
     }),
-    fontWeight: '400',
+    fontWeight: '600',
   },
   chevron: {
-    fontSize: 10,
-    color: '#C5C1B9',
+    width: 12,
+    height: 12,
   },
 });

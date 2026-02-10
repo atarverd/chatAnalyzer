@@ -19,6 +19,7 @@ import { Avatar } from '../components/Avatar';
 import { ImageAssets } from '../utils/imageCache';
 import { useTranslation } from 'react-i18next';
 import { processAvatarUrl } from '../utils/avatarUrl';
+import { GlassButton } from '../components/GlassButton';
 
 type Chat = {
   id: number;
@@ -78,11 +79,16 @@ export function AnalysisResultScreen({
 
   return (
     <BackgroundWrapper showGlow showHeader={false}>
-       <SafeAreaView
-         style={styles.safeArea}
-         edges={Platform.OS === 'android' ? ['bottom'] : []}
-       >
-        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 }]}>
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={Platform.OS === 'android' ? ['bottom'] : []}
+      >
+        <View
+          style={[
+            styles.header,
+            { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 },
+          ]}
+        >
           <BackButton onPress={onBack} />
           <View style={styles.headerCenter}>
             <Text style={styles.headerName}>{chat.title}</Text>
@@ -106,59 +112,54 @@ export function AnalysisResultScreen({
           </View>
         </View>
 
-        {isDone && (
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionHeaderLeft}>
-              <Text style={styles.sectionLabelTop}>
-                {t('analysis.whatToStudy')}
-              </Text>
-              <Text style={styles.sectionValue}>{questionLabel}</Text>
-            </View>
-            {!isAnalyzing && (
-              <TouchableOpacity
-                onPress={onReanalyze}
-                activeOpacity={0.8}
-                style={styles.reanalyzeButton}
-              >
-                <ExpoImage
-                  source={ImageAssets.reAnalyzeIcon}
-                  style={styles.reanalyzeIcon}
-                  contentFit='contain'
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-
         <ScrollView
           style={styles.bodyScroll}
           contentContainerStyle={styles.bodyContent}
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
         >
-            {!isDone ? (
-              <View style={styles.loadingContainer}>
-               <LottieOrLoader
-                  source={require('../../assets/Animation.json')}
-                  style={styles.loadingAnimation}
-                  done={!isAnalyzing}
-                />
-                <Text style={styles.loadingTitle}>
-                  {t('analysis.analyzingTitle')}
+          {isDone && (
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionHeaderLeft}>
+                <Text style={styles.sectionLabelTop}>
+                  {t('analysis.whatToStudy')}
                 </Text>
-                <Text style={styles.loadingSubtitle}>
-                  {t('analysis.analyzingSubtitle')}
-                </Text>
+                <Text style={styles.sectionValue}>{questionLabel}</Text>
               </View>
-            ) : (
-              <View style={styles.resultContainer}>
-                <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
-                  {t('analysis.analysisResult')}
-                </Text>
-                <Text style={styles.resultText}>{result}</Text>
-              </View>
-            )}
+            </View>
+          )}
+          {!isDone ? (
+            <View style={styles.loadingContainer}>
+              <LottieOrLoader
+                source={require('../../assets/Animation.json')}
+                style={styles.loadingAnimation}
+                done={!isAnalyzing}
+              />
+              <Text style={styles.loadingTitle}>
+                {t('analysis.analyzingTitle')}
+              </Text>
+              <Text style={styles.loadingSubtitle}>
+                {t('analysis.analyzingSubtitle')}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.resultContainer}>
+              <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
+                {t('analysis.analysisResult')}
+              </Text>
+              <Text style={styles.resultText}>{result}</Text>
+            </View>
+          )}
         </ScrollView>
+        {isDone && (
+          <View style={styles.buttonContainer}>
+            {/* <Button title='Начать' onPress={onStart} /> */}
+            <GlassButton
+              title={t('analysis.startAgain')}
+              onPress={onReanalyze}
+            />
+          </View>
+        )}
       </SafeAreaView>
     </BackgroundWrapper>
   );
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 34,
+    paddingHorizontal: 0,
     paddingBottom: 0,
     flexShrink: 0,
   },
@@ -241,7 +242,7 @@ const styles = StyleSheet.create({
   },
   bodyContent: {
     paddingHorizontal: 34,
-    paddingBottom: 32,
+    paddingBottom: 100,
     flexGrow: 1,
   },
   loadingContainer: {
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
   resultContainer: {
     flex: 1,
   },
-   sectionLabelTop: {
+  sectionLabelTop: {
     fontSize: 14,
     fontWeight: '600',
     color: '#8C8C8C',
@@ -330,5 +331,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     color: '#C5C1B9',
+  },
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 34,
+    paddingBottom: 36,
   },
 });

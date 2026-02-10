@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { Avatar } from './Avatar';
 import { ImageAssets } from '../utils/imageCache';
@@ -17,17 +24,46 @@ type ChatItemProps = {
   chat: Chat;
   onAnalyze: (chat: Chat) => void;
   hasAnalysis?: boolean;
+  analysisTimestamp?: number;
   isPending?: boolean;
 };
 
-export function ChatItem({ chat, onAnalyze, hasAnalysis = false, isPending = false }: ChatItemProps) {
+function formatAnalysisDate(timestamp: number): string {
+  const d = new Date(timestamp);
+  const now = new Date();
+  const isToday =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (isToday) {
+    return d.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${day}.${month}`;
+}
+
+export function ChatItem({
+  chat,
+  onAnalyze,
+  hasAnalysis = false,
+  analysisTimestamp,
+  isPending = false,
+}: ChatItemProps) {
   const { t } = useTranslation();
-  const isPersonal = 
+  const isPersonal =
     chat.type.toLowerCase() === 'private' ||
-    chat.type.toLowerCase().includes('личн') || 
+    chat.type.toLowerCase().includes('личн') ||
     chat.type.toLowerCase().includes('personal');
-  const chatTypeText = isPersonal ? t('chats.personalChat') : t('chats.groupChat');
-  const chatTypeIconSource = isPersonal ? ImageAssets.privateChatIcon : ImageAssets.groupChatIcon;
+  const chatTypeText = isPersonal
+    ? t('chats.personalChat')
+    : t('chats.groupChat');
+  const chatTypeIconSource = isPersonal
+    ? ImageAssets.privateChatIcon
+    : ImageAssets.groupChatIcon;
   const avatarUrl = processAvatarUrl(chat.avatar_url);
 
   return (
@@ -59,7 +95,11 @@ export function ChatItem({ chat, onAnalyze, hasAnalysis = false, isPending = fal
       >
         {isPending ? (
           <>
-            <ActivityIndicator size="small" color="#34C759" style={styles.loadingIndicator} />
+            <ActivityIndicator
+              size='small'
+              color='#34C759'
+              style={styles.loadingIndicator}
+            />
             <ExpoImage
               source={ImageAssets.arrowIcon}
               style={styles.analyzeButtonArrow}
@@ -68,13 +108,20 @@ export function ChatItem({ chat, onAnalyze, hasAnalysis = false, isPending = fal
           </>
         ) : hasAnalysis ? (
           <>
-            <View style={styles.checkmarkContainer}>
-              <View style={styles.checkmarkCircle} />
-              <ExpoImage
-                source={ImageAssets.doneIcon}
-                style={styles.checkmarkIcon}
-                contentFit='contain'
-              />
+            <View style={styles.analysisMetaContainer}>
+              {analysisTimestamp != null && (
+                <Text style={styles.analysisDateText} numberOfLines={1}>
+                  {formatAnalysisDate(analysisTimestamp)}
+                </Text>
+              )}
+              <View style={styles.checkmarkContainer}>
+                <View style={styles.checkmarkCircle} />
+                <ExpoImage
+                  source={ImageAssets.doneIcon}
+                  style={styles.checkmarkIcon}
+                  contentFit='contain'
+                />
+              </View>
             </View>
             <ExpoImage
               source={ImageAssets.arrowIcon}
@@ -171,29 +218,41 @@ const styles = StyleSheet.create({
     width: 8,
     height: 16,
   },
+  analysisMetaContainer: {
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  analysisDateText: {
+    fontSize: 15,
+    color: '#404040',
+    marginBottom: 2,
+    fontFamily: Platform.select({
+      ios: 'SF-Pro',
+      android: 'SF-Pro',
+      web: 'SF-Pro, sans-serif',
+    }),
+  },
   checkmarkContainer: {
     position: 'relative',
     width: 24,
     height: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
   },
   checkmarkCircle: {
     position: 'absolute',
-    width: 24,
-    height: 24,
+    width: 18,
+    height: 18,
     borderRadius: 12,
     backgroundColor: '#34C759',
     opacity: 0.15,
   },
   checkmarkIcon: {
-    width: 11,
-    height: 11,
+    width: 8,
+    height: 8,
     zIndex: 1,
   },
   loadingIndicator: {
     marginRight: 16,
   },
 });
-

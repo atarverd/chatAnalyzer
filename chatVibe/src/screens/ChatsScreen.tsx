@@ -58,6 +58,9 @@ export function ChatsScreen() {
   const [chatsWithAnalysis, setChatsWithAnalysis] = useState<Set<number>>(
     new Set()
   );
+  const [chatAnalysisTimestamps, setChatAnalysisTimestamps] = useState<Map<number, number>>(
+    new Map()
+  );
   const [chatsWithPendingAnalysis, setChatsWithPendingAnalysis] = useState<Set<number>>(
     new Set()
   );
@@ -247,8 +250,9 @@ export function ChatsScreen() {
         `analysisResult:${chatId}`,
         JSON.stringify(storedResult)
       );
-      // Update the set of chats with analysis
+      // Update the set of chats with analysis and timestamp
       setChatsWithAnalysis((prev) => new Set(prev).add(chatId));
+      setChatAnalysisTimestamps((prev) => new Map(prev).set(chatId, Date.now()));
 
       // Trigger success haptic feedback
       await triggerHaptic('success');
@@ -304,11 +308,20 @@ export function ChatsScreen() {
   const checkAnalysisResults = async () => {
     if (!data) return;
     const chatIdsWithAnalysis = new Set<number>();
+    const timestamps = new Map<number, number>();
     const chatIdsWithPending = new Set<number>();
     for (const chat of data) {
       const saved = await AsyncStorage.getItem(`analysisResult:${chat.id}`);
       if (saved) {
-        chatIdsWithAnalysis.add(chat.id);
+        try {
+          const info = JSON.parse(saved);
+          chatIdsWithAnalysis.add(chat.id);
+          if (info.timestamp != null) {
+            timestamps.set(chat.id, info.timestamp);
+          }
+        } catch {
+          chatIdsWithAnalysis.add(chat.id);
+        }
       }
       // Check for pending analysis
       const pending = await AsyncStorage.getItem(`pendingAnalysis:${chat.id}`);
@@ -317,6 +330,7 @@ export function ChatsScreen() {
       }
     }
     setChatsWithAnalysis(chatIdsWithAnalysis);
+    setChatAnalysisTimestamps(timestamps);
     setChatsWithPendingAnalysis(chatIdsWithPending);
   };
 
@@ -493,6 +507,7 @@ export function ChatsScreen() {
                     chat={item}
                     onAnalyze={handleAnalyze}
                     hasAnalysis={chatsWithAnalysis.has(item.id)}
+                    analysisTimestamp={chatAnalysisTimestamps.get(item.id)}
                     isPending={chatsWithPendingAnalysis.has(item.id)}
                   />
                 )}
