@@ -57,8 +57,12 @@ export function AnalysisOptionsScreen({
 
   const contentPaddingHorizontal = 34;
   const questionGridGap = 16;
+  const contentWidth = screenWidth - contentPaddingHorizontal * 2;
+  const cardsPerRow = contentWidth >= 380 ? 2 : 1;
   const questionCardWidth =
-    (screenWidth - contentPaddingHorizontal * 2 - questionGridGap) / 2;
+    cardsPerRow === 1
+      ? contentWidth
+      : (contentWidth - questionGridGap) / 2;
 
   const isPersonal =
     chat.type.toLowerCase() === 'private' ||
@@ -198,7 +202,7 @@ export function AnalysisOptionsScreen({
                               styles.questionText,
                               isSelected && styles.questionTextActive,
                             ]}
-                            numberOfLines={2}
+                            numberOfLines={cardsPerRow === 1 ? 3 : 2}
                           >
                             {question.text}
                           </Text>

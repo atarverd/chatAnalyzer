@@ -3,6 +3,7 @@
   "common": {
     "back": "Back",
     "search": "Search",
+    "yesterday": "Yesterday",
     "retry": "Retry",
     "close": "Close",
     "country": "Country",
@@ -28,9 +29,13 @@
     "group": "Group",
     "analyze": "Analyze",
     "personalChat": "Personal chat",
-    "groupChat": "Group chat"
+    "groupChat": "Group chat",
+    "refresh": "Refresh",
+    "howItWorks": "How it works"
   },
   "analysis": {
+    "notEnoughData": "Not enough data",
+    "notEnoughDataSubtitle": "Continue communication and try again",
     "whatToLearn": "What do you want to know?",
     "tone": "Tone",
     "start": "Start analysis",
@@ -38,6 +43,22 @@
     "reanalyze": "Reanalyze",
     "analyzingTitle": "Analyzing messages",
     "analyzingSubtitle": "Importing chats for analysis",
+    "inProgress": "Analysis is ongoing",
+    "analyzingQuestion": "Analyzing {{topic}}",
+    "loadingMessages": [
+      "Analysing what could be improved",
+      "Analysing communication patterns",
+      "Looking for key moments",
+      "Checking tone and style",
+      "Understanding the dynamics",
+      "Gathering insights",
+      "Studying emotional undertones",
+      "Analysing initiative balance",
+      "Finding recurring themes",
+      "Evaluating response style",
+      "Preparing recommendations",
+      "Almost there..."
+    ],
     "whatToStudy": "What to study",
     "analysisResult": "Analysis result",
     "questionLabels": {
@@ -56,6 +77,12 @@
     "notifications": {
       "completeTitle": "Analysis complete",
       "completeBody": "Analysis for \"{{chatTitle}}\" is ready"
+    },
+    "errors": {
+      "notAuthorized": "Not authorized",
+      "invalidChatId": "Invalid chat ID",
+      "chatNotFound": "Chat not found. Please load chats first",
+      "internalError": "Internal error"
     }
   },
   "intro": {
@@ -66,7 +93,13 @@
     "features": {
       "emotionalTone": "Emotional tone",
       "initiativeBalance": "Initiative balance"
-    }
+    },
+    "securityTitle": "Your data is safe",
+    "securityAccess": "To analyze chats, we will need access to your Telegram account",
+    "securityNoStore": "We do not store correspondence and delete it immediately after analysis",
+    "securityContinue": "Continue",
+    "termsOfUse": "Terms of use",
+    "privacyPolicy": "Privacy policy"
   },
   "success": {
     "title": "Account connected",

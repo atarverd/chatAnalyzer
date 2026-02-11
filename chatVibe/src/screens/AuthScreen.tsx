@@ -34,7 +34,12 @@ import { CountryCodePicker } from '../components/CountryCodePicker';
 import { CountrySelectionScreen } from './CountrySelectionScreen';
 import { useTranslation } from 'react-i18next';
 import { triggerHaptic } from '../utils/haptics';
-import { getCountryByIso2, getCountryPhoneLength, formatPhoneForDisplay, formatNationalForDisplay } from '../data/countries';
+import {
+  getCountryByIso2,
+  getCountryPhoneLength,
+  formatPhoneForDisplay,
+  formatNationalForDisplay,
+} from '../data/countries';
 import { Image as ExpoImage } from 'expo-image';
 import { ImageAssets } from '../utils/imageCache';
 
@@ -292,10 +297,11 @@ export function AuthScreen() {
     const phone = `${countryCode}${phoneNumber}`;
 
     try {
-      const sendRes = await sendCode({ phone }).unwrap() as { error?: string };
-      const sendError = typeof sendRes?.error === 'string'
-        ? sendRes.error.toUpperCase()
-        : '';
+      const sendRes = (await sendCode({ phone }).unwrap()) as {
+        error?: string;
+      };
+      const sendError =
+        typeof sendRes?.error === 'string' ? sendRes.error.toUpperCase() : '';
       if (sendError.includes('PHONE_NUMBER_INVALID')) {
         setStatus(t('errors.incorrectNumber'));
         return;
@@ -310,7 +316,9 @@ export function AuthScreen() {
         (typeof data?.message === 'string' &&
           data.message.toUpperCase().includes('PHONE_NUMBER_INVALID'));
       setStatus(
-        isInvalidNumber ? t('errors.incorrectNumber') : t('errors.failedToSendCode')
+        isInvalidNumber
+          ? t('errors.incorrectNumber')
+          : t('errors.failedToSendCode'),
       );
     }
   };
@@ -346,14 +354,15 @@ export function AuthScreen() {
         setStatus(null);
         setCodeError(false);
       } else {
-        const errStr = typeof res.error === 'string' ? res.error.toUpperCase() : '';
+        const errStr =
+          typeof res.error === 'string' ? res.error.toUpperCase() : '';
         const isInvalidCode = errStr.includes('PHONE_CODE_INVALID');
         const isInvalidNumber = errStr.includes('PHONE_NUMBER_INVALID');
         const message = isInvalidCode
           ? t('errors.invalidCode')
           : isInvalidNumber
             ? t('errors.incorrectNumber')
-            : (res.error || t('errors.invalidCode'));
+            : res.error || t('errors.invalidCode');
         setStatus(message);
         setCodeError(true);
         await triggerHaptic('error');
@@ -363,7 +372,8 @@ export function AuthScreen() {
         return;
       }
       const data = err?.data;
-      const msg = typeof data?.message === 'string' ? data.message.toUpperCase() : '';
+      const msg =
+        typeof data?.message === 'string' ? data.message.toUpperCase() : '';
       const isInvalidCode =
         data?.code === 'PHONE_CODE_INVALID' ||
         data?.error === 'PHONE_CODE_INVALID' ||
@@ -488,7 +498,10 @@ export function AuthScreen() {
                             style={styles.phoneInput}
                             placeholder=''
                             keyboardType='phone-pad'
-                            value={formatNationalForDisplay(auth.phone, selectedCountryIso2)}
+                            value={formatNationalForDisplay(
+                              auth.phone,
+                              selectedCountryIso2,
+                            )}
                             onChangeText={handleChangePhone}
                             autoFocus={Platform.OS === 'web'}
                             inputMode='numeric'
@@ -539,7 +552,7 @@ export function AuthScreen() {
                           phone: formatPhoneForDisplay(
                             getCountryByIso2(selectedCountryIso2)?.code ?? '+7',
                             auth.phone,
-                            selectedCountryIso2
+                            selectedCountryIso2,
                           ),
                         })}
                       </Text>
@@ -649,7 +662,7 @@ export function AuthScreen() {
                       <Text style={styles.codeTitle}>
                         {t('auth.enterPasswordTitle')}
                       </Text>
-                      <Text style={styles.codeSubtitle}>
+                      {/* <Text style={styles.codeSubtitle}>
                         {t('auth.passwordSentTo', {
                           phone: formatPhoneForDisplay(
                             getCountryByIso2(selectedCountryIso2)?.code ?? '+7',
@@ -657,7 +670,7 @@ export function AuthScreen() {
                             selectedCountryIso2
                           ),
                         })}
-                      </Text>
+                      </Text> */}
 
                       <View style={styles.passwordInputContainer}>
                         <LinearGradient
@@ -1006,7 +1019,7 @@ const styles = StyleSheet.create({
   passwordInputContainer: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 40,
+    marginVertical: 40,
   },
   passwordInputBorder: {
     width: '100%',

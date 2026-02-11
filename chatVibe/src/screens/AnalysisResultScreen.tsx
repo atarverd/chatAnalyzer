@@ -5,14 +5,14 @@ import {
   StyleSheet,
   Platform,
   ScrollView,
-  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
-import { LottieOrLoader } from '../components/LottieOrLoader';
+import { TypingText } from '../components/TypingText';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { BackButton } from '../components/BackButton';
 import { Avatar } from '../components/Avatar';
@@ -33,15 +33,9 @@ type AnalysisResultScreenProps = {
   questionType?: string | null;
   result: string;
   isAnalyzing: boolean;
+  animateResult?: boolean;
   onBack: () => void;
   onReanalyze: () => void;
-};
-
-const QUESTION_LABELS: Record<string, string> = {
-  character: 'Характер общения',
-  communication: 'Как лучше общаться',
-  mistakes: 'Где я делаю ошибки',
-  dynamics: 'Понять динамику',
 };
 
 export function AnalysisResultScreen({
@@ -49,11 +43,16 @@ export function AnalysisResultScreen({
   questionType,
   result,
   isAnalyzing,
+  animateResult = true,
   onBack,
   onReanalyze,
 }: AnalysisResultScreenProps) {
   const { t } = useTranslation();
   const [isDone, setIsDone] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState<'import' | 'analyzing'>(
+    'import',
+  );
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const isPersonal =
     chat.type.toLowerCase() === 'private' ||
     chat.type.toLowerCase().includes('личн') ||
@@ -66,14 +65,49 @@ export function AnalysisResultScreen({
 
   useEffect(() => {
     if (!isAnalyzing && result) {
-      const timer = setTimeout(() => {
-        setIsDone(true);
-      }, 1000);
-      return () => clearTimeout(timer);
+      setIsDone(true);
     } else if (isAnalyzing) {
       setIsDone(false);
+      setLoadingPhase('import');
     }
   }, [isAnalyzing, result]);
+
+  // After 3 seconds, switch from import phase to analyzing phase
+  useEffect(() => {
+    if (!isAnalyzing || isDone) return;
+
+    const timer = setTimeout(() => {
+      setLoadingPhase('analyzing');
+      setLoadingMessageIndex(0);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [isAnalyzing, isDone]);
+
+  // Cycle through loading messages every 2-4 seconds in analyzing phase
+  useEffect(() => {
+    if (!isAnalyzing || isDone || loadingPhase !== 'analyzing') return;
+
+    const loadingMessages = t('analysis.loadingMessages', {
+      returnObjects: true,
+    }) as string[];
+    const messageCount = Array.isArray(loadingMessages)
+      ? loadingMessages.length
+      : 0;
+    if (messageCount === 0) return;
+
+    const minDelay = 2000;
+    const maxDelay = 4000;
+    const delay = minDelay + Math.random() * (maxDelay - minDelay);
+
+    const timer = setTimeout(() => {
+      setLoadingMessageIndex((prev) =>
+        prev < messageCount - 1 ? prev + 1 : prev,
+      );
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [isAnalyzing, isDone, loadingPhase, loadingMessageIndex, t]);
 
   const insets = useSafeAreaInsets();
 
@@ -130,24 +164,47 @@ export function AnalysisResultScreen({
           )}
           {!isDone ? (
             <View style={styles.loadingContainer}>
-              <LottieOrLoader
-                source={require('../../assets/Animation.json')}
-                style={styles.loadingAnimation}
-                done={!isAnalyzing}
-              />
-              <Text style={styles.loadingTitle}>
-                {t('analysis.analyzingTitle')}
-              </Text>
-              <Text style={styles.loadingSubtitle}>
-                {t('analysis.analyzingSubtitle')}
-              </Text>
+              {loadingPhase === 'import' ? (
+                <>
+                  <ActivityIndicator
+                    size='large'
+                    color='#34C759'
+                    style={styles.loadingSpinner}
+                  />
+                  <Text style={styles.importSubtitle}>
+                    {t('analysis.analyzingSubtitle')}
+                  </Text>
+                </>
+              ) : (
+                <View style={styles.analyzingPhaseContainer}>
+                  <Text style={styles.inProgressLabel}>
+                    {t('analysis.inProgress')}
+                  </Text>
+                  <TypingText
+                    text={
+                      (
+                        t('analysis.loadingMessages', {
+                          returnObjects: true,
+                        }) as string[]
+                      )?.[loadingMessageIndex] ??
+                      t('analysis.analyzingQuestion', { topic: questionLabel })
+                    }
+                    speed={40}
+                    style={styles.analyzingQuestion}
+                  />
+                </View>
+              )}
             </View>
           ) : (
             <View style={styles.resultContainer}>
               <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
                 {t('analysis.analysisResult')}
               </Text>
-              <Text style={styles.resultText}>{result}</Text>
+              {animateResult ? (
+                <TypingText text={result} speed={5} style={styles.resultText} />
+              ) : (
+                <Text style={styles.resultText}>{result}</Text>
+              )}
             </View>
           )}
         </ScrollView>
@@ -249,37 +306,50 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    // paddingTop: 40,
     paddingBottom: 100,
   },
-  loadingAnimation: {
-    width: 180,
-    height: 180,
+  loadingSpinner: {
+    marginBottom: 24,
   },
-  loadingTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-    // marginTop: 24,
-    marginBottom: 8,
-    fontFamily: Platform.select({
-      ios: 'Onest-SemiBold',
-      android: 'Onest-SemiBold',
-      web: 'Onest, sans-serif',
-    }),
-  },
-  loadingSubtitle: {
+  importSubtitle: {
     fontSize: 16,
     fontWeight: '400',
-    color: '#C5C1B9',
+    color: '#fff',
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
       android: 'Onest-Regular',
       web: 'Onest, sans-serif',
     }),
-    lineHeight: 20,
+    lineHeight: 22,
+    paddingHorizontal: 24,
+  },
+  analyzingPhaseContainer: {
+    flex: 1,
+    alignSelf: 'stretch',
+    paddingTop: 0,
+  },
+  inProgressLabel: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: 8,
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest-Regular',
+      web: 'Onest, sans-serif',
+    }),
+  },
+  analyzingQuestion: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#fff',
+    fontFamily: Platform.select({
+      ios: 'Onest-SemiBold',
+      android: 'Onest-SemiBold',
+      web: 'Onest, sans-serif',
+    }),
+    lineHeight: 28,
   },
   resultContainer: {
     flex: 1,

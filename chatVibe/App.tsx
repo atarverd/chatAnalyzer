@@ -5,6 +5,7 @@ import {
   Animated,
   Dimensions,
   BackHandler,
+  Modal,
 } from 'react-native';
 
 import { Image as ExpoImage } from 'expo-image';
@@ -50,6 +51,7 @@ function Root() {
   const [showIntro, setShowIntro] = useState<boolean | null>(null);
   const [introChecked, setIntroChecked] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const wasAuthorizedRef = useRef<boolean | null>(null);
   const splashOpacity = useRef(new Animated.Value(1)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
@@ -225,7 +227,27 @@ function Root() {
           ) : showSuccess ? (
             <SuccessScreen onComplete={() => setShowSuccess(false)} />
           ) : auth.authorized ? (
-            <ChatsScreen />
+            <>
+              <ChatsScreen onShowHowItWorks={() => setShowHowItWorks(true)} />
+              <Modal
+                visible={showHowItWorks}
+                animationType="slide"
+                presentationStyle="fullScreen"
+              >
+                <View style={styles.modalContainer}>
+                  <ExpoImage
+                    source={ImageAssets.bgTop}
+                    style={styles.modalBackground}
+                    contentFit="contain"
+                    contentPosition="top"
+                  />
+                  <IntroScreen
+                    onStart={() => setShowHowItWorks(false)}
+                    hideLinks
+                  />
+                </View>
+              </Modal>
+            </>
           ) : (
             <AuthScreen />
           )
@@ -268,10 +290,25 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 1000,
+    backgroundColor: '#141414',
   },
   contentWrapper: {
     flex: 1,
     backgroundColor: 'transparent',
     zIndex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#141414',
+  },
+  modalBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height * 0.4,
+    alignSelf: 'flex-start',
+    zIndex: 0,
   },
 });

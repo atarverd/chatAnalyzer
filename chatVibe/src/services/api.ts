@@ -94,6 +94,46 @@ export const api = createApi({
         }
       },
     }),
+    getAnalyzePossible: builder.query<{ possible: boolean }, number>({
+      queryFn: async (chatId) => {
+        try {
+          const url = `https://chatvibe.dategram.io/chats/${chatId}/analyze/possible`;
+          const response = await fetch(url, {
+            credentials: 'include',
+          });
+          const data = await response.json();
+
+          if (!response.ok) {
+            const errorMsg =
+              data?.error ||
+              data?.message ||
+              (response.status === 401
+                ? 'Not authorized'
+                : response.status === 400
+                  ? 'Invalid chat ID'
+                  : data?.message?.toLowerCase?.()?.includes('not found') ||
+                      data?.message?.toLowerCase?.()?.includes('populate cache')
+                    ? 'Chat not found. Please call /chats first to populate cache'
+                    : 'Internal error');
+            return {
+              error: {
+                status: response.status,
+                data: { message: errorMsg },
+              },
+            };
+          }
+
+          return { data: { possible: data === true || data === false ? data : data?.possible ?? true } };
+        } catch (error: any) {
+          return {
+            error: {
+              status: 'FETCH_ERROR',
+              error: error.message || 'Failed to check analyze possibility',
+            },
+          };
+        }
+      },
+    }),
     analyzeChat: builder.mutation<
       { analysis: string },
       { chatId: number; type: string; tone?: string }
@@ -174,6 +214,7 @@ export const {
   useSignInMutation,
   useSubmitPasswordMutation,
   useGetChatsQuery,
+  useLazyGetAnalyzePossibleQuery,
   useAnalyzeChatMutation,
   useLogoutMutation,
 } = api;

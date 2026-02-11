@@ -26,9 +26,14 @@ type ChatItemProps = {
   hasAnalysis?: boolean;
   analysisTimestamp?: number;
   isPending?: boolean;
+  hasNotEnoughData?: boolean;
 };
 
-function formatAnalysisDate(timestamp: number): string {
+function formatAnalysisDate(
+  timestamp: number,
+  t: (key: string) => string,
+  locale: string,
+): string {
   const d = new Date(timestamp);
   const now = new Date();
   const isToday =
@@ -36,14 +41,25 @@ function formatAnalysisDate(timestamp: number): string {
     d.getMonth() === now.getMonth() &&
     d.getDate() === now.getDate();
   if (isToday) {
-    return d.toLocaleTimeString(undefined, {
+    return d.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
+      hour12: false,
     });
   }
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  return `${day}.${month}`;
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday =
+    d.getFullYear() === yesterday.getFullYear() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getDate() === yesterday.getDate();
+  if (isYesterday) {
+    return t('common.yesterday');
+  }
+  return d.toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'short',
+  });
 }
 
 export function ChatItem({
@@ -52,8 +68,9 @@ export function ChatItem({
   hasAnalysis = false,
   analysisTimestamp,
   isPending = false,
+  hasNotEnoughData = false,
 }: ChatItemProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isPersonal =
     chat.type.toLowerCase() === 'private' ||
     chat.type.toLowerCase().includes('личн') ||
@@ -111,18 +128,32 @@ export function ChatItem({
             <View style={styles.analysisMetaContainer}>
               {analysisTimestamp != null && (
                 <Text style={styles.analysisDateText} numberOfLines={1}>
-                  {formatAnalysisDate(analysisTimestamp)}
+                  {formatAnalysisDate(
+                    analysisTimestamp,
+                    t,
+                    i18n.language === 'ru' ? 'ru-RU' : 'en-GB',
+                  )}
                 </Text>
               )}
-              <View style={styles.checkmarkContainer}>
-                <View style={styles.checkmarkCircle} />
-                <ExpoImage
-                  source={ImageAssets.doneIcon}
-                  style={styles.checkmarkIcon}
-                  contentFit='contain'
-                />
-              </View>
+              <ExpoImage
+                source={ImageAssets.doneIcon}
+                style={styles.checkmarkIcon}
+                contentFit='contain'
+              />
             </View>
+            <ExpoImage
+              source={ImageAssets.arrowIcon}
+              style={styles.analyzeButtonArrow}
+              contentFit='contain'
+            />
+          </>
+        ) : hasNotEnoughData ? (
+          <>
+            <ExpoImage
+              source={ImageAssets.notEnough}
+              style={styles.notEnoughIcon}
+              contentFit='contain'
+            />
             <ExpoImage
               source={ImageAssets.arrowIcon}
               style={styles.analyzeButtonArrow}
@@ -219,7 +250,7 @@ const styles = StyleSheet.create({
     height: 16,
   },
   analysisMetaContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
     marginRight: 16,
   },
   analysisDateText: {
@@ -232,25 +263,14 @@ const styles = StyleSheet.create({
       web: 'SF-Pro, sans-serif',
     }),
   },
-  checkmarkContainer: {
-    position: 'relative',
+  checkmarkIcon: {
+    width: 22,
+    height: 22,
+  },
+  notEnoughIcon: {
     width: 24,
     height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkmarkCircle: {
-    position: 'absolute',
-    width: 18,
-    height: 18,
-    borderRadius: 12,
-    backgroundColor: '#34C759',
-    opacity: 0.15,
-  },
-  checkmarkIcon: {
-    width: 8,
-    height: 8,
-    zIndex: 1,
+    marginRight: 16,
   },
   loadingIndicator: {
     marginRight: 16,

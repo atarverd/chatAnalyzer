@@ -19,12 +19,13 @@ export const ImageAssets = {
   questionIcon: require('../../assets/question.png'),
   alertIcon: require('../../assets/alertIcon.png'),
   closeIcon: require('../../assets/close.png'),
-  doneIcon: require('../../assets/done.png'),
+  doneIcon: require('../../assets/checkmark.png'),
   eye: require('../../assets/eye.png'),
   eyeClosed: require('../../assets/eyeClosed.png'),
   backIcon: require('../../assets/backIcon.png'),
   glow: require('../../assets/glow.png'),
   reAnalyzeIcon: require('../../assets/reAnalyzeIcon.png'),
+  notEnough: require('../../assets/not_enough.png'),
 };
 
 // Preload all images at app startup

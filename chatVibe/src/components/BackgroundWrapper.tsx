@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { ImageAssets } from '../utils/imageCache';
 import { BackButton } from './BackButton';
+import { MenuButton } from './MenuButton';
 
 type BackgroundWrapperProps = {
   showIcon?: boolean;
@@ -20,6 +21,8 @@ type BackgroundWrapperProps = {
   showHeader?: boolean;
   showBackButton?: boolean;
   onBackPress?: () => void;
+  showMenuButton?: boolean;
+  onMenuPress?: () => void;
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
 };
@@ -30,6 +33,8 @@ export function BackgroundWrapper({
   showHeader = false,
   showBackButton = false,
   onBackPress,
+  showMenuButton = false,
+  onMenuPress,
   style,
   children,
 }: BackgroundWrapperProps) {
@@ -45,6 +50,7 @@ export function BackgroundWrapper({
     >
       {showHeader && (
         <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 }]}>
+          <View style={styles.headerRow}>
           <LinearGradient
             colors={['#083C15', '#171E18']}
             locations={[0.1647, 0.8353]}
@@ -106,6 +112,7 @@ export function BackgroundWrapper({
               )}
             </LinearGradient>
           </LinearGradient>
+          </View>
         </View>
       )}
       {showIcon && (
@@ -132,6 +139,15 @@ export function BackgroundWrapper({
             : insets.top + 24 + (49 - 48) / 2  // Header paddingTop (insets.top + 24) + half the difference
         }]}>
           <BackButton onPress={onBackPress} />
+        </View>
+      )}
+      {showMenuButton && onMenuPress && (
+        <View style={[styles.menuButtonContainer, { 
+          top: Platform.OS === 'web' 
+            ? 24 + (49 - 48) / 2
+            : insets.top + 24 + (49 - 48) / 2
+        }]}>
+          <MenuButton onPress={onMenuPress} />
         </View>
       )}
       {children}
@@ -172,6 +188,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
     alignItems: 'center',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuButtonContainer: {
+    position: 'absolute',
+    right: 24,
+    zIndex: 10,
   },
   headerBorder: {
     borderRadius: 60,

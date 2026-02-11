@@ -11,10 +11,20 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Image,
+  Alert,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useGetChatsQuery, useAnalyzeChatMutation, api } from '../services/api';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import {
+  useGetChatsQuery,
+  useLazyGetAnalyzePossibleQuery,
+  useAnalyzeChatMutation,
+  useLogoutMutation,
+  api,
+} from '../services/api';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { triggerHaptic } from '../utils/haptics';
@@ -24,9 +34,14 @@ import { ErrorView } from '../components/ErrorView';
 import { EmptyView } from '../components/EmptyView';
 import { AnalysisOptionsScreen } from './AnalysisOptionsScreen';
 import { AnalysisResultScreen } from './AnalysisResultScreen';
+import { NotEnoughDataScreen } from './NotEnoughDataScreen';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
+import { ChatsMenuDropdown } from '../components/ChatsMenuDropdown';
 import { ImageAssets } from '../utils/imageCache';
 import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '../store';
+import { logout } from '../features/auth/authSlice';
 
 type AnalysisType = 'personal' | 'business' | 'qualities' | null;
 
@@ -37,34 +52,50 @@ type Chat = {
   avatar_url?: string;
 };
 
-export function ChatsScreen() {
+type ChatsScreenProps = {
+  onShowHowItWorks?: () => void;
+};
+
+export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const dispatch = useDispatch<AppDispatch>();
   const { data, isLoading, error, refetch } = useGetChatsQuery();
+  const [getAnalyzePossible] = useLazyGetAnalyzePossibleQuery();
   const [analyzeChat, { isLoading: isAnalyzing }] = useAnalyzeChatMutation();
+  const [logoutMutation] = useLogoutMutation();
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const [analysisView, setAnalysisView] = useState<
-    'none' | 'options' | 'result'
+    'none' | 'options' | 'result' | 'notEnough'
   >('none');
+  const [chatsWithNotEnoughData, setChatsWithNotEnoughData] = useState<
+    Set<number>
+  >(new Set());
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const [analysisResults, setAnalysisResults] = useState<Map<number, string>>(new Map());
+  const [analysisResults, setAnalysisResults] = useState<Map<number, string>>(
+    new Map(),
+  );
   const [currentQuestionType, setCurrentQuestionType] = useState<string | null>(
-    null
+    null,
   );
   const [currentTone, setCurrentTone] = useState<string>('neutral');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'personal' | 'group'>(
-    'all'
+    'all',
   );
   const [chatsWithAnalysis, setChatsWithAnalysis] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
-  const [chatAnalysisTimestamps, setChatAnalysisTimestamps] = useState<Map<number, number>>(
-    new Map()
-  );
-  const [chatsWithPendingAnalysis, setChatsWithPendingAnalysis] = useState<Set<number>>(
-    new Set()
-  );
+  const [chatAnalysisTimestamps, setChatAnalysisTimestamps] = useState<
+    Map<number, number>
+  >(new Map());
+  const [chatsWithPendingAnalysis, setChatsWithPendingAnalysis] = useState<
+    Set<number>
+  >(new Set());
   const [analyzingChatId, setAnalyzingChatId] = useState<number | null>(null);
+  const [isExistingAnalysisResult, setIsExistingAnalysisResult] =
+    useState(false);
   const appStateRef = useRef(AppState.currentState);
   const isAppActiveRef = useRef(true);
 
@@ -114,7 +145,7 @@ export function ChatsScreen() {
           isAppActiveRef.current = false;
         }
         appStateRef.current = nextAppState;
-      }
+      },
     );
 
     return () => {
@@ -132,6 +163,7 @@ export function ChatsScreen() {
         const info = JSON.parse(pending);
         setCurrentQuestionType(info.questionType || info.type || null);
         setCurrentTone(info.tone || 'neutral');
+        setIsExistingAnalysisResult(false);
         setAnalysisView('result');
         setAnalyzingChatId(chat.id);
         return;
@@ -143,7 +175,10 @@ export function ChatsScreen() {
         const info = JSON.parse(saved);
         setCurrentQuestionType(info.questionType || info.type || null);
         setCurrentTone(info.tone || 'neutral');
-        setAnalysisResults((prev) => new Map(prev).set(chat.id, info.analysis || ''));
+        setAnalysisResults((prev) =>
+          new Map(prev).set(chat.id, info.analysis || ''),
+        );
+        setIsExistingAnalysisResult(true);
         setAnalysisView('result');
         setAnalyzingChatId(null);
         return;
@@ -153,6 +188,12 @@ export function ChatsScreen() {
     }
 
     setAnalysisView('options');
+    setAnalyzingChatId(null);
+  };
+
+  const handleBackFromNotEnough = () => {
+    setAnalysisView('none');
+    setSelectedChat(null);
     setAnalyzingChatId(null);
   };
 
@@ -166,12 +207,17 @@ export function ChatsScreen() {
 
     // Check if there's a saved analysis for this chat
     try {
-      const saved = await AsyncStorage.getItem(`analysisResult:${selectedChat.id}`);
+      const saved = await AsyncStorage.getItem(
+        `analysisResult:${selectedChat.id}`,
+      );
       if (saved) {
         const info = JSON.parse(saved);
         setCurrentQuestionType(info.questionType || info.type || null);
         setCurrentTone(info.tone || 'neutral');
-        setAnalysisResults((prev) => new Map(prev).set(selectedChat.id, info.analysis || ''));
+        setAnalysisResults((prev) =>
+          new Map(prev).set(selectedChat.id, info.analysis || ''),
+        );
+        setIsExistingAnalysisResult(true);
         setAnalysisView('result');
         setAnalyzingChatId(null);
         return;
@@ -186,11 +232,46 @@ export function ChatsScreen() {
     setAnalyzingChatId(null);
   };
 
-  const handleStartAnalysis = (questionType: string, tone: string) => {
+  const handleStartAnalysis = async (questionType: string, tone: string) => {
     if (!selectedChat) return;
+
+    // Check if analysis is possible before starting
+    try {
+      const result = await getAnalyzePossible(selectedChat.id);
+      if (result.error) {
+        const err = result.error as {
+          status?: number;
+          data?: { message?: string };
+          error?: string;
+        };
+        const status = err?.status;
+        const msg = err?.data?.message || err?.error || '';
+        const errorKey =
+          status === 401
+            ? 'analysis.errors.notAuthorized'
+            : status === 400 && String(msg).toLowerCase().includes('invalid')
+              ? 'analysis.errors.invalidChatId'
+              : String(msg).toLowerCase().includes('not found') ||
+                  String(msg).toLowerCase().includes('populate cache')
+                ? 'analysis.errors.chatNotFound'
+                : 'analysis.errors.internalError';
+        Alert.alert(t('errors.generic'), t(errorKey));
+        return;
+      }
+      if (result.data?.possible === false) {
+        setChatsWithNotEnoughData((prev) => new Set(prev).add(selectedChat.id));
+        setAnalysisView('notEnough');
+        setAnalyzingChatId(null);
+        return;
+      }
+    } catch (err: any) {
+      Alert.alert(t('errors.generic'), t('analysis.errors.internalError'));
+      return;
+    }
 
     setCurrentQuestionType(questionType);
     setCurrentTone(tone);
+    setIsExistingAnalysisResult(false);
     setAnalysisView('result');
     setAnalysisResults((prev) => {
       const newMap = new Map(prev);
@@ -217,9 +298,12 @@ export function ChatsScreen() {
       tone,
       timestamp: Date.now(),
     };
-      await AsyncStorage.setItem(`pendingAnalysis:${chatId}`, JSON.stringify(analysisInfo));
-      setAnalyzingChatId(chatId);
-      setChatsWithPendingAnalysis((prev) => new Set(prev).add(chatId));
+    await AsyncStorage.setItem(
+      `pendingAnalysis:${chatId}`,
+      JSON.stringify(analysisInfo),
+    );
+    setAnalyzingChatId(chatId);
+    setChatsWithPendingAnalysis((prev) => new Set(prev).add(chatId));
 
     try {
       // Start the analysis
@@ -248,11 +332,13 @@ export function ChatsScreen() {
       };
       await AsyncStorage.setItem(
         `analysisResult:${chatId}`,
-        JSON.stringify(storedResult)
+        JSON.stringify(storedResult),
       );
       // Update the set of chats with analysis and timestamp
       setChatsWithAnalysis((prev) => new Set(prev).add(chatId));
-      setChatAnalysisTimestamps((prev) => new Map(prev).set(chatId, Date.now()));
+      setChatAnalysisTimestamps((prev) =>
+        new Map(prev).set(chatId, Date.now()),
+      );
 
       // Trigger success haptic feedback
       await triggerHaptic('success');
@@ -272,11 +358,15 @@ export function ChatsScreen() {
           });
         } catch (error) {
           // Update result only for this specific chat
-          setAnalysisResults((prev) => new Map(prev).set(chatId, result.analysis));
+          setAnalysisResults((prev) =>
+            new Map(prev).set(chatId, result.analysis),
+          );
         }
       } else {
         // Update result only for this specific chat
-        setAnalysisResults((prev) => new Map(prev).set(chatId, result.analysis));
+        setAnalysisResults((prev) =>
+          new Map(prev).set(chatId, result.analysis),
+        );
       }
     } catch (error: any) {
       await AsyncStorage.removeItem(`pendingAnalysis:${chatId}`);
@@ -290,7 +380,9 @@ export function ChatsScreen() {
       const currentAppState = AppState.currentState;
       if (currentAppState === 'active') {
         // Update error only for this specific chat
-        setAnalysisResults((prev) => new Map(prev).set(chatId, t('errors.failedToAnalyze')));
+        setAnalysisResults((prev) =>
+          new Map(prev).set(chatId, t('errors.failedToAnalyze')),
+        );
       }
     }
   };
@@ -364,10 +456,21 @@ export function ChatsScreen() {
     );
   }
 
+  // Show not enough data screen
+  if (analysisView === 'notEnough' && selectedChat) {
+    return (
+      <NotEnoughDataScreen
+        chat={selectedChat}
+        onBack={handleBackFromNotEnough}
+      />
+    );
+  }
+
   // Show analysis result screen
   if (analysisView === 'result' && selectedChat) {
     // Only show loading if this specific chat is being analyzed
-    const isThisChatAnalyzing = analyzingChatId === selectedChat.id && isAnalyzing;
+    const isThisChatAnalyzing =
+      analyzingChatId === selectedChat.id && isAnalyzing;
     // Get result only for this specific chat
     const chatResult = analysisResults.get(selectedChat.id) || '';
     return (
@@ -376,6 +479,7 @@ export function ChatsScreen() {
         questionType={currentQuestionType}
         result={chatResult}
         isAnalyzing={isThisChatAnalyzing}
+        animateResult={!isExistingAnalysisResult}
         onBack={handleBackFromResult}
         onReanalyze={() => {
           setAnalysisView('options');
@@ -401,8 +505,35 @@ export function ChatsScreen() {
     return matchesSearch && matchesFilter;
   });
 
+  const handleLogout = async () => {
+    try {
+      await logoutMutation().unwrap();
+    } catch {
+      // Ignore errors, still logout locally
+    } finally {
+      dispatch(logout());
+      dispatch(api.util.resetApiState());
+    }
+  };
+
   return (
-    <BackgroundWrapper showGlow showHeader>
+    <BackgroundWrapper
+      showGlow
+      showHeader
+      showMenuButton
+      onMenuPress={() => setMenuVisible(true)}
+    >
+      <ChatsMenuDropdown
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onRefresh={() => refetch()}
+        onHowItWorks={() => {
+          setMenuVisible(false);
+          onShowHowItWorks?.();
+        }}
+        onLogout={handleLogout}
+        anchorTop={Platform.OS === 'web' ? 60 : insets.top + 24 + 36}
+      />
       <SafeAreaView
         style={styles.safeArea}
         edges={Platform.OS === 'android' ? ['bottom'] : []}
@@ -509,6 +640,7 @@ export function ChatsScreen() {
                     hasAnalysis={chatsWithAnalysis.has(item.id)}
                     analysisTimestamp={chatAnalysisTimestamps.get(item.id)}
                     isPending={chatsWithPendingAnalysis.has(item.id)}
+                    hasNotEnoughData={chatsWithNotEnoughData.has(item.id)}
                   />
                 )}
               />
@@ -534,7 +666,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     // width: 354,
-    width:Platform.OS === 'web' ?'-webkit-fill-available' : 'unset',
+    width: Platform.OS === 'web' ? '-webkit-fill-available' : 'unset',
     height: 44,
     borderRadius: 296,
     paddingLeft: 11,
@@ -594,7 +726,7 @@ const styles = StyleSheet.create({
   filterContainer: {
     flexDirection: 'row',
     // width: 354,
-    width:Platform.OS === 'web' ?'-webkit-fill-available' : 'unset',
+    width: Platform.OS === 'web' ? '-webkit-fill-available' : 'unset',
     height: 36,
     borderRadius: 100,
     borderWidth: 1,
