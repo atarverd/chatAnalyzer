@@ -33,7 +33,7 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
   const features = [
     {
       icon: ImageAssets.chatIcon,
-      text: t('analysis.questionLabels.communication_character'),
+      text: t('intro.features.comunicationStyle'),
     },
     {
       icon: ImageAssets.sprakIcon,
@@ -168,7 +168,9 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
                   }
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.linkText}>{t('intro.privacyPolicy')}</Text>
+                  <Text style={styles.linkText}>
+                    {t('intro.privacyPolicy')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -334,7 +336,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 34,
   },
   securityCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#0a0a0a',
     borderRadius: 24,
     padding: 28,
     width: '100%',

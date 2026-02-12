@@ -91,10 +91,11 @@
     "title": "Analyze your Telegram chats with AI",
     "whatWeAnalyze": "WHAT WE ANALYZE",
     "start": "Start",
-    "privacy": "We don't store your messages and delete them right after analysis",
+    "privacy": "We do not store correspondence and delete it immediately after analysis",
     "features": {
       "emotionalTone": "Emotional tone",
-      "initiativeBalance": "Initiative balance"
+      "initiativeBalance": "Initiative balance",
+      "comunicationStyle": "Communication style"
     },
     "securityTitle": "Your data is safe",
     "securityAccess": "To analyze chats, we will need access to your Telegram account",
