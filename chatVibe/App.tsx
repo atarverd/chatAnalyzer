@@ -19,7 +19,11 @@ import {
   Outfit_500Medium,
   Outfit_600SemiBold,
 } from '@expo-google-fonts/outfit';
-import { Onest_400Regular, Onest_600SemiBold } from '@expo-google-fonts/onest';
+import {
+  Onest_400Regular,
+  Onest_500Medium,
+  Onest_600SemiBold,
+} from '@expo-google-fonts/onest';
 import { store } from './src/store';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { ChatsScreen } from './src/screens/ChatsScreen';
@@ -63,6 +67,7 @@ function Root() {
     'Outfit-Medium': Outfit_500Medium,
     'Outfit-SemiBold': Outfit_600SemiBold,
     'Onest-Regular': Onest_400Regular,
+    'Onest-Medium': Onest_500Medium,
     'Onest-SemiBold': Onest_600SemiBold,
     'SF-Pro': require('./assets/fonts/SF-Pro.ttf'),
   });

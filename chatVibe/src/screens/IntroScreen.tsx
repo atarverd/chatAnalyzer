@@ -33,7 +33,7 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
   const features = [
     {
       icon: ImageAssets.chatIcon,
-      text: t('analysis.questionLabels.character'),
+      text: t('analysis.questionLabels.communication_character'),
     },
     {
       icon: ImageAssets.sprakIcon,

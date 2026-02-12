@@ -26,6 +26,9 @@ export const ImageAssets = {
   glow: require('../../assets/glow.png'),
   reAnalyzeIcon: require('../../assets/reAnalyzeIcon.png'),
   notEnough: require('../../assets/not_enough.png'),
+  sparkIcon: require('../../assets/spark.png'),
+  chatOverlay: require('../../assets/chatOverlay.png'),
+  copyIcon: require('../../assets/copy.png'),
 };
 
 // Preload all images at app startup

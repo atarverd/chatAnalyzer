@@ -16,6 +16,21 @@ type Chat = {
   avatar_url?: string;
 };
 
+export type AnalysisBlock = {
+  header: string;
+  type:
+    | 'main_block'
+    | 'secondary_block'
+    | 'recommendations_block'
+    | 'answer_variants';
+  text: string;
+};
+
+export type AnalyzeResponse = {
+  analysis?: string;
+  blocks?: AnalysisBlock[];
+};
+
 const baseQueryWithLogging = async (args: any, api: any, extraOptions: any) => {
   const result = await fetchBaseQuery({ 
     baseUrl: API_BASE_URL,
@@ -135,10 +150,10 @@ export const api = createApi({
       },
     }),
     analyzeChat: builder.mutation<
-      { analysis: string },
-      { chatId: number; type: string; tone?: string }
+      AnalyzeResponse,
+      { chatId: number; type: string; tone?: string; language?: string }
     >({
-      queryFn: async ({ chatId, type, tone }) => {
+      queryFn: async ({ chatId, type, tone, language }) => {
         try {
           const url = `https://chatvibe.dategram.io/chats/${chatId}/analyze`;
 
@@ -146,7 +161,11 @@ export const api = createApi({
           const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type, ...(tone && { tone }) }),
+            body: JSON.stringify({
+              type,
+              ...(tone && { tone }),
+              ...(language && { language }),
+            }),
             credentials: 'include', // Include cookies in requests
             // No signal - request will continue even if app goes to background
           });
@@ -162,7 +181,14 @@ export const api = createApi({
             };
           }
 
-          return { data };
+          // Normalize: API may return blocks array as root or in { blocks }
+          const normalized: AnalyzeResponse = Array.isArray(data)
+            ? { blocks: data }
+            : data?.blocks
+              ? data
+              : { analysis: typeof data?.analysis === 'string' ? data.analysis : JSON.stringify(data) };
+
+          return { data: normalized };
         } catch (error: any) {
           return {
             error: {

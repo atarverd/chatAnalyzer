@@ -61,13 +61,15 @@
     ],
     "whatToStudy": "What to study",
     "analysisResult": "Analysis result",
+    "recommendations": "Recommendations",
+    "answerVariants": "Here are the answer variants:",
+    "variantN": "Variant {{n}}",
     "questionLabels": {
-      "character": "Communication style",
-      "personal_love": "Communication style",
-      "personal_sex": "How to communicate better",
-      "personal_relationship": "Where I make  mistakes",
-      "personal_communication": "Where I make  mistakes",
-      "what_to_answer": "What to answer now"
+      "communication_character": "Communication character",
+      "how_to_communicate_better": "How to communicate better",
+      "where_am_i_making_mistakes": "Where am I making mistakes",
+      "understand_the_dynamic": "Understand the dynamic",
+      "what_to_answer": "What to answer"
     },
     "tones": {
       "neutral": "Neutral",

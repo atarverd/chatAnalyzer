@@ -50,7 +50,7 @@
       "Анализируем паттерны общения",
       "Ищем важные моменты",
       "Проверяем тон и стиль",
-      "Поняем динамику диалога",
+      "Анализируем динамику диалога",
       "Собираем инсайты",
       "Изучаем эмоциональный фон",
       "Анализируем баланс инициативы",
@@ -61,13 +61,15 @@
     ],
     "whatToStudy": "Что нужно изучить",
     "analysisResult": "Результат анализа",
+    "recommendations": "Рекомендации",
+    "answerVariants": "Вот варианты ответа:",
+    "variantN": "Вариант {{n}}",
     "questionLabels": {
-      "character": "Характер общения",
-      "personal_love": "Характер общения",
-      "personal_sex": "Как лучше общаться",
-      "personal_relationship": "Где я делаю ошибки",
-      "personal_communication": "Понять динамику",
-      "what_to_answer": "Что сейчас ответить"
+      "communication_character": "Характер общения",
+      "how_to_communicate_better": "Как лучше общаться",
+      "where_am_i_making_mistakes": "Где я делаю ошибки",
+      "understand_the_dynamic": "Понять динамику",
+      "what_to_answer": "Что ответить"
     },
     "tones": {
       "neutral": "Нейтральный",

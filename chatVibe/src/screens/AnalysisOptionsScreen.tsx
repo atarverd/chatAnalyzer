@@ -36,10 +36,11 @@ type AnalysisOptionsScreenProps = {
 };
 
 type QuestionType =
-  | 'personal_love'
-  | 'personal_sex'
-  | 'personal_relationship'
-  | 'personal_communication'
+  | 'communication_character'
+  | 'how_to_communicate_better'
+  | 'where_am_i_making_mistakes'
+  | 'understand_the_dynamic'
+  | 'what_to_answer'
   | null;
 
 type AnalysisTone = 'neutral' | 'direct' | 'supportive';
@@ -72,24 +73,24 @@ export function AnalysisOptionsScreen({
 
   const questionTypes = [
     {
-      id: 'personal_love' as QuestionType,
+      id: 'communication_character' as QuestionType,
       icon: ImageAssets.heartIcon,
-      text: t('analysis.questionLabels.personal_love'),
+      text: t('analysis.questionLabels.communication_character'),
     },
     {
-      id: 'personal_sex' as QuestionType,
+      id: 'how_to_communicate_better' as QuestionType,
       icon: ImageAssets.chatIconCard,
-      text: t('analysis.questionLabels.personal_sex'),
+      text: t('analysis.questionLabels.how_to_communicate_better'),
     },
     {
-      id: 'personal_relationship' as QuestionType,
+      id: 'where_am_i_making_mistakes' as QuestionType,
       icon: ImageAssets.alertIcon,
-      text: t('analysis.questionLabels.personal_relationship'),
+      text: t('analysis.questionLabels.where_am_i_making_mistakes'),
     },
     {
-      id: 'personal_communication' as QuestionType,
+      id: 'understand_the_dynamic' as QuestionType,
       icon: ImageAssets.chartIcon,
-      text: t('analysis.questionLabels.personal_communication'),
+      text: t('analysis.questionLabels.understand_the_dynamic'),
     },
     {
       id: 'what_to_answer' as QuestionType,

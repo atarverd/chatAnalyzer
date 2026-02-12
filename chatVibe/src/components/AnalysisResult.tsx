@@ -42,7 +42,7 @@ export function AnalysisResult({
         ) : (
           <View style={styles.resultContainer}>
             <Text style={styles.sectionLabel}>{t('analysis.whatToStudy')}</Text>
-            <Text style={styles.sectionValue}>{t('analysis.questionLabels.character')}</Text>
+            <Text style={styles.sectionValue}>{t('analysis.questionLabels.communication_character')}</Text>
 
             <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
               {t('analysis.analysisResult')}

@@ -6,7 +6,9 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -20,6 +22,76 @@ import { ImageAssets } from '../utils/imageCache';
 import { useTranslation } from 'react-i18next';
 import { processAvatarUrl } from '../utils/avatarUrl';
 import { GlassButton } from '../components/GlassButton';
+import { LinearGradient } from 'expo-linear-gradient';
+import Markdown from 'react-native-markdown-display';
+import { triggerHaptic } from '../utils/haptics';
+import type { AnalysisBlock } from '../services/api';
+
+const fontFamily = Platform.select({
+  ios: 'Onest-Regular',
+  android: 'Onest-Regular',
+  web: 'Onest, sans-serif',
+});
+
+const markdownResultStyles = {
+  body: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#C5C1B9',
+    fontFamily,
+  },
+  paragraph: {
+    marginTop: 0,
+    marginBottom: 8,
+  },
+  text: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#C5C1B9',
+    fontFamily,
+  },
+  strong: {
+    color: '#C5C1B9',
+    fontWeight: '600' as const,
+    fontFamily,
+  },
+  em: {
+    color: '#C5C1B9',
+    fontStyle: 'italic' as const,
+    fontFamily,
+  },
+  link: {
+    color: '#34C759',
+    fontFamily,
+  },
+  bullet_list: { marginBottom: 8 },
+  ordered_list: { marginBottom: 8 },
+  list_item: { marginBottom: 4 },
+  code_inline: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    color: '#C5C1B9',
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    fontFamily,
+  },
+  code_block: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    color: '#C5C1B9',
+    padding: 12,
+    borderRadius: 8,
+    fontFamily,
+  },
+};
+
+const markdownRecommendationStyles = {
+  ...markdownResultStyles,
+  body: { ...markdownResultStyles.body, color: '#FFFFFF' },
+  text: { ...markdownResultStyles.text, color: '#FFFFFF' },
+  strong: { ...markdownResultStyles.strong, color: '#FFFFFF' },
+  em: { ...markdownResultStyles.em, color: '#FFFFFF' },
+  code_inline: { ...markdownResultStyles.code_inline, color: '#FFFFFF' },
+  code_block: { ...markdownResultStyles.code_block, color: '#FFFFFF' },
+};
 
 type Chat = {
   id: number;
@@ -31,9 +103,8 @@ type Chat = {
 type AnalysisResultScreenProps = {
   chat: Chat;
   questionType?: string | null;
-  result: string;
+  result: string | AnalysisBlock[];
   isAnalyzing: boolean;
-  animateResult?: boolean;
   onBack: () => void;
   onReanalyze: () => void;
 };
@@ -43,7 +114,6 @@ export function AnalysisResultScreen({
   questionType,
   result,
   isAnalyzing,
-  animateResult = true,
   onBack,
   onReanalyze,
 }: AnalysisResultScreenProps) {
@@ -61,7 +131,36 @@ export function AnalysisResultScreen({
 
   const questionLabel =
     (questionType && t(`analysis.questionLabels.${questionType}`)) ||
-    t('analysis.questionLabels.character');
+    t('analysis.questionLabels.communication_character');
+
+  const isBlocks =
+    Array.isArray(result) &&
+    result.length > 0 &&
+    typeof result[0] === 'object' &&
+    'type' in result[0];
+  const mainBlocks = isBlocks
+    ? (result as AnalysisBlock[]).filter((b) => b.type === 'main_block')
+    : [];
+  const secondaryBlocks = isBlocks
+    ? (result as AnalysisBlock[]).filter((b) => b.type === 'secondary_block')
+    : [];
+  const recommendationBlocks = isBlocks
+    ? (result as AnalysisBlock[]).filter(
+        (b) => b.type === 'recommendations_block',
+      )
+    : [];
+  const answerVariantBlocks = isBlocks
+    ? (result as AnalysisBlock[]).filter((b) => b.type === 'answer_variants')
+    : [];
+
+  const parseAnswerVariants = (text: string): string[] => {
+    try {
+      const parsed = JSON.parse(text);
+      return Array.isArray(parsed) ? parsed : [String(parsed)];
+    } catch {
+      return [text];
+    }
+  };
 
   useEffect(() => {
     if (!isAnalyzing && result) {
@@ -195,16 +294,117 @@ export function AnalysisResultScreen({
                 </View>
               )}
             </View>
+          ) : isBlocks ? (
+            <View style={styles.resultContainer}>
+              <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
+                {t('analysis.analysisResult')}
+              </Text>
+              {mainBlocks.map((block, i) => (
+                <View key={`main-${i}`} style={styles.blockCard}>
+                  <View style={styles.blockHeaderRow}>
+                    <ExpoImage
+                      source={ImageAssets.chatOverlay}
+                      style={styles.mainBlockIcon}
+                      contentFit='contain'
+                    />
+                    <Text style={styles.blockHeader}>{block.header}</Text>
+                  </View>
+                  <Markdown style={markdownResultStyles}>{block.text}</Markdown>
+                </View>
+              ))}
+              {secondaryBlocks.map((block, i) => (
+                <View key={`sec-${i}`} style={styles.blockCard}>
+                  <View style={styles.blockHeaderRow}>
+                    <ExpoImage
+                      source={ImageAssets.sparkIcon}
+                      style={styles.secondaryBlockIcon}
+                      contentFit='contain'
+                    />
+                    <Text style={styles.blockHeader}>{block.header}</Text>
+                  </View>
+                  <Markdown style={markdownResultStyles}>{block.text}</Markdown>
+                </View>
+              ))}
+              {recommendationBlocks.length > 0 && (
+                <LinearGradient
+                  colors={['rgba(170, 224, 183, 0.3)', 'rgba(87, 94, 89, 0.3)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={styles.recommendationsBorder}
+                >
+                  <View style={styles.recommendationsContainer}>
+                    {/* <Text style={styles.recommendationsHeader}>
+                      {t('analysis.recommendations')}
+                    </Text> */}
+                    {recommendationBlocks.map((block, i) => (
+                      <View key={`rec-${i}`}>
+                        {block.header && (
+                          <Text style={styles.recommendationBlockHeader}>
+                            {block.header}
+                          </Text>
+                        )}
+                        <Markdown style={markdownRecommendationStyles}>
+                          {block.text}
+                        </Markdown>
+                      </View>
+                    ))}
+                  </View>
+                </LinearGradient>
+              )}
+              {answerVariantBlocks.map((block, blockIdx) => {
+                const variants = parseAnswerVariants(block.text);
+                if (variants.length === 0) return null;
+                return (
+                  <View
+                    key={`answer-variants-${blockIdx}`}
+                    style={styles.answerVariantsSection}
+                  >
+                    <Text style={styles.answerVariantsTitle}>
+                      {t('analysis.answerVariants')}
+                    </Text>
+                    {variants.map((variantText, idx) => (
+                      <View key={idx} style={styles.answerVariantCard}>
+                        <View style={styles.answerVariantCardHeader}>
+                          <Text style={styles.answerVariantCardTitle}>
+                            {t('analysis.variantN', { n: idx + 1 })}
+                          </Text>
+                          <TouchableOpacity
+                            style={styles.copyButton}
+                            onPress={async () => {
+                              await Clipboard.setStringAsync(variantText);
+                              await triggerHaptic('success');
+                            }}
+                            hitSlop={{
+                              top: 12,
+                              bottom: 12,
+                              left: 12,
+                              right: 12,
+                            }}
+                          >
+                            <ExpoImage
+                              source={ImageAssets.copyIcon}
+                              style={styles.copyIcon}
+                              contentFit='contain'
+                            />
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={styles.answerVariantCardText}>
+                          {variantText}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                );
+              })}
+            </View>
           ) : (
             <View style={styles.resultContainer}>
               <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
                 {t('analysis.analysisResult')}
               </Text>
-              {animateResult ? (
-                <TypingText text={result} speed={5} style={styles.resultText} />
-              ) : (
-                <Text style={styles.resultText}>{result}</Text>
-              )}
+              <Markdown style={markdownResultStyles}>
+                {result as string}
+              </Markdown>
             </View>
           )}
         </ScrollView>
@@ -341,7 +541,7 @@ const styles = StyleSheet.create({
     }),
   },
   analyzingQuestion: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '600',
     color: '#fff',
     fontFamily: Platform.select({
@@ -398,9 +598,150 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   resultText: {
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 22,
     color: '#C5C1B9',
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest-Regular',
+      web: 'Onest, sans-serif',
+    }),
+  },
+  blockCard: {
+    marginBottom: 24,
+  },
+  blockHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  mainBlockIcon: {
+    width: 40,
+    height: 40,
+  },
+  secondaryBlockIcon: {
+    width: 40,
+    height: 40,
+  },
+  blockHeader: {
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 20,
+    color: '#F7FDFA',
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest-Regular',
+      web: 'Onest, sans-serif',
+    }),
+  },
+  recommendationsBorder: {
+    marginTop: 8,
+    marginBottom: 24,
+    borderRadius: 16,
+    padding: 1,
+    overflow: 'hidden',
+  },
+  recommendationsContainer: {
+    padding: 20,
+    borderRadius: 15,
+    backgroundColor: '#141715',
+  },
+  recommendationsHeader: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 13,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#F7FDFA',
+    marginBottom: 16,
+    fontFamily: Platform.select({
+      ios: 'Onest-SemiBold',
+      android: 'Onest-SemiBold',
+      web: 'Onest, sans-serif',
+    }),
+  },
+  recommendationBlockHeader: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 13,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#F7FDFA66',
+    marginBottom: 8,
+    fontFamily: Platform.select({
+      ios: 'Onest-SemiBold',
+      android: 'Onest-SemiBold',
+      web: 'Onest, sans-serif',
+    }),
+  },
+  recommendationText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#FFFFFF',
+    marginBottom: 12,
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest-Regular',
+      web: 'Onest, sans-serif',
+    }),
+  },
+  answerVariantsSection: {
+    marginTop: 24,
+    marginBottom: 24,
+  },
+  answerVariantsTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#F7FDFA',
+    marginBottom: 16,
+    fontFamily: Platform.select({
+      ios: 'Onest-SemiBold',
+      android: 'Onest-SemiBold',
+      web: 'Onest, sans-serif',
+    }),
+  },
+  answerVariantCard: {
+    backgroundColor: '#181818',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#404040',
+    padding: 16,
+    marginBottom: 12,
+  },
+  answerVariantCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  answerVariantCardTitle: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    lineHeight: 20,
+    color: '#F7FDFA',
+    fontFamily: Platform.select({
+      ios: 'Onest-Medium',
+      android: 'Onest-Medium',
+      web: 'Onest, sans-serif',
+    }),
+  },
+  copyButton: {
+    padding: 4,
+  },
+  copyIcon: {
+    width: 20,
+    height: 20,
+  },
+  answerVariantCardText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#C5C1B9',
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest-Regular',
+      web: 'Onest, sans-serif',
+    }),
   },
   buttonContainer: {
     position: 'absolute',
