@@ -33,6 +33,12 @@ const fontFamily = Platform.select({
   web: 'Onest, sans-serif',
 });
 
+const fontFamilyBold = Platform.select({
+  ios: 'Onest-SemiBold',
+  android: 'Onest-SemiBold',
+  web: 'Onest, sans-serif',
+});
+
 const markdownResultStyles = {
   body: {
     fontSize: 15,
@@ -52,8 +58,7 @@ const markdownResultStyles = {
   },
   strong: {
     color: '#C5C1B9',
-    fontWeight: '600' as const,
-    fontFamily,
+    fontFamily: fontFamilyBold,
   },
   em: {
     color: '#C5C1B9',
