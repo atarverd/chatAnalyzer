@@ -23,10 +23,12 @@ import {
   useGetChatsQuery,
   useLazyGetAnalyzePossibleQuery,
   useAnalyzeChatMutation,
+  useCaptureMetricMutation,
   useLogoutMutation,
   api,
   type AnalysisBlock,
 } from '../services/api';
+import { AnalyticsMetric, getOptionMetric } from '../types/analytics';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { triggerHaptic } from '../utils/haptics';
@@ -66,7 +68,12 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
   const { data, isLoading, error, refetch } = useGetChatsQuery();
   const [getAnalyzePossible] = useLazyGetAnalyzePossibleQuery();
   const [analyzeChat, { isLoading: isAnalyzing }] = useAnalyzeChatMutation();
+  const [captureMetric] = useCaptureMetricMutation();
   const [logoutMutation] = useLogoutMutation();
+
+  const trackMetric = (metric: AnalyticsMetric) => {
+    captureMetric({ metric, device: Platform.OS }).catch(() => {});
+  };
   const [menuVisible, setMenuVisible] = useState(false);
 
   const [analysisView, setAnalysisView] = useState<
@@ -196,6 +203,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
 
     setAnalysisView('options');
     setAnalyzingChatId(null);
+    trackMetric(AnalyticsMetric.TELEGRAM_CHAT_SELECTED);
   };
 
   const handleBackFromNotEnough = () => {
@@ -260,12 +268,17 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
     });
     setAnalyzingChatId(selectedChat.id);
 
+    const optionMetric = getOptionMetric(questionType);
+    if (optionMetric) trackMetric(optionMetric);
+
     // Start the analysis
     runAnalysisWithParams(questionType, tone);
   };
 
   const runAnalysisWithParams = async (questionType: string, tone: string) => {
     if (!selectedChat) return;
+
+    trackMetric(AnalyticsMetric.CHAT_ANALYSIS_STARTED);
 
     const chatTitle = selectedChat.title;
     const chatId = selectedChat.id;
@@ -328,6 +341,8 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
         new Map(prev).set(chatId, Date.now()),
       );
 
+      trackMetric(AnalyticsMetric.CHAT_ANALYSIS_COMPLETED);
+
       // Trigger success haptic feedback
       await triggerHaptic('success');
 
@@ -385,6 +400,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
 
   const handleReanalyze = async () => {
     if (!selectedChat) return;
+    trackMetric(AnalyticsMetric.CHAT_ANALYSIS_REANALYZED);
     try {
       await AsyncStorage.removeItem(`analysisResult:${selectedChat.id}`);
     } catch {
@@ -475,6 +491,18 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
       checkAnalysisResults();
     }
   }, [data]);
+
+  // TELEGRAM_CHATS_LOADED - fire once when chats first load (no await)
+  const chatsLoadedFiredRef = useRef(false);
+  useEffect(() => {
+    if (data && data.length > 0 && !chatsLoadedFiredRef.current) {
+      chatsLoadedFiredRef.current = true;
+      captureMetric({
+        metric: AnalyticsMetric.TELEGRAM_CHATS_LOADED,
+        device: Platform.OS,
+      }).catch(() => {});
+    }
+  }, [data, captureMetric]);
 
   if (isLoading) {
     return <LoadingView />;

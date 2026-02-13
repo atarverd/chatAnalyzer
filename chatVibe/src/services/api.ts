@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_BASE_URL } from '@env';
+import type { AnalyticsMetric } from '../types/analytics';
 
 type AuthStatusResponse = { authorized: boolean };
 type SendCodeResponse = { message?: string };
@@ -196,6 +197,16 @@ export const api = createApi({
         }
       },
     }),
+    captureMetric: builder.mutation<
+      { success?: boolean },
+      { metric: AnalyticsMetric | string; device: string }
+    >({
+      query: (body) => ({
+        url: '/analytics/metrics/capture',
+        method: 'POST',
+        body,
+      }),
+    }),
     logout: builder.mutation<{ success?: boolean }, void>({
       queryFn: async () => {
         try {
@@ -239,5 +250,6 @@ export const {
   useGetChatsQuery,
   useLazyGetAnalyzePossibleQuery,
   useAnalyzeChatMutation,
+  useCaptureMetricMutation,
   useLogoutMutation,
 } = api;
