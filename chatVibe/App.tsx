@@ -236,15 +236,15 @@ function Root() {
               <ChatsScreen onShowHowItWorks={() => setShowHowItWorks(true)} />
               <Modal
                 visible={showHowItWorks}
-                animationType="slide"
-                presentationStyle="fullScreen"
+                animationType='slide'
+                presentationStyle='fullScreen'
               >
                 <View style={styles.modalContainer}>
                   <ExpoImage
                     source={ImageAssets.bgTop}
                     style={styles.modalBackground}
-                    contentFit="contain"
-                    contentPosition="top"
+                    contentFit='contain'
+                    contentPosition='top'
                   />
                   <IntroScreen
                     onStart={() => setShowHowItWorks(false)}

@@ -12,6 +12,7 @@ import {
   ScrollView,
   Animated,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -257,6 +258,12 @@ export function AuthScreen() {
       setIsPasswordInputFocused(false);
     }
   }, [auth.step]);
+
+  useEffect(() => {
+    if (isVerifyingCode) {
+      Keyboard.dismiss();
+    }
+  }, [isVerifyingCode]);
 
   useEffect(() => {
     const fullCode = code.join('');
@@ -544,115 +551,126 @@ export function AuthScreen() {
 
                   {auth.step === 'code' && (
                     <React.Fragment key='code-step'>
-                      <Text style={styles.codeTitle}>
-                        {t('auth.enterCodeTitle')}
-                      </Text>
-                      <Text style={styles.codeSubtitle}>
-                        {t('auth.codeSentTo', {
-                          phone: formatPhoneForDisplay(
-                            getCountryByIso2(selectedCountryIso2)?.code ?? '+7',
-                            auth.phone,
-                            selectedCountryIso2,
-                          ),
-                        })}
-                      </Text>
-
-                      <View style={styles.codeInputsContainer}>
-                        {code.map((digit, index) => {
-                          const isFocused = focusedInputIndex === index;
-                          return (
-                            <TouchableOpacity
-                              key={index}
-                              activeOpacity={1}
-                              onPress={() =>
-                                codeInputRefs.current[index]?.focus()
-                              }
-                              style={styles.codeInputTouchable}
-                            >
-                              <LinearGradient
-                                colors={
-                                  codeError
-                                    ? [
-                                        'rgba(255, 255, 255, 0.14)',
-                                        'rgba(254, 63, 33, 0.22)',
-                                        'rgba(254, 63, 33, 0.44)',
-                                      ]
-                                    : isFocused
-                                      ? [
-                                          'rgba(255, 255, 255, 0.14)',
-                                          'rgba(52, 199, 89, 0.22)',
-                                          'rgba(52, 199, 89, 0.44)',
-                                        ]
-                                      : [
-                                          'rgba(255, 255, 255, 0.14)',
-                                          'rgba(255, 255, 255, 0.02)',
-                                          'rgba(255, 255, 255, 0.14)',
-                                        ]
-                                }
-                                locations={[0.1451, 0.5005, 0.8594]}
-                                start={{ x: 0.2, y: 0 }}
-                                end={{ x: 0.8, y: 1 }}
-                                style={styles.codeInputBorder}
-                              >
-                                <LinearGradient
-                                  colors={['#272727', '#272727']}
-                                  start={{ x: 0, y: 0 }}
-                                  end={{ x: 1, y: 0 }}
-                                  style={styles.codeInputWrapper}
-                                >
-                                  <TextInput
-                                    ref={(ref) => {
-                                      codeInputRefs.current[index] = ref;
-                                    }}
-                                    style={styles.codeInput}
-                                    value={digit}
-                                    onChangeText={(value) =>
-                                      handleCodeChange(value, index)
-                                    }
-                                    onKeyPress={(e) =>
-                                      handleCodeKeyPress(e, index)
-                                    }
-                                    onFocus={() => {
-                                      setFocusedInputIndex(index);
-                                      setIsCodeInputFocused(true);
-                                    }}
-                                    onBlur={() => {
-                                      setFocusedInputIndex(null);
-                                      setIsCodeInputFocused(false);
-                                    }}
-                                    keyboardType='number-pad'
-                                    keyboardAppearance='dark'
-                                    maxLength={index === 0 ? 5 : 1}
-                                    textContentType={
-                                      index === 0 ? 'oneTimeCode' : 'none'
-                                    }
-                                    autoComplete={
-                                      index === 0 ? ('sms-otp' as any) : 'off'
-                                    }
-                                    selectTextOnFocus
-                                    selectionColor='#34C759'
-                                    textAlign='center'
-                                    {...(Platform.OS !== 'ios' && {
-                                      caretColor: '#34C759' as any,
-                                    })}
-                                  />
-                                </LinearGradient>
-                              </LinearGradient>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                      {Platform.OS === 'android' && isCodeInputFocused && (
-                        <View style={styles.codeButtonContainer}>
-                          <ResendButton
-                            title={t('auth.resend')}
-                            onPress={handleSendCode}
-                            disabled={isLoading}
-                            width={141}
-                            height={32}
-                            fontSize={12}
-                          />
+                      {isVerifyingCode ? (
+                        <View style={styles.codeLoadingContainer}>
+                          <ActivityIndicator size='large' color='#34C759' />
                         </View>
+                      ) : (
+                        <>
+                          <Text style={styles.codeTitle}>
+                            {t('auth.enterCodeTitle')}
+                          </Text>
+                          <Text style={styles.codeSubtitle}>
+                            {t('auth.codeSentTo', {
+                              phone: formatPhoneForDisplay(
+                                getCountryByIso2(selectedCountryIso2)?.code ??
+                                  '+7',
+                                auth.phone,
+                                selectedCountryIso2,
+                              ),
+                            })}
+                          </Text>
+
+                          <View style={styles.codeInputsContainer}>
+                            {code.map((digit, index) => {
+                              const isFocused = focusedInputIndex === index;
+                              return (
+                                <TouchableOpacity
+                                  key={index}
+                                  activeOpacity={1}
+                                  onPress={() =>
+                                    codeInputRefs.current[index]?.focus()
+                                  }
+                                  style={styles.codeInputTouchable}
+                                >
+                                  <LinearGradient
+                                    colors={
+                                      codeError
+                                        ? [
+                                            'rgba(255, 255, 255, 0.14)',
+                                            'rgba(254, 63, 33, 0.22)',
+                                            'rgba(254, 63, 33, 0.44)',
+                                          ]
+                                        : isFocused
+                                          ? [
+                                              'rgba(255, 255, 255, 0.14)',
+                                              'rgba(52, 199, 89, 0.22)',
+                                              'rgba(52, 199, 89, 0.44)',
+                                            ]
+                                          : [
+                                              'rgba(255, 255, 255, 0.14)',
+                                              'rgba(255, 255, 255, 0.02)',
+                                              'rgba(255, 255, 255, 0.14)',
+                                            ]
+                                    }
+                                    locations={[0.1451, 0.5005, 0.8594]}
+                                    start={{ x: 0.2, y: 0 }}
+                                    end={{ x: 0.8, y: 1 }}
+                                    style={styles.codeInputBorder}
+                                  >
+                                    <LinearGradient
+                                      colors={['#272727', '#272727']}
+                                      start={{ x: 0, y: 0 }}
+                                      end={{ x: 1, y: 0 }}
+                                      style={styles.codeInputWrapper}
+                                    >
+                                      <TextInput
+                                        ref={(ref) => {
+                                          codeInputRefs.current[index] = ref;
+                                        }}
+                                        style={styles.codeInput}
+                                        value={digit}
+                                        onChangeText={(value) =>
+                                          handleCodeChange(value, index)
+                                        }
+                                        onKeyPress={(e) =>
+                                          handleCodeKeyPress(e, index)
+                                        }
+                                        onFocus={() => {
+                                          setFocusedInputIndex(index);
+                                          setIsCodeInputFocused(true);
+                                        }}
+                                        onBlur={() => {
+                                          setFocusedInputIndex(null);
+                                          setIsCodeInputFocused(false);
+                                        }}
+                                        keyboardType='number-pad'
+                                        keyboardAppearance='dark'
+                                        maxLength={index === 0 ? 5 : 1}
+                                        textContentType={
+                                          index === 0 ? 'oneTimeCode' : 'none'
+                                        }
+                                        autoComplete={
+                                          index === 0
+                                            ? ('sms-otp' as any)
+                                            : 'off'
+                                        }
+                                        selectTextOnFocus
+                                        selectionColor='#34C759'
+                                        textAlign='center'
+                                        {...(Platform.OS !== 'ios' && {
+                                          caretColor: '#34C759' as any,
+                                        })}
+                                      />
+                                    </LinearGradient>
+                                  </LinearGradient>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                          {Platform.OS === 'android' && isCodeInputFocused && (
+                            <View style={styles.codeButtonContainer}>
+                              <ResendButton
+                                title={t('auth.resend')}
+                                onPress={handleSendCode}
+                                disabled={isLoading}
+                                width={141}
+                                height={32}
+                                fontSize={12}
+                              />
+                            </View>
+                          )}
+                        </>
                       )}
                     </React.Fragment>
                   )}
@@ -768,6 +786,7 @@ export function AuthScreen() {
                     />
                   )}
                 {auth.step === 'code' &&
+                  !isVerifyingCode &&
                   (Platform.OS !== 'android' || !isCodeInputFocused) && (
                     <ResendButton
                       title={t('auth.resend')}
@@ -961,6 +980,12 @@ const styles = StyleSheet.create({
       web: 'Onest, sans-serif',
     }),
     lineHeight: 20,
+  },
+
+  codeLoadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
   },
 
   codeInputsContainer: {

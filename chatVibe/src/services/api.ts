@@ -32,16 +32,12 @@ export type AnalyzeResponse = {
 };
 
 const baseQueryWithLogging = async (args: any, api: any, extraOptions: any) => {
-  const result = await fetchBaseQuery({ 
+  const result = await fetchBaseQuery({
     baseUrl: API_BASE_URL,
     // Include credentials to send cookies with requests
     // Backend must have AllowCredentials: true and specific origins (not *)
     credentials: 'include',
-  })(
-    args,
-    api,
-    extraOptions
-  );
+  })(args, api, extraOptions);
 
   return result;
 };
@@ -138,7 +134,14 @@ export const api = createApi({
             };
           }
 
-          return { data: { possible: data === true || data === false ? data : data?.possible ?? true } };
+          return {
+            data: {
+              possible:
+                data === true || data === false
+                  ? data
+                  : (data?.possible ?? true),
+            },
+          };
         } catch (error: any) {
           return {
             error: {
@@ -186,7 +189,12 @@ export const api = createApi({
             ? { blocks: data }
             : data?.blocks
               ? data
-              : { analysis: typeof data?.analysis === 'string' ? data.analysis : JSON.stringify(data) };
+              : {
+                  analysis:
+                    typeof data?.analysis === 'string'
+                      ? data.analysis
+                      : JSON.stringify(data),
+                };
 
           return { data: normalized };
         } catch (error: any) {

@@ -15,6 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "buildNumber": "1",
       "infoPlist": {
         "UIStatusBarHidden": true,
         "UIViewControllerBasedStatusBarAppearance": false,
@@ -26,14 +27,13 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#141414"
       },
+      "versionCode": 1,
       "predictiveBackGestureEnabled": false,
       "package": "com.atarverd.cahtvibe",
       "navigationBarHidden": true,
       "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "navigationBarColor": "#141414"
-
-
     },
     "web": {
       "favicon": "./assets/icon.png",
@@ -50,10 +50,6 @@
       "translucent": false
     },
     "owner": "atarverd",
-    "plugins": [
-      "expo-font",
-      "expo-localization",
-      "expo-navigation-bar"
-    ]
+    "plugins": ["expo-font", "expo-localization", "expo-navigation-bar"]
   }
 }

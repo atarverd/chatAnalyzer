@@ -9,7 +9,8 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Image as ExpoImage } from 'expo-image';
+import { ImageAssets } from '../utils/imageCache';
 import { useTranslation } from 'react-i18next';
 
 type ChatsMenuDropdownProps = {
@@ -66,7 +67,11 @@ export function ChatsMenuDropdown({
                     }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="refresh" size={20} color="#fff" />
+                    <ExpoImage
+                      source={ImageAssets.refreshIcon}
+                      style={styles.menuIcon}
+                      contentFit="contain"
+                    />
                     <Text style={styles.menuItemText}>{t('chats.refresh')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -77,7 +82,11 @@ export function ChatsMenuDropdown({
                     }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="help-circle-outline" size={20} color="#fff" />
+                    <ExpoImage
+                      source={ImageAssets.questionMarkIcon}
+                      style={styles.menuIcon}
+                      contentFit="contain"
+                    />
                     <Text style={styles.menuItemText}>
                       {t('chats.howItWorks')}
                     </Text>
@@ -90,7 +99,11 @@ export function ChatsMenuDropdown({
                     }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="log-out-outline" size={20} color="#FF6B6B" />
+                    <ExpoImage
+                      source={ImageAssets.leaveIcon}
+                      style={[styles.menuIcon, styles.logoutIcon]}
+                      contentFit="contain"
+                    />
                     <Text style={[styles.menuItemText, styles.logoutText]}>
                       {t('common.logout')}
                     </Text>
@@ -137,6 +150,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     gap: 12,
+  },
+  menuIcon: {
+    width: 20,
+    height: 20,
+  },
+  logoutIcon: {
+    tintColor: '#FF6B6B',
   },
   menuItemText: {
     fontSize: 16,

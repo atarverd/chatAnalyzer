@@ -1,6 +1,7 @@
 {
   "appName": "ChatVibe",
   "common": {
+    "okay": "Окей",
     "back": "Назад",
     "search": "Поиск",
     "yesterday": "Вчера",

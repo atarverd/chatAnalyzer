@@ -76,8 +76,8 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
               </Text>
               <View style={styles.securityButtonWrapper}>
                 <GlassButton
-                  title={t('intro.securityContinue')}
-                  onPress={() => setShowSecurityStep(false)}
+                  title={hideLinks ? t('common.okay') : t('intro.securityContinue')}
+                  onPress={() => (hideLinks ? onStart() : setShowSecurityStep(false))}
                 />
               </View>
             </View>

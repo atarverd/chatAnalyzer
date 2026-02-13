@@ -37,7 +37,7 @@ export const authSlice = createSlice({
       (state, action) => {
         state.authorized = action.payload.authorized;
         state.checked = true;
-      }
+      },
     );
     builder.addMatcher(api.endpoints.authStatus.matchRejected, (state) => {
       state.authorized = false;
@@ -59,7 +59,7 @@ export const authSlice = createSlice({
         if (action.payload.success) {
           state.authorized = true;
         }
-      }
+      },
     );
   },
 });

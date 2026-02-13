@@ -29,6 +29,9 @@ export const ImageAssets = {
   sparkIcon: require('../../assets/spark.png'),
   chatOverlay: require('../../assets/chatOverlay.png'),
   copyIcon: require('../../assets/copy.png'),
+  refreshIcon: require('../../assets/refresh.png'),
+  questionMarkIcon: require('../../assets/questionMark.png'),
+  leaveIcon: require('../../assets/leave.png'),
 };
 
 // Preload all images at app startup

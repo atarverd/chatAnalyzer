@@ -83,6 +83,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
   );
   const [currentTone, setCurrentTone] = useState<string>('neutral');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInputFocused, setSearchInputFocused] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'personal' | 'group'>(
     'all',
   );
@@ -202,39 +203,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
     setAnalyzingChatId(null);
   };
 
-  const handleBackFromOptions = async () => {
-    if (!selectedChat) {
-      setAnalysisView('none');
-      setSelectedChat(null);
-      setAnalyzingChatId(null);
-      return;
-    }
-
-    // Check if there's a saved analysis for this chat
-    try {
-      const saved = await AsyncStorage.getItem(
-        `analysisResult:${selectedChat.id}`,
-      );
-      if (saved) {
-        const info = JSON.parse(saved);
-        setCurrentQuestionType(info.questionType || info.type || null);
-        setCurrentTone(info.tone || 'neutral');
-        setAnalysisResults((prev) =>
-          new Map(prev).set(
-            selectedChat.id,
-            info.blocks ?? info.analysis ?? '',
-          ),
-        );
-        setIsExistingAnalysisResult(true);
-        setAnalysisView('result');
-        setAnalyzingChatId(null);
-        return;
-      }
-    } catch (e) {
-      // ignore and fall back to chats screen
-    }
-
-    // No saved analysis, go back to chats screen
+  const handleBackFromOptions = () => {
     setAnalysisView('none');
     setSelectedChat(null);
     setAnalyzingChatId(null);
@@ -420,8 +389,33 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
     setSelectedChat(null);
     setCurrentQuestionType(null);
     setAnalyzingChatId(null);
-    // Refresh analysis status when returning from result
     checkAnalysisResults();
+  };
+
+  const handleReanalyze = async () => {
+    if (!selectedChat) return;
+    try {
+      await AsyncStorage.removeItem(`analysisResult:${selectedChat.id}`);
+    } catch {
+      // ignore
+    }
+    setAnalysisResults((prev) => {
+      const next = new Map(prev);
+      next.delete(selectedChat.id);
+      return next;
+    });
+    setChatsWithAnalysis((prev) => {
+      const next = new Set(prev);
+      next.delete(selectedChat.id);
+      return next;
+    });
+    setChatAnalysisTimestamps((prev) => {
+      const next = new Map(prev);
+      next.delete(selectedChat.id);
+      return next;
+    });
+    setIsExistingAnalysisResult(false);
+    setAnalysisView('options');
   };
 
   const persistNotEnoughData = async (ids: Set<number>) => {
@@ -572,11 +566,13 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
                 placeholder=''
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                onFocus={() => setSearchInputFocused(true)}
+                onBlur={() => setSearchInputFocused(false)}
                 {...(Platform.OS === 'web' && {
                   outlineStyle: 'none' as any,
                 })}
               />
-              {!searchQuery && (
+              {!searchQuery && !searchInputFocused && (
                 <View
                   style={styles.searchPlaceholderContainer}
                   pointerEvents='none'
@@ -705,7 +701,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
                 analyzingChatId === selectedChat.id && isAnalyzing
               }
               onBack={handleBackFromResult}
-              onReanalyze={() => setAnalysisView('options')}
+              onReanalyze={handleReanalyze}
             />
           )}
           </BackgroundWrapper>
