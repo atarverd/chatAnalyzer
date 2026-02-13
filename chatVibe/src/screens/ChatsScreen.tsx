@@ -41,6 +41,7 @@ import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { ChatsMenuDropdown } from '../components/ChatsMenuDropdown';
 import { ImageAssets } from '../utils/imageCache';
 import { useTranslation } from 'react-i18next';
+import { getApiErrorMessage } from '../utils/apiErrorMap';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../store';
 import { logout } from '../features/auth/authSlice';
@@ -216,23 +217,12 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
     try {
       const result = await getAnalyzePossible(selectedChat.id);
       if (result.error) {
-        const err = result.error as {
-          status?: number;
-          data?: { message?: string };
-          error?: string;
-        };
-        const status = err?.status;
-        const msg = err?.data?.message || err?.error || '';
-        const errorKey =
-          status === 401
-            ? 'analysis.errors.notAuthorized'
-            : status === 400 && String(msg).toLowerCase().includes('invalid')
-              ? 'analysis.errors.invalidChatId'
-              : String(msg).toLowerCase().includes('not found') ||
-                  String(msg).toLowerCase().includes('populate cache')
-                ? 'analysis.errors.chatNotFound'
-                : 'analysis.errors.internalError';
-        Alert.alert(t('errors.generic'), t(errorKey));
+        const msg = getApiErrorMessage(
+          result.error as { data?: { code?: string; error?: string } },
+          t,
+          'errors.generic'
+        );
+        Alert.alert(t('errors.generic'), msg);
         return;
       }
       if (result.data?.possible === false) {
@@ -254,7 +244,8 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
         });
       }
     } catch (err: any) {
-      Alert.alert(t('errors.generic'), t('analysis.errors.internalError'));
+      const msg = getApiErrorMessage(err, t, 'errors.generic');
+      Alert.alert(t('errors.generic'), msg);
       return;
     }
 
@@ -376,9 +367,9 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
 
       const currentAppState = AppState.currentState;
       if (currentAppState === 'active') {
-        // Update error only for this specific chat
+        const msg = getApiErrorMessage(error, t, 'errors.failedToAnalyze');
         setAnalysisResults((prev) =>
-          new Map(prev).set(chatId, t('errors.failedToAnalyze')),
+          new Map(prev).set(chatId, msg),
         );
       }
     }

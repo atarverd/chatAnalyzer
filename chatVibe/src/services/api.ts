@@ -115,21 +115,10 @@ export const api = createApi({
           const data = await response.json();
 
           if (!response.ok) {
-            const errorMsg =
-              data?.error ||
-              data?.message ||
-              (response.status === 401
-                ? 'Not authorized'
-                : response.status === 400
-                  ? 'Invalid chat ID'
-                  : data?.message?.toLowerCase?.()?.includes('not found') ||
-                      data?.message?.toLowerCase?.()?.includes('populate cache')
-                    ? 'Chat not found. Please call /chats first to populate cache'
-                    : 'Internal error');
             return {
               error: {
                 status: response.status,
-                data: { message: errorMsg },
+                data: data ?? {},
               },
             };
           }

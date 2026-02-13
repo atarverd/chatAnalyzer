@@ -5,6 +5,7 @@ import { BackgroundWrapper } from './BackgroundWrapper';
 import { Button } from './Button';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import { getApiErrorMessage } from '../utils/apiErrorMap';
 import type { AppDispatch } from '../store';
 import { logout } from '../features/auth/authSlice';
 import { useLogoutMutation, api } from '../services/api';
@@ -25,6 +26,8 @@ export function ErrorView({ error, onRetry }: ErrorViewProps) {
       errorMessage = t('errors.networkError');
     } else if (error.status === 'PARSING_ERROR') {
       errorMessage = t('errors.invalidResponse');
+    } else if (error.data && (error.data.code || error.data.error)) {
+      errorMessage = getApiErrorMessage(error, t, 'errors.failedToLoadChats');
     } else if (error.data) {
       errorMessage =
         typeof error.data === 'object'

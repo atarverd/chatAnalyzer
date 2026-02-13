@@ -119,7 +119,18 @@
     "failedToVerifyCode": "Failed to verify code. Please try again.",
     "invalidCode": "Invalid code",
     "invalidPhoneLength": "Phone number must be between 7 and 16 digits",
-    "incorrectNumber": "Incorrect number"
+    "incorrectNumber": "Incorrect number",
+    "failedToVerifyPassword": "Failed to verify password. Please try again.",
+    "api": {
+      "invalidRequest": "Invalid request. Please try again.",
+      "floodWait": "Too many attempts. Please wait a few minutes before trying again.",
+      "invalidPhoneNumber": "Incorrect phone number",
+      "noSessionFound": "Session expired. Please start over and request a new code.",
+      "phoneCodeExpired": "Code expired. Please request a new code.",
+      "phoneCodeInvalid": "Invalid code",
+      "notAuthorized": "Not authorized. Please log in again.",
+      "chatNotFound": "Chat not found. Please load chats first."
+    }
   },
   "empty": {
     "noChatsFound": "No chats found"

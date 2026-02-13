@@ -35,6 +35,7 @@ import { CountryCodePicker } from '../components/CountryCodePicker';
 import { CountrySelectionScreen } from './CountrySelectionScreen';
 import { useTranslation } from 'react-i18next';
 import { triggerHaptic } from '../utils/haptics';
+import { getApiErrorMessage } from '../utils/apiErrorMap';
 import {
   getCountryByIso2,
   getCountryPhoneLength,
@@ -307,25 +308,21 @@ export function AuthScreen() {
       const sendRes = (await sendCode({ phone }).unwrap()) as {
         error?: string;
       };
-      const sendError =
-        typeof sendRes?.error === 'string' ? sendRes.error.toUpperCase() : '';
-      if (sendError.includes('PHONE_NUMBER_INVALID')) {
-        setStatus(t('errors.incorrectNumber'));
+      if (sendRes?.error) {
+        setStatus(
+          getApiErrorMessage(
+            { data: { error: sendRes.error } },
+            t,
+            'errors.failedToSendCode'
+          )
+        );
         return;
       }
       setStatus(null);
       dispatch(setStep('code'));
     } catch (err: any) {
-      const data = err?.data;
-      const isInvalidNumber =
-        data?.code === 'PHONE_NUMBER_INVALID' ||
-        data?.error === 'PHONE_NUMBER_INVALID' ||
-        (typeof data?.message === 'string' &&
-          data.message.toUpperCase().includes('PHONE_NUMBER_INVALID'));
       setStatus(
-        isInvalidNumber
-          ? t('errors.incorrectNumber')
-          : t('errors.failedToSendCode'),
+        getApiErrorMessage(err, t, 'errors.failedToSendCode')
       );
     }
   };
@@ -361,16 +358,13 @@ export function AuthScreen() {
         setStatus(null);
         setCodeError(false);
       } else {
-        const errStr =
-          typeof res.error === 'string' ? res.error.toUpperCase() : '';
-        const isInvalidCode = errStr.includes('PHONE_CODE_INVALID');
-        const isInvalidNumber = errStr.includes('PHONE_NUMBER_INVALID');
-        const message = isInvalidCode
-          ? t('errors.invalidCode')
-          : isInvalidNumber
-            ? t('errors.incorrectNumber')
-            : res.error || t('errors.invalidCode');
-        setStatus(message);
+        setStatus(
+          getApiErrorMessage(
+            { data: { error: res.error } },
+            t,
+            'errors.failedToVerifyCode'
+          )
+        );
         setCodeError(true);
         await triggerHaptic('error');
       }
@@ -378,23 +372,9 @@ export function AuthScreen() {
       if (err?.name === 'AbortError') {
         return;
       }
-      const data = err?.data;
-      const msg =
-        typeof data?.message === 'string' ? data.message.toUpperCase() : '';
-      const isInvalidCode =
-        data?.code === 'PHONE_CODE_INVALID' ||
-        data?.error === 'PHONE_CODE_INVALID' ||
-        msg.includes('PHONE_CODE_INVALID');
-      const isInvalidNumber =
-        data?.code === 'PHONE_NUMBER_INVALID' ||
-        data?.error === 'PHONE_NUMBER_INVALID' ||
-        msg.includes('PHONE_NUMBER_INVALID');
-      const statusMessage = isInvalidCode
-        ? t('errors.invalidCode')
-        : isInvalidNumber
-          ? t('errors.incorrectNumber')
-          : t('errors.failedToVerifyCode');
-      setStatus(statusMessage);
+      setStatus(
+        getApiErrorMessage(err, t, 'errors.failedToVerifyCode')
+      );
       setCodeError(true);
       await triggerHaptic('error');
     } finally {
@@ -411,13 +391,18 @@ export function AuthScreen() {
       if (res.success) {
         setStatus(null);
       } else {
-        setStatus(res.error || t('errors.generic'));
+        setStatus(
+          getApiErrorMessage(
+            { data: { error: res.error } },
+            t,
+            'errors.failedToVerifyPassword'
+          )
+        );
         await triggerHaptic('error');
       }
-    } catch {
+    } catch (err: any) {
       setStatus(
-        t('errors.failedToVerifyPassword') ||
-          'Failed to verify password. Please try again.',
+        getApiErrorMessage(err, t, 'errors.failedToVerifyPassword')
       );
       await triggerHaptic('error');
     }
