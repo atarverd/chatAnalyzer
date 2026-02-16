@@ -74,7 +74,15 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
   const trackMetric = (metric: AnalyticsMetric) => {
     captureMetric({ metric, device: Platform.OS }).catch(() => {});
   };
+  const firstTimeChatsSeenRef = useRef(false);
   const [menuVisible, setMenuVisible] = useState(false);
+
+  useEffect(() => {
+    if (!firstTimeChatsSeenRef.current) {
+      firstTimeChatsSeenRef.current = true;
+      trackMetric(AnalyticsMetric.FIRST_TIME_CHATS_SCREEN_SEEN);
+    }
+  }, []);
 
   const [analysisView, setAnalysisView] = useState<
     'none' | 'options' | 'result' | 'notEnough'

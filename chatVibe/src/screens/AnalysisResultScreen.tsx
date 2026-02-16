@@ -25,6 +25,8 @@ import { GlassButton } from '../components/GlassButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import Markdown from 'react-native-markdown-display';
 import { triggerHaptic } from '../utils/haptics';
+import { useCaptureMetricMutation } from '../services/api';
+import { AnalyticsMetric } from '../types/analytics';
 import type { AnalysisBlock } from '../services/api';
 
 const fontFamily = Platform.select({
@@ -123,7 +125,15 @@ export function AnalysisResultScreen({
   onReanalyze,
 }: AnalysisResultScreenProps) {
   const { t } = useTranslation();
+  const [captureMetric] = useCaptureMetricMutation();
   const [isDone, setIsDone] = useState(false);
+
+  useEffect(() => {
+    captureMetric({
+      metric: AnalyticsMetric.ANALYSIS_RESULT_SCREEN_SEEN,
+      device: Platform.OS,
+    }).catch(() => {});
+  }, [captureMetric]);
   const [loadingPhase, setLoadingPhase] = useState<'import' | 'analyzing'>(
     'import',
   );

@@ -29,7 +29,9 @@ import { AuthScreen } from './src/screens/AuthScreen';
 import { ChatsScreen } from './src/screens/ChatsScreen';
 import { IntroScreen } from './src/screens/IntroScreen';
 import { SuccessScreen } from './src/screens/SuccessScreen';
-import { useAuthStatusQuery } from './src/services/api';
+import { useAuthStatusQuery, useCaptureMetricMutation } from './src/services/api';
+import { AnalyticsMetric } from './src/types/analytics';
+import { Platform } from 'react-native';
 import { BackgroundWrapper } from './src/components/BackgroundWrapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { preloadImages, ImageAssets } from './src/utils/imageCache';
@@ -50,6 +52,7 @@ function SplashScreenComponent() {
 function Root() {
   const { data, isLoading } = useAuthStatusQuery();
   const auth = useSelector(selectAuth);
+  const [captureMetric] = useCaptureMetricMutation();
   const [appIsReady, setAppIsReady] = useState(false);
   const [minSplashTimeElapsed, setMinSplashTimeElapsed] = useState(false);
   const [showIntro, setShowIntro] = useState<boolean | null>(null);
@@ -162,6 +165,10 @@ function Root() {
       wasAuthorizedRef.current === false
     ) {
       // User just became authorized during this session - show success screen
+      captureMetric({
+        metric: AnalyticsMetric.AUTH_SUCCESS,
+        device: Platform.OS,
+      }).catch(() => {});
       setShowSuccess(true);
       wasAuthorizedRef.current = true;
 

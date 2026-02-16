@@ -202,7 +202,7 @@ export const api = createApi({
       { metric: AnalyticsMetric | string; device: string }
     >({
       query: (body) => ({
-        url: '/analytics/metrics/capture',
+        url: 'https://chatvibe.dategram.io/analytics/metrics/capture',
         method: 'POST',
         body,
       }),

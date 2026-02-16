@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { ImageAssets } from '../utils/imageCache';
 import { GlassButton } from '../components/GlassButton';
 import { useTranslation } from 'react-i18next';
+import { useCaptureMetricMutation } from '../services/api';
+import { AnalyticsMetric } from '../types/analytics';
 
 type IntroScreenProps = {
   onStart: () => void;
@@ -29,6 +31,23 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
   const { width } = useWindowDimensions();
   const [showSecurityStep, setShowSecurityStep] = useState(true);
   const horizontalPadding = width < 380 ? 20 : 34;
+  const [captureMetric] = useCaptureMetricMutation();
+  const firstStepSeenRef = useRef(false);
+  const secondStepSeenRef = useRef(false);
+
+  const trackMetric = (metric: AnalyticsMetric) => {
+    captureMetric({ metric, device: Platform.OS }).catch(() => {});
+  };
+
+  useEffect(() => {
+    if (showSecurityStep && !firstStepSeenRef.current) {
+      firstStepSeenRef.current = true;
+      trackMetric(AnalyticsMetric.INTRO_FIRST_STEP_SEEN);
+    } else if (!showSecurityStep && !secondStepSeenRef.current) {
+      secondStepSeenRef.current = true;
+      trackMetric(AnalyticsMetric.INTRO_SECOND_STEP_SEEN);
+    }
+  }, [showSecurityStep]);
 
   const features = [
     {
@@ -77,7 +96,10 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
               <View style={styles.securityButtonWrapper}>
                 <GlassButton
                   title={hideLinks ? t('common.okay') : t('intro.securityContinue')}
-                  onPress={() => (hideLinks ? onStart() : setShowSecurityStep(false))}
+                  onPress={() => {
+                    trackMetric(AnalyticsMetric.INTRO_FIRST_STEP_BUTTON_CLICKED);
+                    hideLinks ? onStart() : setShowSecurityStep(false);
+                  }}
                 />
               </View>
             </View>
@@ -151,7 +173,13 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
           </View>
 
           <View style={styles.buttonContainer}>
-            <GlassButton title={t('intro.start')} onPress={onStart} />
+            <GlassButton
+              title={t('intro.start')}
+              onPress={() => {
+                trackMetric(AnalyticsMetric.INTRO_SECOND_STEP_BUTTON_CLICKED);
+                onStart();
+              }}
+            />
             {!hideLinks && (
               <View style={styles.linksRow}>
                 <TouchableOpacity

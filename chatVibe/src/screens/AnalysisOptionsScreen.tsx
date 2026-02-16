@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,8 @@ import { GlassButton } from '../components/GlassButton';
 import { ImageAssets } from '../utils/imageCache';
 import { processAvatarUrl } from '../utils/avatarUrl';
 import { useTranslation } from 'react-i18next';
+import { useCaptureMetricMutation } from '../services/api';
+import { AnalyticsMetric } from '../types/analytics';
 
 type Chat = {
   id: number;
@@ -55,6 +57,14 @@ export function AnalysisOptionsScreen({
   const { width: screenWidth } = useWindowDimensions();
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionType>(null);
   const [selectedTone, setSelectedTone] = useState<AnalysisTone>('neutral');
+  const [captureMetric] = useCaptureMetricMutation();
+
+  useEffect(() => {
+    captureMetric({
+      metric: AnalyticsMetric.ANALYSIS_OPTIONS_SCREEN_SEEN,
+      device: Platform.OS,
+    }).catch(() => {});
+  }, [captureMetric]);
 
   const contentPaddingHorizontal = 34;
   const questionGridGap = 16;

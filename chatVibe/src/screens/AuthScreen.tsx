@@ -26,7 +26,9 @@ import {
   useSendCodeMutation,
   useSignInMutation,
   useSubmitPasswordMutation,
+  useCaptureMetricMutation,
 } from '../services/api';
+import { AnalyticsMetric } from '../types/analytics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { GlassButton } from '../components/GlassButton';
@@ -76,8 +78,20 @@ export function AuthScreen() {
   const [signIn, { isLoading: isVerifyingCode }] = useSignInMutation();
   const [submitPassword, { isLoading: isVerifyingPassword }] =
     useSubmitPasswordMutation();
+  const [captureMetric] = useCaptureMetricMutation();
+  const numberScreenSeenRef = useRef(false);
 
   const bottomTranslateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (auth.step === 'phone' && !numberScreenSeenRef.current) {
+      numberScreenSeenRef.current = true;
+      captureMetric({
+        metric: AnalyticsMetric.PHONE_NUMBER_SCREEN_SEEN,
+        device: Platform.OS,
+      }).catch(() => {});
+    }
+  }, [auth.step, captureMetric]);
 
   // ✅ Track whether Android is actually resizing (to avoid double shift)
   const baseWindowHeightRef = useRef(Dimensions.get('window').height);
@@ -286,6 +300,11 @@ export function AuthScreen() {
   }, [code, auth.step, isVerifyingCode]);
 
   const handleSendCode = async () => {
+    captureMetric({
+      metric: AnalyticsMetric.PHONE_NUMBER_SCREEN_BUTTON_CLICKED,
+      device: Platform.OS,
+    }).catch(() => {});
+
     const phoneNumber = auth.phone.trim();
     if (!phoneNumber) {
       setStatus(t('errors.generic'));
