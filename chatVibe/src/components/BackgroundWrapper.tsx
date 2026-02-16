@@ -49,69 +49,76 @@ export function BackgroundWrapper({
       ]}
     >
       {showHeader && (
-        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 }]}>
+        <View
+          style={[
+            styles.header,
+            { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 },
+          ]}
+        >
           <View style={styles.headerRow}>
-          <LinearGradient
-            colors={['#083C15', '#171E18']}
-            locations={[0.1647, 0.8353]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0.12, y: 0.99 }}
-            style={styles.headerBorder}
-          >
             <LinearGradient
-              colors={['#202020', '#071503']}
+              colors={['#083C15', '#171E18']}
+              locations={[0.1647, 0.8353]}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerContent}
+              end={{ x: 0.12, y: 0.99 }}
+              style={styles.headerBorder}
             >
-              <View style={styles.headerLogoContainer}>
-                <ExpoImage
-                  source={ImageAssets.icon}
-                  style={styles.headerLogo}
-                  contentFit='contain'
-                />
-              </View>
-              {Platform.OS === 'web' ? (
-                <View style={styles.headerTextWebContainer}>
-                  <Text
-                    style={[
-                      styles.headerTextMaskText,
-                      {
-                        background:
-                          'linear-gradient(90deg, #3F7B52 0%, #5ABC79 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        color: 'transparent',
-                      } as any,
-                    ]}
-                  >
-                    ChatVibe
-                  </Text>
+              <LinearGradient
+                colors={['#202020', '#071503']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.headerContent}
+              >
+                <View style={styles.headerLogoContainer}>
+                  <ExpoImage
+                    source={ImageAssets.icon}
+                    style={styles.headerLogo}
+                    contentFit='contain'
+                  />
                 </View>
-              ) : (
-                <View style={styles.headerTextMask}>
-                  <MaskedView
-                    style={styles.headerTextMaskView}
-                    maskElement={
-                      <View style={styles.headerTextMaskContainer}>
-                        <Text style={styles.headerTextMaskText}>ChatVibe</Text>
-                      </View>
-                    }
-                  >
-                    <LinearGradient
-                      colors={['#3F7B52', '#5ABC79']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.headerTextGradient}
+                {Platform.OS === 'web' ? (
+                  <View style={styles.headerTextWebContainer}>
+                    <Text
+                      style={[
+                        styles.headerTextMaskText,
+                        {
+                          background:
+                            'linear-gradient(90deg, #3F7B52 0%, #5ABC79 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                          color: 'transparent',
+                        } as any,
+                      ]}
                     >
-                      <View style={styles.headerTextGradientPlaceholder} />
-                    </LinearGradient>
-                  </MaskedView>
-                </View>
-              )}
+                      ChatVibe
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.headerTextMask}>
+                    <MaskedView
+                      style={styles.headerTextMaskView}
+                      maskElement={
+                        <View style={styles.headerTextMaskContainer}>
+                          <Text style={styles.headerTextMaskText}>
+                            ChatVibe
+                          </Text>
+                        </View>
+                      }
+                    >
+                      <LinearGradient
+                        colors={['#3F7B52', '#5ABC79']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.headerTextGradient}
+                      >
+                        <View style={styles.headerTextGradientPlaceholder} />
+                      </LinearGradient>
+                    </MaskedView>
+                  </View>
+                )}
+              </LinearGradient>
             </LinearGradient>
-          </LinearGradient>
           </View>
         </View>
       )}
@@ -133,20 +140,32 @@ export function BackgroundWrapper({
         />
       )}
       {showBackButton && onBackPress && (
-        <View style={[styles.backButtonContainer, { 
-          top: Platform.OS === 'web' 
-            ? 24 + (49 - 48) / 2  // Header paddingTop (24) + half the difference between header height (49) and button height (48)
-            : insets.top + 24 + (49 - 48) / 2  // Header paddingTop (insets.top + 24) + half the difference
-        }]}>
+        <View
+          style={[
+            styles.backButtonContainer,
+            {
+              top:
+                Platform.OS === 'web'
+                  ? 24 + (49 - 48) / 2 // Header paddingTop (24) + half the difference between header height (49) and button height (48)
+                  : insets.top + 24 + (49 - 48) / 2, // Header paddingTop (insets.top + 24) + half the difference
+            },
+          ]}
+        >
           <BackButton onPress={onBackPress} />
         </View>
       )}
       {showMenuButton && onMenuPress && (
-        <View style={[styles.menuButtonContainer, { 
-          top: Platform.OS === 'web' 
-            ? 24 + (49 - 48) / 2
-            : insets.top + 24 + (49 - 48) / 2
-        }]}>
+        <View
+          style={[
+            styles.menuButtonContainer,
+            {
+              top:
+                Platform.OS === 'web'
+                  ? 24 + (49 - 48) / 2
+                  : insets.top + 24 + (49 - 48) / 2,
+            },
+          ]}
+        >
           <MenuButton onPress={onMenuPress} />
         </View>
       )}

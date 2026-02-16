@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -127,13 +127,8 @@ export function AnalysisResultScreen({
   const { t } = useTranslation();
   const [captureMetric] = useCaptureMetricMutation();
   const [isDone, setIsDone] = useState(false);
+  const resultSeenFiredRef = useRef(false);
 
-  useEffect(() => {
-    captureMetric({
-      metric: AnalyticsMetric.ANALYSIS_RESULT_SCREEN_SEEN,
-      device: Platform.OS,
-    }).catch(() => {});
-  }, [captureMetric]);
   const [loadingPhase, setLoadingPhase] = useState<'import' | 'analyzing'>(
     'import',
   );
@@ -185,6 +180,18 @@ export function AnalysisResultScreen({
       setLoadingPhase('import');
     }
   }, [isAnalyzing, result]);
+
+  useEffect(() => {
+    if (isDone && !resultSeenFiredRef.current) {
+      resultSeenFiredRef.current = true;
+      captureMetric({
+        metric: AnalyticsMetric.ANALYSIS_RESULT_SCREEN_SEEN,
+        device: Platform.OS,
+      }).catch(() => {});
+    } else if (!isDone) {
+      resultSeenFiredRef.current = false;
+    }
+  }, [isDone, captureMetric]);
 
   // After 3 seconds, switch from import phase to analyzing phase
   useEffect(() => {

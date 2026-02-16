@@ -67,6 +67,10 @@ export function AuthScreen() {
   const [isPhoneInputFocused, setIsPhoneInputFocused] = useState(false);
   const [isCodeInputFocused, setIsCodeInputFocused] = useState(false);
   const [isPasswordInputFocused, setIsPasswordInputFocused] = useState(false);
+  const [bottomButtonVisible, setBottomButtonVisible] = useState(true);
+  const bottomButtonDelayRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const codeInputRefs = useRef<(TextInput | null)[]>([]);
   const isVerifyingRef = useRef(false);
@@ -113,7 +117,13 @@ export function AuthScreen() {
     const onShow = (e: any) => {
       const h = e?.endCoordinates?.height ?? 0;
 
-      // iOS handled by KeyboardAvoidingView
+      if (Platform.OS === 'android') {
+        setBottomButtonVisible(false);
+        bottomButtonDelayRef.current &&
+          clearTimeout(bottomButtonDelayRef.current);
+        bottomButtonDelayRef.current = null;
+      }
+
       if (Platform.OS !== 'android') return;
 
       // Give Android a frame to apply adjustResize (if it will)
@@ -134,19 +144,26 @@ export function AuthScreen() {
     };
 
     const onHide = () => {
-      // When keyboard closes, reset focus states so the button goes back to the bottom
+      // When keyboard closes, reset focus states so the inline button disappears
       setIsPhoneInputFocused(false);
       setIsCodeInputFocused(false);
       setIsPasswordInputFocused(false);
 
       if (Platform.OS === 'android') {
+        setBottomButtonVisible(false);
+        bottomButtonDelayRef.current &&
+          clearTimeout(bottomButtonDelayRef.current);
+        bottomButtonDelayRef.current = setTimeout(() => {
+          setBottomButtonVisible(true);
+          bottomButtonDelayRef.current = null;
+        }, 200);
+
         Animated.timing(bottomTranslateY, {
           toValue: 0,
           duration: 220,
           useNativeDriver: true,
         }).start();
 
-        // reset baseline height after keyboard closes
         requestAnimationFrame(() => {
           baseWindowHeightRef.current = Dimensions.get('window').height;
         });
@@ -159,6 +176,8 @@ export function AuthScreen() {
     return () => {
       subShow.remove();
       subHide.remove();
+      bottomButtonDelayRef.current &&
+        clearTimeout(bottomButtonDelayRef.current);
     };
   }, [bottomTranslateY]);
 
@@ -332,17 +351,15 @@ export function AuthScreen() {
           getApiErrorMessage(
             { data: { error: sendRes.error } },
             t,
-            'errors.failedToSendCode'
-          )
+            'errors.failedToSendCode',
+          ),
         );
         return;
       }
       setStatus(null);
       dispatch(setStep('code'));
     } catch (err: any) {
-      setStatus(
-        getApiErrorMessage(err, t, 'errors.failedToSendCode')
-      );
+      setStatus(getApiErrorMessage(err, t, 'errors.failedToSendCode'));
     }
   };
 
@@ -381,8 +398,8 @@ export function AuthScreen() {
           getApiErrorMessage(
             { data: { error: res.error } },
             t,
-            'errors.failedToVerifyCode'
-          )
+            'errors.failedToVerifyCode',
+          ),
         );
         setCodeError(true);
         await triggerHaptic('error');
@@ -391,9 +408,7 @@ export function AuthScreen() {
       if (err?.name === 'AbortError') {
         return;
       }
-      setStatus(
-        getApiErrorMessage(err, t, 'errors.failedToVerifyCode')
-      );
+      setStatus(getApiErrorMessage(err, t, 'errors.failedToVerifyCode'));
       setCodeError(true);
       await triggerHaptic('error');
     } finally {
@@ -414,15 +429,13 @@ export function AuthScreen() {
           getApiErrorMessage(
             { data: { error: res.error } },
             t,
-            'errors.failedToVerifyPassword'
-          )
+            'errors.failedToVerifyPassword',
+          ),
         );
         await triggerHaptic('error');
       }
     } catch (err: any) {
-      setStatus(
-        getApiErrorMessage(err, t, 'errors.failedToVerifyPassword')
-      );
+      setStatus(getApiErrorMessage(err, t, 'errors.failedToVerifyPassword'));
       await triggerHaptic('error');
     }
   };
@@ -780,7 +793,8 @@ export function AuthScreen() {
                 ]}
               >
                 {auth.step === 'phone' &&
-                  (Platform.OS !== 'android' || !isPhoneInputFocused) && (
+                  (Platform.OS !== 'android' ||
+                    (!isPhoneInputFocused && bottomButtonVisible)) && (
                     <GlassButton
                       title={isLoading ? t('auth.sending') : t('auth.getCode')}
                       onPress={handleSendCode}
@@ -791,7 +805,8 @@ export function AuthScreen() {
                   )}
                 {auth.step === 'code' &&
                   !isVerifyingCode &&
-                  (Platform.OS !== 'android' || !isCodeInputFocused) && (
+                  (Platform.OS !== 'android' ||
+                    (!isCodeInputFocused && bottomButtonVisible)) && (
                     <ResendButton
                       title={t('auth.resend')}
                       onPress={handleSendCode}
@@ -802,7 +817,8 @@ export function AuthScreen() {
                     />
                   )}
                 {auth.step === 'password' &&
-                  (Platform.OS !== 'android' || !isPasswordInputFocused) && (
+                  (Platform.OS !== 'android' ||
+                    (!isPasswordInputFocused && bottomButtonVisible)) && (
                     <GlassButton
                       title={
                         isVerifyingPassword

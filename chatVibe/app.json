@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "chatVibe",
-    "slug": "cahtvibe",
+    "slug": "chatvibe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -29,7 +29,7 @@
       },
       "versionCode": 1,
       "predictiveBackGestureEnabled": false,
-      "package": "com.atarverd.cahtvibe",
+      "package": "com.atarverd.chatvibe",
       "navigationBarHidden": true,
       "edgeToEdgeEnabled": false,
       "softwareKeyboardLayoutMode": "resize",

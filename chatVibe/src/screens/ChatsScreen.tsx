@@ -74,14 +74,23 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
   const trackMetric = (metric: AnalyticsMetric) => {
     captureMetric({ metric, device: Platform.OS }).catch(() => {});
   };
-  const firstTimeChatsSeenRef = useRef(false);
   const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
-    if (!firstTimeChatsSeenRef.current) {
-      firstTimeChatsSeenRef.current = true;
-      trackMetric(AnalyticsMetric.FIRST_TIME_CHATS_SCREEN_SEEN);
-    }
+    const run = async () => {
+      try {
+        const sent = await AsyncStorage.getItem('firstTimeChatsScreenSeenSent');
+        if (sent === 'true') {
+          trackMetric(AnalyticsMetric.TELEGRAM_CHATS_SEEN);
+        } else {
+          trackMetric(AnalyticsMetric.FIRST_TIME_CHATS_SCREEN_SEEN);
+          await AsyncStorage.setItem('firstTimeChatsScreenSeenSent', 'true');
+        }
+      } catch {
+        trackMetric(AnalyticsMetric.TELEGRAM_CHATS_SEEN);
+      }
+    };
+    run();
   }, []);
 
   const [analysisView, setAnalysisView] = useState<
@@ -506,7 +515,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
     if (data && data.length > 0 && !chatsLoadedFiredRef.current) {
       chatsLoadedFiredRef.current = true;
       captureMetric({
-        metric: AnalyticsMetric.TELEGRAM_CHATS_LOADED,
+        metric: AnalyticsMetric.TELEGRAM_CHATS_SEEN,
         device: Platform.OS,
       }).catch(() => {});
     }
