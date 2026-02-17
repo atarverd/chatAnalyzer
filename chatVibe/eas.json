@@ -10,12 +10,24 @@
     },
     "preview": {
       "distribution": "internal",
-      "ios": { "autoIncrement": true },
-      "android": { "autoIncrement": true }
+      "ios": {
+        "autoIncrement": true,
+        "image": "latest"
+      },
+      "android": {
+        "autoIncrement": true
+      }
     },
     "production": {
-      "ios": { "autoIncrement": true },
-      "android": { "autoIncrement": true }
+      "distribution": "store",
+      "ios": {
+        "distribution": "store",
+        "autoIncrement": true,
+        "image": "latest"
+      },
+      "android": {
+        "autoIncrement": true
+      }
     }
   },
   "submit": {

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "chatVibe",
-    "slug": "chatvibe",
+    "slug": "cahtvibe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,8 +19,10 @@
       "infoPlist": {
         "UIStatusBarHidden": true,
         "UIViewControllerBasedStatusBarAppearance": false,
-        "UIRequiresFullScreen": true
-      }
+        "UIRequiresFullScreen": true,
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.atarverd.chatvibe"
     },
     "android": {
       "adaptiveIcon": {
@@ -43,13 +45,18 @@
     "extra": {
       "eas": {
         "projectId": "96134182-0a20-437b-85e1-59fc3307ff8a"
-      }
+      },
+      "expo-navigation-bar": {}
     },
     "statusBar": {
       "hidden": true,
       "translucent": false
     },
     "owner": "atarverd",
-    "plugins": ["expo-font", "expo-localization", "expo-navigation-bar"]
+    "plugins": [
+      "expo-font",
+      "expo-localization",
+      "expo-navigation-bar"
+    ]
   }
 }
