@@ -23,7 +23,7 @@
       "ios": {
         "distribution": "store",
         "autoIncrement": true,
-        "image": "latest"
+        "image": "macos-sequoia-15.6-xcode-16.4"
       },
       "android": {
         "autoIncrement": true

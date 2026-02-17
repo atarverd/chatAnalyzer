@@ -2,7 +2,7 @@
   "expo": {
     "name": "chatVibe",
     "slug": "cahtvibe",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -53,10 +53,6 @@
       "translucent": false
     },
     "owner": "atarverd",
-    "plugins": [
-      "expo-font",
-      "expo-localization",
-      "expo-navigation-bar"
-    ]
+    "plugins": ["expo-font", "expo-localization", "expo-navigation-bar"]
   }
 }
