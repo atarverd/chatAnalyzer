@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 16.28.0",
+    "version": ">= 18.0.1",
     "appVersionSource": "remote"
   },
   "build": {
@@ -19,15 +19,7 @@
       }
     },
     "production": {
-      "distribution": "store",
-      "ios": {
-        "distribution": "store",
-        "autoIncrement": true,
-        "image": "macos-sequoia-15.6-xcode-16.4"
-      },
-      "android": {
-        "autoIncrement": true
-      }
+      "autoIncrement": true
     }
   },
   "submit": {
