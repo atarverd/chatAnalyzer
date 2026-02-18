@@ -29,7 +29,10 @@ import { AuthScreen } from './src/screens/AuthScreen';
 import { ChatsScreen } from './src/screens/ChatsScreen';
 import { IntroScreen } from './src/screens/IntroScreen';
 import { SuccessScreen } from './src/screens/SuccessScreen';
-import { useAuthStatusQuery, useCaptureMetricMutation } from './src/services/api';
+import {
+  useAuthStatusQuery,
+  useCaptureMetricMutation,
+} from './src/services/api';
 import { AnalyticsMetric } from './src/types/analytics';
 import { Platform } from 'react-native';
 import { BackgroundWrapper } from './src/components/BackgroundWrapper';

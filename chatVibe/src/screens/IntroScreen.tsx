@@ -95,9 +95,13 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
               </Text>
               <View style={styles.securityButtonWrapper}>
                 <GlassButton
-                  title={hideLinks ? t('common.okay') : t('intro.securityContinue')}
+                  title={
+                    hideLinks ? t('common.okay') : t('intro.securityContinue')
+                  }
                   onPress={() => {
-                    trackMetric(AnalyticsMetric.INTRO_FIRST_STEP_BUTTON_CLICKED);
+                    trackMetric(
+                      AnalyticsMetric.INTRO_FIRST_STEP_BUTTON_CLICKED,
+                    );
                     hideLinks ? onStart() : setShowSecurityStep(false);
                   }}
                 />
@@ -181,7 +185,7 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
               }}
             />
             {!hideLinks && (
-              <View style={styles.linksRow}>
+              <View style={[styles.linksRow, { gap: width < 380 ? 12 : 24 }]}>
                 <TouchableOpacity
                   onPress={() =>
                     Linking.openURL('https://chatvibe.dategram.io/terms')
