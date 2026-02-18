@@ -61,6 +61,9 @@ type ChatsScreenProps = {
   onShowHowItWorks?: () => void;
 };
 
+// Persists across Strict Mode unmount/remount to prevent duplicate analytics
+let chatsScreenSeenFired = false;
+
 export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -77,6 +80,9 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
   const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
+    if (chatsScreenSeenFired) return;
+    chatsScreenSeenFired = true;
+
     const run = async () => {
       try {
         const sent = await AsyncStorage.getItem('firstTimeChatsScreenSeenSent');
@@ -508,18 +514,6 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
       checkAnalysisResults();
     }
   }, [data]);
-
-  // TELEGRAM_CHATS_LOADED - fire once when chats first load (no await)
-  const chatsLoadedFiredRef = useRef(false);
-  useEffect(() => {
-    if (data && data.length > 0 && !chatsLoadedFiredRef.current) {
-      chatsLoadedFiredRef.current = true;
-      captureMetric({
-        metric: AnalyticsMetric.TELEGRAM_CHATS_SEEN,
-        device: Platform.OS,
-      }).catch(() => {});
-    }
-  }, [data, captureMetric]);
 
   if (isLoading) {
     return <LoadingView />;

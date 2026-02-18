@@ -47,8 +47,8 @@ export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithLogging,
   tagTypes: ['Auth'],
-  // Keep data even when components unmount
-  keepUnusedDataFor: 0,
+  // Keep cached data so remount (e.g. Strict Mode) doesn't trigger refetch
+  keepUnusedDataFor: 60,
   endpoints: (builder) => ({
     authStatus: builder.query<AuthStatusResponse, void>({
       query: () => '/auth/status',
@@ -105,6 +105,8 @@ export const api = createApi({
           };
         }
       },
+      // Prevent double fetch on mount (React 18 Strict Mode / rapid remount)
+      refetchOnMountOrArgChange: false,
     }),
     getAnalyzePossible: builder.query<{ possible: boolean }, number>({
       queryFn: async (chatId) => {
@@ -201,11 +203,41 @@ export const api = createApi({
       { success?: boolean },
       { metric: AnalyticsMetric | string; device: string }
     >({
-      query: (body) => ({
-        url: 'https://chatvibe.dategram.io/analytics/metrics/capture',
-        method: 'POST',
-        body,
-      }),
+      queryFn: async (body) => {
+        const { metric, device } = body;
+        __DEV__ &&
+          console.log('[Analytics] Sending:', { metric, device });
+        try {
+          const response = await fetch(
+            'https://chatvibe.dategram.io/analytics/metrics/capture',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+              credentials: 'include',
+            },
+          );
+          const ok = response.ok;
+          if (__DEV__) {
+            if (ok) {
+              console.log('[Analytics] OK', metric);
+            } else {
+              const text = await response.text();
+              console.log(
+                '[Analytics] Failed',
+                response.status,
+                metric,
+                text || response.statusText,
+              );
+            }
+          }
+          return ok ? { data: {} } : { error: { status: response.status } };
+        } catch (err: any) {
+          __DEV__ &&
+            console.log('[Analytics] Error', metric, err?.message ?? String(err));
+          return { error: { status: 'FETCH_ERROR', error: err?.message } };
+        }
+      },
     }),
     logout: builder.mutation<{ success?: boolean }, void>({
       queryFn: async () => {
