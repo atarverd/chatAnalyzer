@@ -4,8 +4,6 @@ import { Button } from './Button';
 import { useTranslation } from 'react-i18next';
 import { LottieOrLoader } from './LottieOrLoader';
 
-const loadingAnimation = require('../../assets/Animation.json');
-
 type AnalysisResultProps = {
   result: string;
   isAnalyzing: boolean;
@@ -33,7 +31,7 @@ export function AnalysisResult({
       >
         {isAnalyzing ? (
           <View style={styles.loadingContainer}>
-            <LottieOrLoader source={loadingAnimation} style={styles.loadingAnimation} />
+            <LottieOrLoader style={styles.loadingAnimation} />
             <Text style={styles.loadingTitle}>{t('analysis.analyzingTitle')}</Text>
             <Text style={styles.loadingSubtitle}>
               {t('analysis.analyzingSubtitle')}
