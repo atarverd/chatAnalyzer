@@ -9,6 +9,7 @@ import { getApiErrorMessage } from '../utils/apiErrorMap';
 import type { AppDispatch } from '../store';
 import { logout } from '../features/auth/authSlice';
 import { useLogoutMutation, api } from '../services/api';
+import { colors } from '../theme/colors';
 
 type ErrorViewProps = {
   error: any;
@@ -55,9 +56,7 @@ export function ErrorView({ error, onRetry }: ErrorViewProps) {
     <BackgroundWrapper>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.center}>
-          <Text style={styles.errorText}>
-            {t('errors.generic')}
-          </Text>
+          <Text style={styles.errorText}>{t('errors.generic')}</Text>
           <Text style={styles.errorDetails}>{errorMessage}</Text>
           <Button title={t('common.retry')} onPress={onRetry} />
           <View style={styles.logoutButtonContainer}>
@@ -81,7 +80,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#FE3F21',
+    color: colors.error,
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
       android: 'Onest-Regular',
@@ -95,7 +94,7 @@ const styles = StyleSheet.create({
   },
   errorDetails: {
     fontSize: 16,
-    color: '#FE3F21',
+    color: colors.error,
     fontFamily: Platform.select({
       ios: 'Onest-Regular',
       android: 'Onest-Regular',

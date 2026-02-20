@@ -27,18 +27,14 @@ export function CountryCodePicker({
   return (
     <TouchableOpacity onPress={onSelect} activeOpacity={0.8}>
       <LinearGradient
-        colors={[
-          'rgba(255, 255, 255, 0.14)',
-          'rgba(255, 255, 255, 0.02)',
-          'rgba(255, 255, 255, 0.14)',
-        ]}
+        colors={['#FFFFFF24', '#FFFFFF05', '#FFFFFF24']}
         locations={[0.1647, 0.8353]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.12, y: 0.99 }}
         style={styles.selectorBorder}
       >
         <LinearGradient
-          colors={['#272727', '#272727']}
+          colors={['#202121', '#202121']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.selector}

@@ -14,6 +14,7 @@ import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { BackButton } from '../components/BackButton';
 import { CloseButton } from '../components/CloseButton';
 import { ImageAssets } from '../utils/imageCache';
+import { colors } from '../theme/colors';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -174,6 +175,13 @@ export function CountrySelectionScreen({
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     returnKeyType='search'
+                    selectionColor={colors.blue}
+                    {...(Platform.OS === 'web' && {
+                      outlineStyle: 'none' as any,
+                    })}
+                    {...(Platform.OS !== 'ios' && {
+                      caretColor: colors.blue as any,
+                    })}
                   />
                 </View>
               </LinearGradient>
@@ -216,6 +224,13 @@ export function CountrySelectionScreen({
                     onChangeText={setSearchQuery}
                     autoFocus
                     returnKeyType='search'
+                    selectionColor={colors.blue}
+                    {...(Platform.OS === 'web' && {
+                      outlineStyle: 'none' as any,
+                    })}
+                    {...(Platform.OS !== 'ios' && {
+                      caretColor: colors.blue as any,
+                    })}
                   />
                 </View>
               </LinearGradient>
@@ -396,6 +411,10 @@ const styles = StyleSheet.create({
     }),
     fontWeight: '500',
     letterSpacing: 0,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none' as any,
+      caretColor: colors.blue,
+    }),
   },
 
   countryList: {
@@ -487,7 +506,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#34C759',
+    backgroundColor: colors.blue,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',

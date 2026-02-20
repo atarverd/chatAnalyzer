@@ -4,6 +4,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { ImageAssets } from '../utils/imageCache';
 import { useTranslation } from 'react-i18next';
+import { colors } from '../theme/colors';
 
 type Props = {
   onComplete: () => void;
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#34C759',
+    backgroundColor: colors.blue,
     opacity: 0.15,
     top: 0.5,
     left: 0.5,

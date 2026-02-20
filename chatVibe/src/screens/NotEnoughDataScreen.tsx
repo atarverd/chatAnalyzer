@@ -10,7 +10,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
 import { ImageAssets } from '../utils/imageCache';
@@ -42,11 +41,10 @@ export function NotEnoughDataScreen({
   const avatarUrl = processAvatarUrl(chat.avatar_url);
 
   return (
-    <BackgroundWrapper showGlow showHeader={false}>
-      <SafeAreaView
-        style={styles.safeArea}
-        edges={Platform.OS === 'android' ? ['bottom'] : []}
-      >
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={Platform.OS === 'android' ? ['bottom'] : []}
+    >
         <View
           style={[
             styles.header,
@@ -89,8 +87,7 @@ export function NotEnoughDataScreen({
             {t('analysis.notEnoughDataSubtitle')}
           </Text>
         </View>
-      </SafeAreaView>
-    </BackgroundWrapper>
+    </SafeAreaView>
   );
 }
 

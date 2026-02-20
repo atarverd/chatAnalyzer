@@ -31,9 +31,9 @@ export const GlassButton = ({
       style={[styles.touchableOpacity, disabled && styles.disabled]}
     >
       {disabled ? (
-        <View style={styles.backButtonBorderDisabled}>
+        <View style={styles.backButtonBorderPlain}>
           <LinearGradient
-            colors={['#006601', '#016901', '#036c03', '#047007']}
+            colors={['#1079e0', '#0e87e6']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={styles.backButton}
@@ -60,7 +60,7 @@ export const GlassButton = ({
           style={styles.backButtonBorder}
         >
           <LinearGradient
-            colors={['#006601', '#016901', '#036c03', '#047007']}
+            colors={['#1079e0', '#0e87e6']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={styles.backButton}
@@ -109,12 +109,12 @@ const styles = StyleSheet.create({
     shadowRadius: 40,
     elevation: 3,
   },
-  backButtonBorderDisabled: {
+  backButtonBorderPlain: {
     width: '100%',
     height: 48,
     borderRadius: 24,
-    padding: 0,
     marginRight: 12,
+    overflow: 'hidden',
   },
   backButton: {
     flex: 1,

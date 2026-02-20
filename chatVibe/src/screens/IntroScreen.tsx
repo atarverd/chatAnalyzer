@@ -19,6 +19,7 @@ import { GlassButton } from '../components/GlassButton';
 import { useTranslation } from 'react-i18next';
 import { useCaptureMetricMutation } from '../services/api';
 import { AnalyticsMetric } from '../types/analytics';
+import { colors } from '../theme/colors';
 
 type IntroScreenProps = {
   onStart: () => void;
@@ -91,7 +92,7 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
                 {t('intro.securityAccess')}
               </Text>
               <Text style={styles.securityText}>
-                {t('intro.securityNoStore')}
+                {t('intro.privacy')}
               </Text>
               <View style={styles.securityButtonWrapper}>
                 <GlassButton
@@ -132,33 +133,33 @@ export function IntroScreen({ onStart, hideLinks }: IntroScreenProps) {
               {t('intro.title')}
             </Text>
 
-            <LinearGradient
+            {/* <LinearGradient
               colors={['rgba(170, 224, 183, 0.3)', 'rgba(87, 94, 89, 0.3)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               style={styles.featuresCardBorder}
-            >
-              <View style={styles.featuresCard}>
-                <Text style={styles.featuresTitle}>
-                  {t('intro.whatWeAnalyze')}
-                </Text>
-                {features.map((feature, index) => (
-                  <View key={index} style={styles.featureItem}>
-                    <View style={styles.featureIconContainer}>
-                      <Image
-                        source={feature.icon}
-                        style={styles.icon}
-                        resizeMode='contain'
-                      />
-                    </View>
-                    <Text style={styles.featureText}>{feature.text}</Text>
+            > */}
+            <View style={styles.featuresCard}>
+              <Text style={styles.featuresTitle}>
+                {t('intro.whatWeAnalyze')}
+              </Text>
+              {features.map((feature, index) => (
+                <View key={index} style={styles.featureItem}>
+                  <View style={styles.featureIconContainer}>
+                    <Image
+                      source={feature.icon}
+                      style={styles.icon}
+                      resizeMode='contain'
+                    />
                   </View>
-                ))}
-              </View>
-            </LinearGradient>
+                  <Text style={styles.featureText}>{feature.text}</Text>
+                </View>
+              ))}
+            </View>
+            {/* </LinearGradient> */}
 
             <LinearGradient
-              colors={['rgba(52, 199, 89, 0.3)', 'rgba(25, 97, 43, 0.3)']}
+              colors={[colors.borderGradient1, colors.borderGradient2]}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               style={styles.privacyCardBorder}
@@ -240,19 +241,20 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     letterSpacing: 0,
   },
-  featuresCardBorder: {
-    borderRadius: 16,
-    padding: 1,
-    marginBottom: 16,
-    width: '100%',
-    maxWidth: 400,
-  },
+  // featuresCardBorder: {
+  //   borderRadius: 16,
+  //   padding: 1,
+  //   marginBottom: 16,
+  //   width: '100%',
+  //   maxWidth: 400,
+  // },
   featuresCard: {
-    backgroundColor: '#151715',
+    backgroundColor: colors.darkBlue,
     borderRadius: 15,
     padding: 20,
     width: '100%',
     paddingBottom: 5,
+    marginBottom: 16,
   },
   featuresTitle: {
     fontSize: 13,
@@ -307,7 +309,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   privacyCard: {
-    backgroundColor: '#141715',
+    backgroundColor: colors.privacyCard,
     borderRadius: 15,
     padding: 18,
     width: '100%',
@@ -318,7 +320,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: 'rgba(58, 228, 120, 0.1)',
+    backgroundColor: '#041E33',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -414,6 +416,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   securityStepBackground: {
-    backgroundColor: '#141414',
+    backgroundColor: colors.background,
   },
 });

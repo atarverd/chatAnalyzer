@@ -10,6 +10,7 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 import { Avatar } from './Avatar';
 import { ImageAssets } from '../utils/imageCache';
+import { colors } from '../theme/colors';
 import { useTranslation } from 'react-i18next';
 import { processAvatarUrl } from '../utils/avatarUrl';
 
@@ -114,7 +115,7 @@ export function ChatItem({
           <>
             <ActivityIndicator
               size='small'
-              color='#34C759'
+              color={colors.lightBlue}
               style={styles.loadingIndicator}
             />
             <ExpoImage

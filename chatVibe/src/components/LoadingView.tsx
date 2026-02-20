@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { colors } from '../theme/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundWrapper } from './BackgroundWrapper';
 
@@ -8,7 +9,7 @@ export function LoadingView() {
     <BackgroundWrapper>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.center}>
-          <ActivityIndicator color="#34C759" />
+          <ActivityIndicator color={colors.lightBlue} />
         </View>
       </SafeAreaView>
     </BackgroundWrapper>

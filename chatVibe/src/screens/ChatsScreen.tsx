@@ -12,7 +12,6 @@ import {
   Keyboard,
   Image,
   Alert,
-  Dimensions,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import {
@@ -42,6 +41,7 @@ import { NotEnoughDataScreen } from './NotEnoughDataScreen';
 import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { ChatsMenuDropdown } from '../components/ChatsMenuDropdown';
 import { ImageAssets } from '../utils/imageCache';
+import { colors } from '../theme/colors';
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from '../utils/apiErrorMap';
 import { useDispatch } from 'react-redux';
@@ -59,12 +59,16 @@ type Chat = {
 
 type ChatsScreenProps = {
   onShowHowItWorks?: () => void;
+  onAnalysisOptionsOrResultActive?: (active: boolean) => void;
 };
 
 // Persists across Strict Mode unmount/remount to prevent duplicate analytics
 let chatsScreenSeenFired = false;
 
-export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
+export function ChatsScreen({
+  onShowHowItWorks,
+  onAnalysisOptionsOrResultActive,
+}: ChatsScreenProps) {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch<AppDispatch>();
@@ -102,6 +106,13 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
   const [analysisView, setAnalysisView] = useState<
     'none' | 'options' | 'result' | 'notEnough'
   >('none');
+
+  useEffect(() => {
+    onAnalysisOptionsOrResultActive?.(
+      analysisView === 'options' || analysisView === 'result',
+    );
+    return () => onAnalysisOptionsOrResultActive?.(false);
+  }, [analysisView, onAnalysisOptionsOrResultActive]);
   const [chatsWithNotEnoughData, setChatsWithNotEnoughData] = useState<
     Set<number>
   >(new Set());
@@ -210,10 +221,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
         setCurrentQuestionType(info.questionType || info.type || null);
         setCurrentTone(info.tone || 'neutral');
         setAnalysisResults((prev) =>
-          new Map(prev).set(
-            chat.id,
-            info.blocks ?? info.analysis ?? '',
-          ),
+          new Map(prev).set(chat.id, info.blocks ?? info.analysis ?? ''),
         );
         setIsExistingAnalysisResult(true);
         setAnalysisView('result');
@@ -251,7 +259,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
         const msg = getApiErrorMessage(
           result.error as { data?: { code?: string; error?: string } },
           t,
-          'errors.generic'
+          'errors.generic',
         );
         Alert.alert(t('errors.generic'), msg);
         return;
@@ -406,9 +414,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
       const currentAppState = AppState.currentState;
       if (currentAppState === 'active') {
         const msg = getApiErrorMessage(error, t, 'errors.failedToAnalyze');
-        setAnalysisResults((prev) =>
-          new Map(prev).set(chatId, msg),
-        );
+        setAnalysisResults((prev) => new Map(prev).set(chatId, msg));
       }
     }
   };
@@ -567,6 +573,7 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
       showGlow
       showHeader
       showMenuButton
+      headerLogoPadding={false}
       onMenuPress={() => setMenuVisible(true)}
     >
       <ChatsMenuDropdown
@@ -598,8 +605,10 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
                 onChangeText={setSearchQuery}
                 onFocus={() => setSearchInputFocused(true)}
                 onBlur={() => setSearchInputFocused(false)}
+                selectionColor={colors.blue}
                 {...(Platform.OS === 'web' && {
                   outlineStyle: 'none' as any,
+                  caretColor: colors.blue,
                 })}
               />
               {!searchQuery && !searchInputFocused && (
@@ -710,30 +719,28 @@ export function ChatsScreen({ onShowHowItWorks }: ChatsScreenProps) {
             style={styles.analysisOverlayContent}
           >
             {analysisView === 'options' && (
-            <AnalysisOptionsScreen
-              chat={selectedChat}
-              onBack={handleBackFromOptions}
-              onStartAnalysis={handleStartAnalysis}
-            />
-          )}
-          {analysisView === 'notEnough' && (
-            <NotEnoughDataScreen
-              chat={selectedChat}
-              onBack={handleBackFromNotEnough}
-            />
-          )}
-          {analysisView === 'result' && (
-            <AnalysisResultScreen
-              chat={selectedChat}
-              questionType={currentQuestionType}
-              result={analysisResults.get(selectedChat.id) || ''}
-              isAnalyzing={
-                analyzingChatId === selectedChat.id && isAnalyzing
-              }
-              onBack={handleBackFromResult}
-              onReanalyze={handleReanalyze}
-            />
-          )}
+              <AnalysisOptionsScreen
+                chat={selectedChat}
+                onBack={handleBackFromOptions}
+                onStartAnalysis={handleStartAnalysis}
+              />
+            )}
+            {analysisView === 'notEnough' && (
+              <NotEnoughDataScreen
+                chat={selectedChat}
+                onBack={handleBackFromNotEnough}
+              />
+            )}
+            {analysisView === 'result' && (
+              <AnalysisResultScreen
+                chat={selectedChat}
+                questionType={currentQuestionType}
+                result={analysisResults.get(selectedChat.id) || ''}
+                isAnalyzing={analyzingChatId === selectedChat.id && isAnalyzing}
+                onBack={handleBackFromResult}
+                onReanalyze={handleReanalyze}
+              />
+            )}
           </BackgroundWrapper>
         </View>
       )}
@@ -745,16 +752,15 @@ const styles = StyleSheet.create({
   analysisOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
-    backgroundColor: '#141414',
+    backgroundColor: colors.background,
   },
   analysisOverlayBg: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height * 0.4,
-    alignSelf: 'flex-start',
+    width: '100%',
+    height: '40%',
     zIndex: 0,
   },
   analysisOverlayContent: {
@@ -799,6 +805,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     ...(Platform.OS === 'web' && {
       outlineStyle: 'none' as any,
+      caretColor: colors.blue,
     }),
   },
   searchPlaceholderContainer: {

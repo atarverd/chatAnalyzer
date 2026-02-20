@@ -6,6 +6,7 @@ import {
   Platform,
   ViewStyle,
 } from 'react-native';
+import { colors } from '../theme/colors';
 
 type ResendButtonProps = {
   title: string;
@@ -85,6 +86,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   buttonTextDisabled: {
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: colors.azure55,
   },
 });

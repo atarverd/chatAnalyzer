@@ -15,10 +15,10 @@ import {
 } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
 import { TypingText } from '../components/TypingText';
-import { BackgroundWrapper } from '../components/BackgroundWrapper';
 import { BackButton } from '../components/BackButton';
 import { Avatar } from '../components/Avatar';
 import { ImageAssets } from '../utils/imageCache';
+import { colors } from '../theme/colors';
 import { useTranslation } from 'react-i18next';
 import { processAvatarUrl } from '../utils/avatarUrl';
 import { GlassButton } from '../components/GlassButton';
@@ -68,7 +68,7 @@ const markdownResultStyles = {
     fontFamily,
   },
   link: {
-    color: '#34C759',
+    color: colors.blue,
     fontFamily,
   },
   bullet_list: { marginBottom: 8 },
@@ -233,214 +233,207 @@ export function AnalysisResultScreen({
   const insets = useSafeAreaInsets();
 
   return (
-    <BackgroundWrapper showGlow showHeader={false}>
-      <SafeAreaView
-        style={styles.safeArea}
-        edges={Platform.OS === 'android' ? ['bottom'] : []}
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={Platform.OS === 'android' ? ['bottom'] : []}
+    >
+      <View
+        style={[
+          styles.header,
+          { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 },
+        ]}
       >
-        <View
-          style={[
-            styles.header,
-            { paddingTop: Platform.OS === 'web' ? 24 : insets.top + 24 },
-          ]}
-        >
-          <BackButton onPress={onBack} />
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerName}>{chat.title}</Text>
-            <View style={styles.headerTypeContainer}>
-              <ExpoImage
-                source={
-                  isPersonal
-                    ? ImageAssets.privateChatIcon
-                    : ImageAssets.groupChatIcon
-                }
-                style={styles.headerTypeIcon}
-                contentFit='contain'
-              />
-              <Text style={styles.headerType}>
-                {isPersonal ? t('chats.personalChat') : t('chats.groupChat')}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.headerAvatar}>
-            <Avatar name={chat.title} size={40} avatarUrl={avatarUrl} />
+        <BackButton onPress={onBack} />
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerName}>{chat.title}</Text>
+          <View style={styles.headerTypeContainer}>
+            <ExpoImage
+              source={
+                isPersonal
+                  ? ImageAssets.privateChatIcon
+                  : ImageAssets.groupChatIcon
+              }
+              style={styles.headerTypeIcon}
+              contentFit='contain'
+            />
+            <Text style={styles.headerType}>
+              {isPersonal ? t('chats.personalChat') : t('chats.groupChat')}
+            </Text>
           </View>
         </View>
+        <View style={styles.headerAvatar}>
+          <Avatar name={chat.title} size={40} avatarUrl={avatarUrl} />
+        </View>
+      </View>
 
-        <ScrollView
-          style={styles.bodyScroll}
-          contentContainerStyle={styles.bodyContent}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-        >
-          {isDone && (
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.sectionHeaderLeft}>
-                <Text style={styles.sectionLabelTop}>
-                  {t('analysis.whatToStudy')}
-                </Text>
-                <Text style={styles.sectionValue}>{questionLabel}</Text>
-              </View>
-            </View>
-          )}
-          {!isDone ? (
-            <View style={styles.loadingContainer}>
-              {loadingPhase === 'import' ? (
-                <>
-                  <ActivityIndicator
-                    size='large'
-                    color='#34C759'
-                    style={styles.loadingSpinner}
-                  />
-                  <Text style={styles.importSubtitle}>
-                    {t('analysis.analyzingSubtitle')}
-                  </Text>
-                </>
-              ) : (
-                <View style={styles.analyzingPhaseContainer}>
-                  <Text style={styles.inProgressLabel}>
-                    {t('analysis.inProgress')}
-                  </Text>
-                  <TypingText
-                    text={
-                      (
-                        t('analysis.loadingMessages', {
-                          returnObjects: true,
-                        }) as string[]
-                      )?.[loadingMessageIndex] ??
-                      t('analysis.analyzingQuestion', { topic: questionLabel })
-                    }
-                    speed={40}
-                    style={styles.analyzingQuestion}
-                  />
-                </View>
-              )}
-            </View>
-          ) : isBlocks ? (
-            <View style={styles.resultContainer}>
-              <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
-                {t('analysis.analysisResult')}
-              </Text>
-              {mainBlocks.map((block, i) => (
-                <View key={`main-${i}`} style={styles.blockCard}>
-                  <View style={styles.blockHeaderRow}>
-                    <ExpoImage
-                      source={ImageAssets.chatOverlay}
-                      style={styles.mainBlockIcon}
-                      contentFit='contain'
-                    />
-                    <Text style={styles.blockHeader}>{block.header}</Text>
-                  </View>
-                  <Markdown style={markdownResultStyles}>{block.text}</Markdown>
-                </View>
-              ))}
-              {secondaryBlocks.map((block, i) => (
-                <View key={`sec-${i}`} style={styles.blockCard}>
-                  <View style={styles.blockHeaderRow}>
-                    <ExpoImage
-                      source={ImageAssets.sparkIcon}
-                      style={styles.secondaryBlockIcon}
-                      contentFit='contain'
-                    />
-                    <Text style={styles.blockHeader}>{block.header}</Text>
-                  </View>
-                  <Markdown style={markdownResultStyles}>{block.text}</Markdown>
-                </View>
-              ))}
-              {recommendationBlocks.length > 0 && (
-                <LinearGradient
-                  colors={['rgba(170, 224, 183, 0.3)', 'rgba(87, 94, 89, 0.3)']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={styles.recommendationsBorder}
-                >
-                  <View style={styles.recommendationsContainer}>
-                    {/* <Text style={styles.recommendationsHeader}>
-                      {t('analysis.recommendations')}
-                    </Text> */}
-                    {recommendationBlocks.map((block, i) => (
-                      <View key={`rec-${i}`}>
-                        {block.header && (
-                          <Text style={styles.recommendationBlockHeader}>
-                            {block.header}
-                          </Text>
-                        )}
-                        <Markdown style={markdownRecommendationStyles}>
-                          {block.text}
-                        </Markdown>
-                      </View>
-                    ))}
-                  </View>
-                </LinearGradient>
-              )}
-              {answerVariantBlocks.map((block, blockIdx) => {
-                const variants = parseAnswerVariants(block.text);
-                if (variants.length === 0) return null;
-                return (
-                  <View
-                    key={`answer-variants-${blockIdx}`}
-                    style={styles.answerVariantsSection}
-                  >
-                    <Text style={styles.answerVariantsTitle}>
-                      {t('analysis.answerVariants')}
-                    </Text>
-                    {variants.map((variantText, idx) => (
-                      <View key={idx} style={styles.answerVariantCard}>
-                        <View style={styles.answerVariantCardHeader}>
-                          <Text style={styles.answerVariantCardTitle}>
-                            {t('analysis.variantN', { n: idx + 1 })}
-                          </Text>
-                          <TouchableOpacity
-                            style={styles.copyButton}
-                            onPress={async () => {
-                              await Clipboard.setStringAsync(variantText);
-                              await triggerHaptic('success');
-                            }}
-                            hitSlop={{
-                              top: 12,
-                              bottom: 12,
-                              left: 12,
-                              right: 12,
-                            }}
-                          >
-                            <ExpoImage
-                              source={ImageAssets.copyIcon}
-                              style={styles.copyIcon}
-                              contentFit='contain'
-                            />
-                          </TouchableOpacity>
-                        </View>
-                        <Text style={styles.answerVariantCardText}>
-                          {variantText}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                );
-              })}
-            </View>
-          ) : (
-            <View style={styles.resultContainer}>
-              <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
-                {t('analysis.analysisResult')}
-              </Text>
-              <Markdown style={markdownResultStyles}>
-                {result as string}
-              </Markdown>
-            </View>
-          )}
-        </ScrollView>
+      <ScrollView
+        style={styles.bodyScroll}
+        contentContainerStyle={styles.bodyContent}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {isDone && (
-          <View style={styles.buttonContainer}>
-            {/* <Button title='Начать' onPress={onStart} /> */}
-            <GlassButton
-              title={t('analysis.startAgain')}
-              onPress={onReanalyze}
-            />
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionHeaderLeft}>
+              <Text style={styles.sectionLabelTop}>
+                {t('analysis.whatToStudy')}
+              </Text>
+              <Text style={styles.sectionValue}>{questionLabel}</Text>
+            </View>
           </View>
         )}
-      </SafeAreaView>
-    </BackgroundWrapper>
+        {!isDone ? (
+          <View style={styles.loadingContainer}>
+            {loadingPhase === 'import' ? (
+              <>
+                <ActivityIndicator
+                  size='large'
+                  color={colors.lightBlue}
+                  style={styles.loadingSpinner}
+                />
+                <Text style={styles.importSubtitle}>
+                  {t('analysis.analyzingSubtitle')}
+                </Text>
+              </>
+            ) : (
+              <View style={styles.analyzingPhaseContainer}>
+                <Text style={styles.inProgressLabel}>
+                  {t('analysis.inProgress')}
+                </Text>
+                <TypingText
+                  text={
+                    (
+                      t('analysis.loadingMessages', {
+                        returnObjects: true,
+                      }) as string[]
+                    )?.[loadingMessageIndex] ??
+                    t('analysis.analyzingQuestion', { topic: questionLabel })
+                  }
+                  speed={40}
+                  style={styles.analyzingQuestion}
+                />
+              </View>
+            )}
+          </View>
+        ) : isBlocks ? (
+          <View style={styles.resultContainer}>
+            <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
+              {t('analysis.analysisResult')}
+            </Text>
+            {mainBlocks.map((block, i) => (
+              <View key={`main-${i}`} style={styles.blockCard}>
+                <View style={styles.blockHeaderRow}>
+                  <ExpoImage
+                    source={ImageAssets.chatOverlay}
+                    style={styles.mainBlockIcon}
+                    contentFit='contain'
+                  />
+                  <Text style={styles.blockHeader}>{block.header}</Text>
+                </View>
+                <Markdown style={markdownResultStyles}>{block.text}</Markdown>
+              </View>
+            ))}
+            {secondaryBlocks.map((block, i) => (
+              <View key={`sec-${i}`} style={styles.blockCard}>
+                <View style={styles.blockHeaderRow}>
+                  <ExpoImage
+                    source={ImageAssets.sparkIcon}
+                    style={styles.secondaryBlockIcon}
+                    contentFit='contain'
+                  />
+                  <Text style={styles.blockHeader}>{block.header}</Text>
+                </View>
+                <Markdown style={markdownResultStyles}>{block.text}</Markdown>
+              </View>
+            ))}
+            {recommendationBlocks.length > 0 && (
+              <LinearGradient
+                colors={[colors.borderGradient1, colors.borderGradient2]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={styles.recommendationsBorder}
+              >
+                <View style={styles.recommendationsContainer}>
+                  {/* <Text style={styles.recommendationsHeader}>
+                      {t('analysis.recommendations')}
+                    </Text> */}
+                  {recommendationBlocks.map((block, i) => (
+                    <View key={`rec-${i}`}>
+                      {block.header && (
+                        <Text style={styles.recommendationBlockHeader}>
+                          {block.header}
+                        </Text>
+                      )}
+                      <Markdown style={markdownRecommendationStyles}>
+                        {block.text}
+                      </Markdown>
+                    </View>
+                  ))}
+                </View>
+              </LinearGradient>
+            )}
+            {answerVariantBlocks.map((block, blockIdx) => {
+              const variants = parseAnswerVariants(block.text);
+              if (variants.length === 0) return null;
+              return (
+                <View
+                  key={`answer-variants-${blockIdx}`}
+                  style={styles.answerVariantsSection}
+                >
+                  <Text style={styles.answerVariantsTitle}>
+                    {t('analysis.answerVariants')}
+                  </Text>
+                  {variants.map((variantText, idx) => (
+                    <View key={idx} style={styles.answerVariantCard}>
+                      <View style={styles.answerVariantCardHeader}>
+                        <Text style={styles.answerVariantCardTitle}>
+                          {t('analysis.variantN', { n: idx + 1 })}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.copyButton}
+                          onPress={async () => {
+                            await Clipboard.setStringAsync(variantText);
+                            await triggerHaptic('success');
+                          }}
+                          hitSlop={{
+                            top: 12,
+                            bottom: 12,
+                            left: 12,
+                            right: 12,
+                          }}
+                        >
+                          <ExpoImage
+                            source={ImageAssets.copyIcon}
+                            style={styles.copyIcon}
+                            contentFit='contain'
+                          />
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={styles.answerVariantCardText}>
+                        {variantText}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.resultContainer}>
+            <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
+              {t('analysis.analysisResult')}
+            </Text>
+            <Markdown style={markdownResultStyles}>{result as string}</Markdown>
+          </View>
+        )}
+      </ScrollView>
+      {isDone && (
+        <View style={styles.buttonContainer}>
+          {/* <Button title='Начать' onPress={onStart} /> */}
+          <GlassButton title={t('analysis.startAgain')} onPress={onReanalyze} />
+        </View>
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -667,7 +660,7 @@ const styles = StyleSheet.create({
   recommendationsContainer: {
     padding: 20,
     borderRadius: 15,
-    backgroundColor: '#141715',
+    backgroundColor: colors.backgroundCard,
   },
   recommendationsHeader: {
     fontSize: 13,

@@ -42,6 +42,7 @@ import { useSelector } from 'react-redux';
 import { selectAuth } from './src/store';
 import NavigationBar from 'expo-navigation-bar';
 import './src/i18n';
+import { colors } from './src/theme/colors';
 
 // Prevent auto-hiding splash screen until we're ready
 SplashScreen.preventAutoHideAsync();
@@ -202,17 +203,46 @@ function Root() {
     return () => subscription.remove();
   }, []);
   const showSplash = isLoading || !appIsReady || !fontsLoaded;
+  const [hidePersistentBg, setHidePersistentBg] = useState(false);
+  const persistentBgOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    Animated.timing(persistentBgOpacity, {
+      toValue: hidePersistentBg ? 0 : 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [hidePersistentBg, persistentBgOpacity]);
 
   return (
-    <View style={styles.rootContainer}>
-      <ExpoImage
-        source={ImageAssets.bgTop}
-        style={styles.persistentBackground}
-        contentFit='contain'
-        contentPosition='top'
-        priority='high'
-        cachePolicy='memory-disk'
-      />
+    <View
+      style={[
+        styles.rootContainer,
+        Platform.OS === 'web' && styles.rootContainerWeb,
+      ]}
+    >
+      <Animated.View
+        style={[
+          styles.persistentBackgroundWrapper,
+          {
+            opacity:
+              Platform.OS === 'web' ? persistentBgOpacity : 1,
+          },
+        ]}
+        pointerEvents={
+          Platform.OS === 'web' && hidePersistentBg ? 'none' : 'box-none'
+        }
+      >
+        <ExpoImage
+          source={ImageAssets.bgTop}
+          style={styles.persistentBackground}
+          contentFit='contain'
+          contentPosition='top'
+          priority='high'
+          cachePolicy='memory-disk'
+        />
+      </Animated.View>
       {showSplash && (
         <Animated.View
           style={[
@@ -226,48 +256,60 @@ function Root() {
           <SplashScreenComponent />
         </Animated.View>
       )}
-      <Animated.View
+      <View
         style={[
-          styles.contentWrapper,
-          {
-            opacity: contentOpacity,
-          },
+          styles.contentContainer,
+          Platform.OS === 'web' && styles.contentContainerWeb,
         ]}
-        pointerEvents={appIsReady ? 'auto' : 'none'}
       >
-        {/* <AuthScreen /> */}
-        {appIsReady && introChecked ? (
-          showIntro === true ? (
-            <IntroScreen onStart={handleIntroComplete} />
-          ) : showSuccess ? (
-            <SuccessScreen onComplete={() => setShowSuccess(false)} />
-          ) : auth.authorized ? (
-            <>
-              <ChatsScreen onShowHowItWorks={() => setShowHowItWorks(true)} />
-              <Modal
-                visible={showHowItWorks}
-                animationType='slide'
-                presentationStyle='fullScreen'
-              >
-                <View style={styles.modalContainer}>
-                  <ExpoImage
-                    source={ImageAssets.bgTop}
-                    style={styles.modalBackground}
-                    contentFit='contain'
-                    contentPosition='top'
-                  />
-                  <IntroScreen
-                    onStart={() => setShowHowItWorks(false)}
-                    hideLinks
-                  />
-                </View>
-              </Modal>
-            </>
-          ) : (
-            <AuthScreen />
-          )
-        ) : null}
-      </Animated.View>
+        <Animated.View
+          style={[
+            styles.contentWrapper,
+            {
+              opacity: contentOpacity,
+            },
+          ]}
+          pointerEvents={appIsReady ? 'auto' : 'none'}
+        >
+          {/* <AuthScreen /> */}
+          {appIsReady && introChecked ? (
+            showIntro === true ? (
+              <IntroScreen onStart={handleIntroComplete} />
+            ) : showSuccess ? (
+              <SuccessScreen onComplete={() => setShowSuccess(false)} />
+            ) : auth.authorized ? (
+              <>
+                <ChatsScreen
+                  onShowHowItWorks={() => setShowHowItWorks(true)}
+                  onAnalysisOptionsOrResultActive={
+                    Platform.OS === 'web' ? setHidePersistentBg : undefined
+                  }
+                />
+                <Modal
+                  visible={showHowItWorks}
+                  animationType='slide'
+                  presentationStyle='fullScreen'
+                >
+                  <View style={styles.modalContainer}>
+                    <ExpoImage
+                      source={ImageAssets.bgTop}
+                      style={styles.modalBackground}
+                      contentFit='contain'
+                      contentPosition='top'
+                    />
+                    <IntroScreen
+                      onStart={() => setShowHowItWorks(false)}
+                      hideLinks
+                    />
+                  </View>
+                </Modal>
+              </>
+            ) : (
+              <AuthScreen />
+            )
+          ) : null}
+        </Animated.View>
+      </View>
     </View>
   );
 }
@@ -286,7 +328,28 @@ export default function App() {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#141414',
+    backgroundColor: colors.background,
+  },
+  rootContainerWeb: {
+    alignItems: 'center',
+  },
+  contentContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  contentContainerWeb: {
+    maxWidth: 430,
+    width: '100%',
+  },
+  persistentBackgroundWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height * 0.4,
+    zIndex: 0,
+    ...(Platform.OS === 'web' && ({ width: '100%' } as any)),
   },
   persistentBackground: {
     position: 'absolute',
@@ -297,6 +360,12 @@ const styles = StyleSheet.create({
     height: Dimensions.get('window').height * 0.4,
     alignSelf: 'flex-start',
     zIndex: 0,
+    ...(Platform.OS === 'web' &&
+      ({
+        width: '100vw',
+        left: 0,
+        right: 0,
+      } as any)),
   },
   splashWrapper: {
     position: 'absolute',
@@ -305,7 +374,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 1000,
-    backgroundColor: '#141414',
+    backgroundColor: colors.background,
   },
   contentWrapper: {
     flex: 1,
@@ -314,7 +383,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#141414',
+    backgroundColor: colors.background,
   },
   modalBackground: {
     position: 'absolute',
@@ -325,5 +394,11 @@ const styles = StyleSheet.create({
     height: Dimensions.get('window').height * 0.4,
     alignSelf: 'flex-start',
     zIndex: 0,
+    ...(Platform.OS === 'web' &&
+      ({
+        width: '100vw',
+        left: 0,
+        right: 0,
+      } as any)),
   },
 });

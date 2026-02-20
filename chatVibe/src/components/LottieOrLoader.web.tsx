@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { colors } from '../theme/colors';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 type Props = {
@@ -11,7 +12,7 @@ type Props = {
 export function LottieOrLoader({ style }: Props) {
   return (
     <View style={style}>
-      <ActivityIndicator color="#34C759" />
+      <ActivityIndicator color={colors.lightBlue} />
     </View>
   );
 }

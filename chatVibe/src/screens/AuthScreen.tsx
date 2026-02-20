@@ -46,6 +46,7 @@ import {
 } from '../data/countries';
 import { Image as ExpoImage } from 'expo-image';
 import { ImageAssets } from '../utils/imageCache';
+import { colors } from '../theme/colors';
 
 const BOTTOM_BAR_PADDING = 26;
 const BOTTOM_BAR_HEIGHT_APPROX = 64;
@@ -53,6 +54,10 @@ const BOTTOM_BAR_HEIGHT_APPROX = 64;
 export function AuthScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const auth = useSelector(selectAuth);
+  // const auth = {
+  //   step: 'password',
+  //   phone: '+79999999999',
+  // };
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -529,12 +534,14 @@ export function AuthScreen() {
                             onChangeText={handleChangePhone}
                             autoFocus={Platform.OS === 'web'}
                             inputMode='numeric'
-                            selectionColor='#34C759'
+                            selectionColor={colors.blue}
                             keyboardAppearance='dark'
                             onFocus={() => {
                               setIsPhoneInputFocused(true);
                             }}
                             onBlur={() => setIsPhoneInputFocused(false)}
+                            onSubmitEditing={handleSendCode}
+                            // returnKeyType='go'
                             editable={true}
                             importantForAccessibility='yes'
                           />
@@ -570,7 +577,10 @@ export function AuthScreen() {
                     <React.Fragment key='code-step'>
                       {isVerifyingCode ? (
                         <View style={styles.codeLoadingContainer}>
-                          <ActivityIndicator size='large' color='#34C759' />
+                          <ActivityIndicator
+                            size='large'
+                            color={colors.lightBlue}
+                          />
                         </View>
                       ) : (
                         <>
@@ -604,20 +614,20 @@ export function AuthScreen() {
                                     colors={
                                       codeError
                                         ? [
-                                            'rgba(255, 255, 255, 0.14)',
-                                            'rgba(254, 63, 33, 0.22)',
-                                            'rgba(254, 63, 33, 0.44)',
+                                            colors.white14,
+                                            colors.error22,
+                                            colors.error44,
                                           ]
                                         : isFocused
                                           ? [
-                                              'rgba(255, 255, 255, 0.14)',
-                                              'rgba(52, 199, 89, 0.22)',
-                                              'rgba(52, 199, 89, 0.44)',
+                                              colors.white14,
+                                              colors.blue22,
+                                              colors.blue44,
                                             ]
                                           : [
-                                              'rgba(255, 255, 255, 0.14)',
-                                              'rgba(255, 255, 255, 0.02)',
-                                              'rgba(255, 255, 255, 0.14)',
+                                              colors.white14,
+                                              colors.white02,
+                                              colors.white14,
                                             ]
                                     }
                                     locations={[0.1451, 0.5005, 0.8594]}
@@ -663,10 +673,10 @@ export function AuthScreen() {
                                             : 'off'
                                         }
                                         selectTextOnFocus
-                                        selectionColor='#34C759'
+                                        selectionColor={colors.blue}
                                         textAlign='center'
                                         {...(Platform.OS !== 'ios' && {
-                                          caretColor: '#34C759' as any,
+                                          caretColor: colors.blue as any,
                                         })}
                                       />
                                     </LinearGradient>
@@ -710,9 +720,9 @@ export function AuthScreen() {
                       <View style={styles.passwordInputContainer}>
                         <LinearGradient
                           colors={[
-                            'rgba(255, 255, 255, 0.14)',
-                            'rgba(52, 199, 89, 0.22)',
-                            'rgba(52, 199, 89, 0.44)',
+                            colors.white14,
+                            colors.blue22,
+                            colors.blue44,
                           ]}
                           locations={[0.1451, 0.5005, 0.8594]}
                           start={{ x: 0.5, y: 0 }}
@@ -731,14 +741,16 @@ export function AuthScreen() {
                                 setStatus(null);
                               }}
                               autoFocus={Platform.OS === 'web'}
-                              selectionColor='#34C759'
+                              selectionColor={colors.blue}
                               placeholderTextColor='#C5C1B9'
                               onFocus={() => setIsPasswordInputFocused(true)}
                               onBlur={() => setIsPasswordInputFocused(false)}
+                              onSubmitEditing={handleSubmitPassword}
+                              // returnKeyType='go'
                               {...(Platform.OS === 'web' && {
                                 outlineStyle: 'none' as any,
                                 WebkitAppearance: 'none' as any,
-                                caretColor: '#34C759',
+                                caretColor: colors.blue,
                               })}
                             />
                             <TouchableOpacity
@@ -936,7 +948,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' && {
       outlineStyle: 'none' as any,
       WebkitAppearance: 'none' as any,
-      caretColor: '#34C759',
+      caretColor: colors.blue,
     }),
   },
   phoneInputPlaceholder: {
@@ -964,7 +976,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
     textAlign: 'center',
-    color: '#FE3F21',
+    color: colors.error,
     fontSize: 16,
     fontWeight: '400',
     fontFamily: Platform.select({
@@ -1045,7 +1057,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     ...(Platform.OS === 'ios' &&
       ({
-        tintColor: '#34C759',
+        tintColor: colors.blue,
       } as any)),
     fontFamily: Platform.select({
       ios: 'Onest-SemiBold',
@@ -1097,6 +1109,11 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     textAlignVertical: 'center',
     includeFontPadding: false,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none' as any,
+      WebkitAppearance: 'none' as any,
+      caretColor: colors.blue,
+    }),
   },
   eyeIconButton: {
     width: 24,

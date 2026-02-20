@@ -23,6 +23,7 @@ type BackgroundWrapperProps = {
   onBackPress?: () => void;
   showMenuButton?: boolean;
   onMenuPress?: () => void;
+  headerLogoPadding?: boolean;
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
 };
@@ -35,6 +36,7 @@ export function BackgroundWrapper({
   onBackPress,
   showMenuButton = false,
   onMenuPress,
+  headerLogoPadding = true,
   style,
   children,
 }: BackgroundWrapperProps) {
@@ -57,26 +59,31 @@ export function BackgroundWrapper({
         >
           <View style={styles.headerRow}>
             <LinearGradient
-              colors={['#083C15', '#171E18']}
+              colors={['#144382', '#001A2B']}
               locations={[0.1647, 0.8353]}
               start={{ x: 0, y: 0 }}
               end={{ x: 0.12, y: 0.99 }}
               style={styles.headerBorder}
             >
               <LinearGradient
-                colors={['#202020', '#071503']}
+                colors={['#093560', '#0D1F32']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.headerContent}
               >
-                <View style={styles.headerLogoContainer}>
+                <View
+                  style={[
+                    styles.headerLogoContainer,
+                    !headerLogoPadding && styles.headerLogoContainerNoPadding,
+                  ]}
+                >
                   <ExpoImage
                     source={ImageAssets.icon}
                     style={styles.headerLogo}
                     contentFit='contain'
                   />
                 </View>
-                {Platform.OS === 'web' ? (
+                {/* {Platform.OS === 'web' ? (
                   <View style={styles.headerTextWebContainer}>
                     <Text
                       style={[
@@ -116,7 +123,7 @@ export function BackgroundWrapper({
                       </LinearGradient>
                     </MaskedView>
                   </View>
-                )}
+                )} */}
               </LinearGradient>
             </LinearGradient>
           </View>
@@ -197,7 +204,8 @@ const styles = StyleSheet.create({
   greenGlow: {
     position: 'absolute',
     bottom: 0,
-    alignSelf: 'center',
+    left: '50%',
+    marginLeft: -200,
     width: 400,
     height: 100,
   },
@@ -221,13 +229,13 @@ const styles = StyleSheet.create({
   headerBorder: {
     borderRadius: 60,
     padding: 1,
-    width: 167,
+    // width: 64,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 167,
-    height: 49,
+    // width: 64,
+    // height: 49,
     borderRadius: 59,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -236,16 +244,20 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   headerLogoContainer: {
-    width: 31,
-    height: 31,
-    marginLeft: 9,
-    marginRight: 12,
+    // width: 41,
+    // height: 41,
+    // marginLeft: 9,
+    // marginRight: 12,
+    padding: 11.76,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerLogoContainerNoPadding: {
+    padding: 0,
+  },
   headerLogo: {
-    width: 31,
-    height: 31,
+    width: 40.49,
+    height: 40.49,
   },
   headerTextMask: {
     flex: 1,
