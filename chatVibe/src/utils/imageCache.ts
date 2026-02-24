@@ -24,7 +24,6 @@ export const ImageAssets = {
   eyeClosed: require('../../assets/eyeClosed.png'),
   backIcon: require('../../assets/backIcon.png'),
   glow: require('../../assets/glow.png'),
-  reAnalyzeIcon: require('../../assets/reAnalyzeIcon.png'),
   notEnough: require('../../assets/not_enough.png'),
   sparkIcon: require('../../assets/spark.png'),
   chatOverlay: require('../../assets/chatOverlay.png'),

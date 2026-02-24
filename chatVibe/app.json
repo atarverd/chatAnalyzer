@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "buildNumber": "1",
+      "icon": "./assets/adaptive-icon.png",
       "infoPlist": {
         "UIStatusBarHidden": true,
         "UIViewControllerBasedStatusBarAppearance": false,
