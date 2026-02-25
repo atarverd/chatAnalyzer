@@ -521,6 +521,16 @@ export function ChatsScreen({
     }
   }, [data]);
 
+  const handleLogout = async () => {
+    try {
+      await logoutMutation().unwrap();
+    } catch {
+    } finally {
+      dispatch(logout());
+      dispatch(api.util.resetApiState());
+    }
+  };
+
   if (isLoading) {
     return <LoadingView />;
   }
@@ -530,7 +540,33 @@ export function ChatsScreen({
   }
 
   if (!data || data.length === 0) {
-    return <EmptyView />;
+    return (
+      <BackgroundWrapper
+        showGlow
+        showHeader
+        showMenuButton
+        headerLogoPadding={false}
+        onMenuPress={() => setMenuVisible(true)}
+      >
+        <ChatsMenuDropdown
+          visible={menuVisible}
+          onClose={() => setMenuVisible(false)}
+          onRefresh={() => refetch()}
+          onHowItWorks={() => {
+            setMenuVisible(false);
+            onShowHowItWorks?.();
+          }}
+          onLogout={handleLogout}
+          anchorTop={Platform.OS === 'web' ? 60 : insets.top + 24 + 36}
+        />
+        <SafeAreaView
+          style={styles.safeArea}
+          edges={Platform.OS === 'android' ? ['bottom'] : []}
+        >
+          <EmptyView embedded />
+        </SafeAreaView>
+      </BackgroundWrapper>
+    );
   }
 
   // Filter chats based on search and filter type
@@ -549,17 +585,6 @@ export function ChatsScreen({
           chat.type.toLowerCase().includes('group')));
     return matchesSearch && matchesFilter;
   });
-
-  const handleLogout = async () => {
-    try {
-      await logoutMutation().unwrap();
-    } catch {
-      // Ignore errors, still logout locally
-    } finally {
-      dispatch(logout());
-      dispatch(api.util.resetApiState());
-    }
-  };
 
   const showAnalysisOverlay =
     analysisView !== 'none' &&

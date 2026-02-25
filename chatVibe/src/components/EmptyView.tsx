@@ -1,17 +1,30 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackgroundWrapper } from './BackgroundWrapper';
 import { useTranslation } from 'react-i18next';
+import { colors } from '../theme/colors';
 
-export function EmptyView() {
+type EmptyViewProps = {
+  embedded?: boolean;
+};
+
+export function EmptyView({ embedded }: EmptyViewProps) {
   const { t } = useTranslation();
+  const content = (
+    <View style={styles.center}>
+      <Text style={styles.emptyText}>{t('empty.noChatsFound')}</Text>
+    </View>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
   return (
     <BackgroundWrapper>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>{t('empty.noChatsFound')}</Text>
-        </View>
+        {content}
       </SafeAreaView>
     </BackgroundWrapper>
   );
@@ -30,5 +43,14 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
+    color: colors.white,
+    fontFamily: Platform.select({
+      ios: 'Onest-Regular',
+      android: 'Onest-Regular',
+      web: 'Onest, sans-serif',
+    }),
+    fontWeight: '400',
+    lineHeight: 20,
+    letterSpacing: 0,
   },
 });

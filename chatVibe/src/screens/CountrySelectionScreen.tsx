@@ -345,7 +345,6 @@ const styles = StyleSheet.create({
   },
 
   staticSearchContainer: {
-    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     ...(Platform.OS === 'android' && {
