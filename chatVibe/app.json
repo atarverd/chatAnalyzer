@@ -30,6 +30,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0c0d0d"
       },
+      "icon": "./assets/adaptive-icon.png",
       "versionCode": 1,
       "predictiveBackGestureEnabled": false,
       "package": "com.atarverd.chatvibe",

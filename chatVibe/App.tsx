@@ -226,8 +226,7 @@ function Root() {
         style={[
           styles.persistentBackgroundWrapper,
           {
-            opacity:
-              Platform.OS === 'web' ? persistentBgOpacity : 1,
+            opacity: Platform.OS === 'web' ? persistentBgOpacity : 1,
           },
         ]}
         pointerEvents={
@@ -271,8 +270,8 @@ function Root() {
           ]}
           pointerEvents={appIsReady ? 'auto' : 'none'}
         >
-          {/* <AuthScreen /> */}
-          {appIsReady && introChecked ? (
+          <AuthScreen />
+          {/* {appIsReady && introChecked ? (
             showIntro === true ? (
               <IntroScreen onStart={handleIntroComplete} />
             ) : showSuccess ? (
@@ -307,7 +306,7 @@ function Root() {
             ) : (
               <AuthScreen />
             )
-          ) : null}
+          ) : null} */}
         </Animated.View>
       </View>
     </View>
