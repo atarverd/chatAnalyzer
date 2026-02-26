@@ -78,7 +78,7 @@ export function BackgroundWrapper({
                   ]}
                 >
                   <ExpoImage
-                    source={ImageAssets.icon}
+                    source={ImageAssets.icon_small}
                     style={styles.headerLogo}
                     contentFit='contain'
                   />

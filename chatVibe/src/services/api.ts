@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { API_BASE_URL } from '@env';
 import type { AnalyticsMetric } from '../types/analytics';
+import { getInstallId } from '../utils/installId';
 
 type AuthStatusResponse = { authorized: boolean };
 type SendCodeResponse = { message?: string };
@@ -205,15 +206,17 @@ export const api = createApi({
     >({
       queryFn: async (body) => {
         const { metric, device } = body;
+        const userDeviceId = await getInstallId();
+        const payload = { ...body, userDeviceId };
         __DEV__ &&
-          console.log('[Analytics] Sending:', { metric, device });
+          console.log('[Analytics] Sending:', { metric, device, userDeviceId });
         try {
           const response = await fetch(
             'https://chatvibe.dategram.io/analytics/metrics/capture',
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
+              body: JSON.stringify(payload),
               credentials: 'include',
             },
           );

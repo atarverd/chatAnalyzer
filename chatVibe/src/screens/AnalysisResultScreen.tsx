@@ -764,6 +764,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 34,
-    paddingBottom: 36,
+    paddingBottom: 45,
   },
 });

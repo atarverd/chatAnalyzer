@@ -4,6 +4,7 @@ import { Image, Platform } from 'react-native';
 export const ImageAssets = {
   bgTop: require('../../assets/bg_top.png'),
   icon: require('../../assets/icon.png'),
+  icon_small: require('../../assets/icon_small.png'),
   chatIcon: require('../../assets/chatIcon.png'),
   chatIconCard: require('../../assets/chatIconCard.png'),
   sprakIcon: require('../../assets/sprakIcon.png'),
