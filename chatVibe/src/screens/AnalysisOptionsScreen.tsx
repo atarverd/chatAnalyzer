@@ -155,7 +155,10 @@ export function AnalysisOptionsScreen({
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + 36 },
+        ]}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
       >

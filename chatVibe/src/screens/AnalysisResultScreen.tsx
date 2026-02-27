@@ -133,6 +133,7 @@ export function AnalysisResultScreen({
     'import',
   );
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
   const isPersonal =
     chat.type.toLowerCase() === 'private' ||
     chat.type.toLowerCase().includes('личн') ||
@@ -257,163 +258,187 @@ export function AnalysisResultScreen({
         </View>
       </View>
 
-      <ScrollView
-        style={styles.bodyScroll}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-      >
-        {isDone && (
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionHeaderLeft}>
-              <Text style={styles.sectionLabelTop}>
-                {t('analysis.whatToStudy')}
-              </Text>
-              <Text style={styles.sectionValue}>{questionLabel}</Text>
-            </View>
-          </View>
+      <View style={styles.scrollWrapper}>
+        {scrollY > 0 && (
+          <LinearGradient
+            colors={['#0C0D0D', 'rgba(12, 13, 13, 0)']}
+            locations={[0, 1]}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.scrollTopShadow}
+            pointerEvents='none'
+          />
         )}
-        {!isDone ? (
-          <View style={styles.loadingContainer}>
-            {loadingPhase === 'import' ? (
-              <>
-                <ActivityIndicator
-                  size='large'
-                  color={colors.lightBlue}
-                  style={styles.loadingSpinner}
-                />
-                <Text style={styles.importSubtitle}>
-                  {t('analysis.analyzingSubtitle')}
+        <ScrollView
+          style={styles.bodyScroll}
+          contentContainerStyle={styles.bodyContent}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
+          scrollEventThrottle={16}
+        >
+          {isDone && (
+            <View style={styles.sectionHeaderRow}>
+              {/* <View style={styles.sectionHeaderLeft}>
+                <Text style={styles.sectionLabelTop}>
+                  {t('analysis.whatToStudy')}
                 </Text>
-              </>
-            ) : (
-              <View style={styles.analyzingPhaseContainer}>
-                <Text style={styles.inProgressLabel}>
-                  {t('analysis.inProgress')}
-                </Text>
-                <TypingText
-                  text={
-                    (
-                      t('analysis.loadingMessages', {
-                        returnObjects: true,
-                      }) as string[]
-                    )?.[loadingMessageIndex] ??
-                    t('analysis.analyzingQuestion', { topic: questionLabel })
-                  }
-                  speed={40}
-                  style={styles.analyzingQuestion}
-                />
-              </View>
-            )}
-          </View>
-        ) : isBlocks ? (
-          <View style={styles.resultContainer}>
-            <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
-              {t('analysis.analysisResult')}
-            </Text>
-            {mainBlocks.map((block, i) => (
-              <View key={`main-${i}`} style={styles.blockCard}>
-                <View style={styles.blockHeaderRow}>
-                  <ExpoImage
-                    source={ImageAssets.chatOverlay}
-                    style={styles.mainBlockIcon}
-                    contentFit='contain'
+                <Text style={styles.sectionValue}>{questionLabel}</Text>
+              </View> */}
+            </View>
+          )}
+          {!isDone ? (
+            <View style={styles.loadingContainer}>
+              {loadingPhase === 'import' ? (
+                <>
+                  <ActivityIndicator
+                    size='large'
+                    color={colors.lightBlue}
+                    style={styles.loadingSpinner}
                   />
-                  <Text style={styles.blockHeader}>{block.header}</Text>
-                </View>
-                <Markdown style={markdownResultStyles}>{block.text}</Markdown>
-              </View>
-            ))}
-            {secondaryBlocks.map((block, i) => (
-              <View key={`sec-${i}`} style={styles.blockCard}>
-                <View style={styles.blockHeaderRow}>
-                  <ExpoImage
-                    source={ImageAssets.sparkIcon}
-                    style={styles.secondaryBlockIcon}
-                    contentFit='contain'
+                  <Text style={styles.importSubtitle}>
+                    {t('analysis.analyzingSubtitle')}
+                  </Text>
+                </>
+              ) : (
+                <View style={styles.analyzingPhaseContainer}>
+                  <Text style={styles.inProgressLabel}>
+                    {t('analysis.inProgress')}
+                  </Text>
+                  <TypingText
+                    text={
+                      (
+                        t('analysis.loadingMessages', {
+                          returnObjects: true,
+                        }) as string[]
+                      )?.[loadingMessageIndex] ??
+                      t('analysis.analyzingQuestion', { topic: questionLabel })
+                    }
+                    speed={40}
+                    style={styles.analyzingQuestion}
                   />
-                  <Text style={styles.blockHeader}>{block.header}</Text>
                 </View>
-                <Markdown style={markdownResultStyles}>{block.text}</Markdown>
-              </View>
-            ))}
-            {recommendationBlocks.length > 0 && (
-              <LinearGradient
-                colors={[colors.borderGradient1, colors.borderGradient2]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.recommendationsBorder}
-              >
-                <View style={styles.recommendationsContainer}>
-                  {/* <Text style={styles.recommendationsHeader}>
-                      {t('analysis.recommendations')}
-                    </Text> */}
-                  {recommendationBlocks.map((block, i) => (
-                    <View key={`rec-${i}`}>
-                      {block.header && (
-                        <Text style={styles.recommendationBlockHeader}>
-                          {block.header}
-                        </Text>
-                      )}
-                      <Markdown style={markdownRecommendationStyles}>
-                        {block.text}
-                      </Markdown>
-                    </View>
-                  ))}
-                </View>
-              </LinearGradient>
-            )}
-            {answerVariantBlocks.map((block, blockIdx) => (
-              <View
-                key={`answer-variants-${blockIdx}`}
-                style={[
-                  styles.answerVariantsSection,
-                  blockIdx === 0 && styles.answerVariantsSectionFirst,
-                ]}
-              >
-                <View style={styles.answerVariantCard}>
-                  <View style={styles.answerVariantCardHeader}>
-                    <Text style={styles.answerVariantCardTitle}>
-                      {block.header
-                        ? block.header.charAt(0).toUpperCase() + block.header.slice(1)
-                        : t('analysis.variantN', { n: blockIdx + 1 })}
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.copyButton}
-                      onPress={async () => {
-                        await Clipboard.setStringAsync(block.text);
-                        await triggerHaptic('success');
-                      }}
-                      hitSlop={{
-                        top: 12,
-                        bottom: 12,
-                        left: 12,
-                        right: 12,
-                      }}
-                    >
-                      <ExpoImage
-                        source={ImageAssets.copyIcon}
-                        style={styles.copyIcon}
-                        contentFit='contain'
-                      />
-                    </TouchableOpacity>
+              )}
+            </View>
+          ) : isBlocks ? (
+            <View style={styles.resultContainer}>
+              <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
+                {t('analysis.analysisResult')}
+              </Text>
+              {mainBlocks.map((block, i) => (
+                <View key={`main-${i}`} style={styles.blockCard}>
+                  <View style={styles.blockHeaderRow}>
+                    <ExpoImage
+                      source={ImageAssets.chatOverlay}
+                      style={styles.mainBlockIcon}
+                      contentFit='contain'
+                    />
+                    <Text style={styles.blockHeader}>{block.header}</Text>
                   </View>
                   <Markdown style={markdownResultStyles}>{block.text}</Markdown>
                 </View>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.resultContainer}>
-            <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
-              {t('analysis.analysisResult')}
-            </Text>
-            <Markdown style={markdownResultStyles}>{result as string}</Markdown>
-          </View>
-        )}
-      </ScrollView>
+              ))}
+              {secondaryBlocks.map((block, i) => (
+                <View key={`sec-${i}`} style={styles.blockCard}>
+                  <View style={styles.blockHeaderRow}>
+                    <ExpoImage
+                      source={ImageAssets.sparkIcon}
+                      style={styles.secondaryBlockIcon}
+                      contentFit='contain'
+                    />
+                    <Text style={styles.blockHeader}>{block.header}</Text>
+                  </View>
+                  <Markdown style={markdownResultStyles}>{block.text}</Markdown>
+                </View>
+              ))}
+              {recommendationBlocks.length > 0 && (
+                <LinearGradient
+                  colors={[colors.borderGradient1, colors.borderGradient2]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={styles.recommendationsBorder}
+                >
+                  <View style={styles.recommendationsContainer}>
+                    {/* <Text style={styles.recommendationsHeader}>
+                      {t('analysis.recommendations')}
+                    </Text> */}
+                    {recommendationBlocks.map((block, i) => (
+                      <View key={`rec-${i}`}>
+                        {block.header && (
+                          <Text style={styles.recommendationBlockHeader}>
+                            {block.header}
+                          </Text>
+                        )}
+                        <Markdown style={markdownRecommendationStyles}>
+                          {block.text}
+                        </Markdown>
+                      </View>
+                    ))}
+                  </View>
+                </LinearGradient>
+              )}
+              {answerVariantBlocks.map((block, blockIdx) => (
+                <View
+                  key={`answer-variants-${blockIdx}`}
+                  style={[
+                    styles.answerVariantsSection,
+                    blockIdx === 0 && styles.answerVariantsSectionFirst,
+                  ]}
+                >
+                  <View style={styles.answerVariantCard}>
+                    <View style={styles.answerVariantCardHeader}>
+                      <Text style={styles.answerVariantCardTitle}>
+                        {block.header
+                          ? block.header.charAt(0).toUpperCase() +
+                            block.header.slice(1)
+                          : t('analysis.variantN', { n: blockIdx + 1 })}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.copyButton}
+                        onPress={async () => {
+                          await Clipboard.setStringAsync(block.text);
+                          await triggerHaptic('success');
+                        }}
+                        hitSlop={{
+                          top: 12,
+                          bottom: 12,
+                          left: 12,
+                          right: 12,
+                        }}
+                      >
+                        <ExpoImage
+                          source={ImageAssets.copyIcon}
+                          style={styles.copyIcon}
+                          contentFit='contain'
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <Markdown style={markdownResultStyles}>
+                      {block.text}
+                    </Markdown>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.resultContainer}>
+              <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
+                {t('analysis.analysisResult')}
+              </Text>
+              <Markdown style={markdownResultStyles}>
+                {result as string}
+              </Markdown>
+            </View>
+          )}
+        </ScrollView>
+      </View>
       {isDone && (
-        <View style={styles.buttonContainer}>
+        <View
+          style={[
+            styles.buttonContainer,
+            { paddingBottom: insets.bottom + 36 },
+          ]}
+        >
           {/* <Button title='Начать' onPress={onStart} /> */}
           <GlassButton title={t('analysis.startAgain')} onPress={onReanalyze} />
         </View>
@@ -425,6 +450,29 @@ export function AnalysisResultScreen({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    position: 'relative',
+  },
+  screenBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '100%',
+    height: 226,
+    zIndex: 2,
+    opacity: 0.6,
+  },
+  scrollWrapper: {
+    flex: 1,
+    position: 'relative',
+  },
+  scrollTopShadow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+    zIndex: 10,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -452,6 +500,8 @@ const styles = StyleSheet.create({
     height: 24,
   },
   header: {
+    position: 'relative',
+    zIndex: 3,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
@@ -729,6 +779,5 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 34,
-    paddingBottom: 50,
   },
 });

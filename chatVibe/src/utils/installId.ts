@@ -4,6 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const INSTALL_ID_KEY = '@chatvibe/install_id';
 
+/** Converts Android ID (16 hex chars) to a deterministic UUID v4 format. */
+function androidIdToUuid(androidId: string): string {
+  const raw = androidId.toLowerCase().replace(/[^0-9a-f]/g, '');
+  const hex = (raw + '0'.repeat(32)).slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(12, 15)}-8${hex.slice(15, 18)}-${hex.slice(18, 30)}`;
+}
+
 function generateId(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
@@ -25,7 +32,8 @@ export async function getInstallId(): Promise<string> {
 
   try {
     if (Platform.OS === 'android') {
-      cachedId = Application.getAndroidId();
+      const androidId = Application.getAndroidId();
+      cachedId = androidIdToUuid(androidId);
       return cachedId;
     }
 

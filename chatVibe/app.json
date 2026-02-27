@@ -4,7 +4,7 @@
     "slug": "cahtvibe",
     "version": "1.0.2",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon_main.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "buildNumber": "1",
-      "icon": "./assets/adaptive-icon.png",
+      "icon": "./assets/icon_main.png",
       "infoPlist": {
         "UIStatusBarHidden": true,
         "UIViewControllerBasedStatusBarAppearance": false,
@@ -30,7 +30,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0c0d0d"
       },
-      "icon": "./assets/adaptive-icon.png",
+      "icon": "./assets/icon_main.png",
       "versionCode": 1,
       "predictiveBackGestureEnabled": false,
       "package": "com.atarverd.chatvibe",
