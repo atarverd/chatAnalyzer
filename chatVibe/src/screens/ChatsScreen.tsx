@@ -283,7 +283,7 @@ export function ChatsScreen({
         });
       }
     } catch (err: any) {
-      const msg = getApiErrorMessage(err, t, 'errors.generic');
+        const msg = getApiErrorMessage(err, t, 'errors.generic');
       Alert.alert(t('errors.generic'), msg);
       return;
     }
@@ -330,7 +330,6 @@ export function ChatsScreen({
     setChatsWithPendingAnalysis((prev) => new Set(prev).add(chatId));
 
     try {
-      // Start the analysis
       const result = await analyzeChat({
         chatId: selectedChat.id,
         type: questionType,

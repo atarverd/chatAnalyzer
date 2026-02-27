@@ -163,15 +163,6 @@ export function AnalysisResultScreen({
     ? (result as AnalysisBlock[]).filter((b) => b.type === 'answer_variants')
     : [];
 
-  const parseAnswerVariants = (text: string): string[] => {
-    try {
-      const parsed = JSON.parse(text);
-      return Array.isArray(parsed) ? parsed : [String(parsed)];
-    } catch {
-      return [text];
-    }
-  };
-
   useEffect(() => {
     if (!isAnalyzing && result) {
       setIsDone(true);
@@ -372,51 +363,45 @@ export function AnalysisResultScreen({
                 </View>
               </LinearGradient>
             )}
-            {answerVariantBlocks.map((block, blockIdx) => {
-              const variants = parseAnswerVariants(block.text);
-              if (variants.length === 0) return null;
-              return (
-                <View
-                  key={`answer-variants-${blockIdx}`}
-                  style={styles.answerVariantsSection}
-                >
-                  <Text style={styles.answerVariantsTitle}>
-                    {t('analysis.answerVariants')}
-                  </Text>
-                  {variants.map((variantText, idx) => (
-                    <View key={idx} style={styles.answerVariantCard}>
-                      <View style={styles.answerVariantCardHeader}>
-                        <Text style={styles.answerVariantCardTitle}>
-                          {t('analysis.variantN', { n: idx + 1 })}
-                        </Text>
-                        <TouchableOpacity
-                          style={styles.copyButton}
-                          onPress={async () => {
-                            await Clipboard.setStringAsync(variantText);
-                            await triggerHaptic('success');
-                          }}
-                          hitSlop={{
-                            top: 12,
-                            bottom: 12,
-                            left: 12,
-                            right: 12,
-                          }}
-                        >
-                          <ExpoImage
-                            source={ImageAssets.copyIcon}
-                            style={styles.copyIcon}
-                            contentFit='contain'
-                          />
-                        </TouchableOpacity>
-                      </View>
-                      <Text style={styles.answerVariantCardText}>
-                        {variantText}
-                      </Text>
-                    </View>
-                  ))}
+            {answerVariantBlocks.map((block, blockIdx) => (
+              <View
+                key={`answer-variants-${blockIdx}`}
+                style={[
+                  styles.answerVariantsSection,
+                  blockIdx === 0 && styles.answerVariantsSectionFirst,
+                ]}
+              >
+                <View style={styles.answerVariantCard}>
+                  <View style={styles.answerVariantCardHeader}>
+                    <Text style={styles.answerVariantCardTitle}>
+                      {block.header
+                        ? block.header.charAt(0).toUpperCase() + block.header.slice(1)
+                        : t('analysis.variantN', { n: blockIdx + 1 })}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.copyButton}
+                      onPress={async () => {
+                        await Clipboard.setStringAsync(block.text);
+                        await triggerHaptic('success');
+                      }}
+                      hitSlop={{
+                        top: 12,
+                        bottom: 12,
+                        left: 12,
+                        right: 12,
+                      }}
+                    >
+                      <ExpoImage
+                        source={ImageAssets.copyIcon}
+                        style={styles.copyIcon}
+                        contentFit='contain'
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <Markdown style={markdownResultStyles}>{block.text}</Markdown>
                 </View>
-              );
-            })}
+              </View>
+            ))}
           </View>
         ) : (
           <View style={styles.resultContainer}>
@@ -611,6 +596,7 @@ const styles = StyleSheet.create({
   },
   resultSectionLabel: {
     marginTop: 16,
+    marginBottom: 24,
   },
   resultText: {
     fontSize: 15,
@@ -701,20 +687,9 @@ const styles = StyleSheet.create({
       web: 'Onest, sans-serif',
     }),
   },
-  answerVariantsSection: {
-    marginTop: 24,
-    marginBottom: 24,
-  },
-  answerVariantsTitle: {
-    fontSize: 14,
-    fontWeight: '600' as const,
-    color: '#F7FDFA',
-    marginBottom: 16,
-    fontFamily: Platform.select({
-      ios: 'Onest-SemiBold',
-      android: 'Onest-SemiBold',
-      web: 'Onest, sans-serif',
-    }),
+  answerVariantsSection: {},
+  answerVariantsSectionFirst: {
+    marginTop: 30,
   },
   answerVariantCard: {
     backgroundColor: '#181818',
@@ -722,7 +697,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#404040',
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 17,
   },
   answerVariantCardHeader: {
     flexDirection: 'row',
@@ -747,16 +722,6 @@ const styles = StyleSheet.create({
   copyIcon: {
     width: 20,
     height: 20,
-  },
-  answerVariantCardText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#C5C1B9',
-    fontFamily: Platform.select({
-      ios: 'Onest-Regular',
-      android: 'Onest-Regular',
-      web: 'Onest, sans-serif',
-    }),
   },
   buttonContainer: {
     position: 'absolute',
