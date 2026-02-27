@@ -270,8 +270,8 @@ function Root() {
           ]}
           pointerEvents={appIsReady ? 'auto' : 'none'}
         >
-          <AuthScreen />
-          {/* {appIsReady && introChecked ? (
+          {/* <AuthScreen /> */}
+          {appIsReady && introChecked ? (
             showIntro === true ? (
               <IntroScreen onStart={handleIntroComplete} />
             ) : showSuccess ? (
@@ -306,7 +306,7 @@ function Root() {
             ) : (
               <AuthScreen />
             )
-          ) : null} */}
+          ) : null}
         </Animated.View>
       </View>
     </View>
